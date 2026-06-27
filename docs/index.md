@@ -36,8 +36,11 @@ a.Transpose().Shape() // [3 2]
 The hot paths are **multicore + SIMD**: a go-asmgen sum kernel and a
 panel-packed, cache-blocked GEMM with a SIMD-FMA micro-kernel (amd64 SSE2,
 arm64 NEON), plus packed elementwise / sqrt / max-min kernels. The result
-**beats single-threaded NumPy** on Add/Mul/Sum/Sqrt/Max and the blocked GEMM;
-where tuned BLAS (OpenBLAS/MKL) still wins, the benchmark page says so.
+**beats single-threaded NumPy** on Add/Mul/Sum/Sqrt/Max and the blocked GEMM.
+**MatMul reaches tuned-BLAS parity at 1024²** (≈1.00× of single-threaded vecLib,
+~373 GFLOP/s; ≈0.99× vs multi-threaded OpenBLAS) and beats the pure-Go **gonum
+4–10×** at every size, while **Dot (1-D) wins at parity** (~0.98×). Where tuned
+BLAS still leads at small n, the benchmark page says so.
 
 ## Where to go next
 
