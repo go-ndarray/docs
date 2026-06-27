@@ -514,8 +514,11 @@ numpy 2.2.</p>
 <p>The hot paths are <strong>multicore + SIMD</strong>: a go-asmgen sum kernel and a
 panel-packed, cache-blocked GEMM with a SIMD-FMA micro-kernel (amd64 SSE2,
 arm64 NEON), plus packed elementwise / sqrt / max-min kernels. The result
-<strong>beats single-threaded NumPy</strong> on Add/Mul/Sum/Sqrt/Max and the blocked GEMM;
-where tuned BLAS (OpenBLAS/MKL) still wins, the benchmark page says so.</p>
+<strong>beats single-threaded NumPy</strong> on Add/Mul/Sum/Sqrt/Max and the blocked GEMM.
+<strong>MatMul reaches tuned-BLAS parity at 1024²</strong> (≈1.00× of single-threaded vecLib,
+~373 GFLOP/s; ≈0.99× vs multi-threaded OpenBLAS) and beats the pure-Go <strong>gonum
+4–10×</strong> at every size, while <strong>Dot (1-D) wins at parity</strong> (~0.98×). Where tuned
+BLAS still leads at small n, the benchmark page says so.</p>
 <h2 id="where-to-go-next">Where to go next<a class="headerlink" href="#where-to-go-next" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="roadmap/">Roadmap</a> — the plan and what ships today.</li>

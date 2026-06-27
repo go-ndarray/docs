@@ -681,6 +681,20 @@
 <p>Honest, reproducible head-to-head of <code>go-ndarray/ndarray</code> against <strong>NumPy
 2.2.4</strong> on identical hardware. "On n'a pas le droit de se tromper": every number
 here is measured, every win is real, and where NumPy still leads it says so.</p>
+<blockquote>
+<p><strong>Two benchmark contexts, one verdict.</strong> This page reports the arm64 Tart-VM
+run (4 vCPU, OpenBLAS 0.3.29). The repo's
+<a href="https://github.com/go-ndarray/ndarray/blob/main/BENCHMARKS.md"><code>BENCHMARKS.md</code></a>
+reports a second run on an Apple <strong>M4 Max</strong> (16 cores, NumPy's tuned vecLib).
+Both agree on the verdict: the elementwise/reduction core and the packed GEMM
+beat single-threaded NumPy, and <strong>MatMul reaches tuned-BLAS parity at 1024²</strong>
+(≈0.99× vs multi-threaded OpenBLAS here; ~1.00× of single-threaded vecLib at
+~373 GFLOP/s on the M4 Max). The M4-Max run also pits MatMul against the
+pure-Go peer <strong>gonum</strong>, which go-ndarray beats <strong>4–10× at every size</strong>, and
+measures <strong>Dot (1-D) at parity</strong> (~0.98×, a ~90× speed-up over the prior
+per-element path). A many-core join panic in the parallel GEMM was fixed in
+the same 2026-06-23 pass.</p>
+</blockquote>
 <h2 id="how-a-pure-go-library-can-beat-numpy">How a pure-Go library can beat NumPy<a class="headerlink" href="#how-a-pure-go-library-can-beat-numpy" title="Permanent link">&para;</a></h2>
 <p>NumPy's elementwise and reduction ufuncs (<code>+</code>, <code>*</code>, <code>sqrt</code>, <code>sum</code>, <code>max</code>, …) are
 <strong>single-threaded SIMD C</strong>. So a pure-Go library wins them by combining two
