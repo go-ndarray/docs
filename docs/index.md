@@ -14,9 +14,10 @@ numpy 2.2.
 ```go
 import nd "github.com/go-ndarray/ndarray"
 
-a := nd.Arange(0, 6).Reshape(2, 3)
-a.Sum()              // 15
-a.Transpose().Shape() // [3 2]
+a, _ := nd.Arange(0, 6, 1)
+m, _ := a.Reshape(2, 3)
+m.Sum()               // 15
+m.Transpose().Shape() // [3 2]
 ```
 
 ## API surface
@@ -28,6 +29,7 @@ a.Transpose().Shape() // [3 2]
 | Elementwise | `Add`/`Sub`/`Mul`/`Div` (+`*Scalar`, +`*Into`), `Map`, `Neg`, `Abs` |
 | Ufuncs | `Sqrt`, `Exp`, `Log`/`Log2`/`Log10`, `Sin`/`Cos`/`Tan`, `Floor`/`Ceil`/`Round`, `Square`, `Power` |
 | Reductions | `Sum`, `Mean`, `Max`/`Min`, `Prod`, `ArgMax`/`ArgMin`, `CumSum`/`CumProd`, `Clip`, `Where` (+ per-axis) |
+| Indexing | `Slice` (basic indexing), `MaskSelect` (`a[mask]`), `Nonzero` (`flatnonzero`), `Take` (fancy indexing) |
 | Manipulation | `Flatten`, `ExpandDims`, `Squeeze`, `Concatenate`, `Stack`, `VStack`, `HStack` |
 | Linear algebra | `MatMul`, `Dot`, `Inner`, `Outer` |
 
