@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{#
+  Version warning. mkdocs-material fills this block on every page, then its
+  mike integration reveals it only when the version being read is not the
+  default one (extra.version.default: latest in mkdocs.yml). Readers of an
+  older version therefore see that it is outdated, with a link to the latest.
+  The link goes to the parent of the version directory, the site root, which
+  mike redirects to "latest". base_url ~ '/../' resolves there from every page:
+  base_url is relative ("." or "..") on ordinary pages and absolute
+  ("/docs/0.1") on 404.html, where '../' ~ base_url would not.
+#}
+{% block outdated %}
+  You are reading the documentation of an outdated version, whose text may
+  no longer be accurate.
+  <a href="{{ base_url ~ '/../' }}">
+    <strong>Go to the latest version.</strong>
+  </a>
+{% endblock %}

@@ -7,6 +7,9 @@ edit_uri: ""
 
 theme:
   name: material
+  # overrides/main.html defines the "outdated" block: the banner that tells
+  # a reader of any version other than "latest" to go to the latest one.
+  custom_dir: overrides
   logo: assets/logo.svg
   favicon: assets/logo.svg
   features:
