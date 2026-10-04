@@ -4,7 +4,7 @@ Honest, reproducible head-to-head of `go-ndarray/ndarray` against **NumPy
 2.2.4** on identical hardware. "On n'a pas le droit de se tromper": every number
 here is measured, every win is real, and where NumPy still leads it says so.
 
-> **Where it stands at v0.2.5.** This page grew round by round: the sections
+> **Where it stands at v0.2.6.** This page grew round by round: the sections
 > up to *Where go-ndarray still loses* were measured on an arm64 Tart VM
 > (4 vCPU, NumPy 2.2.4, OpenBLAS 0.3.29); the dated sections after it on an
 > AMD Zen 3, 16 cores, against **NumPy 2.5.3 + OpenBLAS 0.3.34**, except the
@@ -641,13 +641,16 @@ baseline is POWER8.
 
 ## loong64: LASX kernels (2026-10-04)
 
-Go's loong64 assembler has LASX vector float64 add/sub/mul/div, square root and
-256-bit loads, but no fused multiply-add and no broadcast load; go-asmgen
-v0.14.0 encodes `xvfmadd.d` and `xvldrepl.d` as `WORD`s (pinned against GNU as
-2.43, bit-identical to `math.FMA` on a Loongson 3C5000L; transitional until
-cmd/asm names them). go-ndarray uses them for sum, dot, sqrt, add/sub/mul/div
-and an 8×8 GEMM micro-kernel (16 four-lane accumulators, A broadcast by
-`xvldrepl.d`). LASX is not on every LoongArch CPU, so the kernels run only when
+Go's loong64 assembler has LASX vector float64 add/sub/mul/div, square root,
+256-bit loads and the broadcast load (spelled as an arrangement,
+`XVMOVQ off(R), X.V4`, which assembles to `xvldrepl.d`), but no fused
+multiply-add; go-asmgen v0.14.0 encodes `xvfmadd.d` as a `WORD` (pinned
+against GNU as 2.43, bit-identical to `math.FMA` on a Loongson 3C5000L;
+transitional until cmd/asm names it). go-ndarray uses them for sum, dot, sqrt,
+add/sub/mul/div and an 8×8 GEMM micro-kernel (16 four-lane accumulators, A
+broadcast by `xvldrepl.d`). (v0.2.5 said Go had no broadcast load and emitted
+it as a WORD too; it has one, and v0.2.6 emits the mnemonic, the same machine
+code.) LASX is not on every LoongArch CPU, so the kernels run only when
 the kernel reports it in AT_HWCAP (`/proc/self/auxv`), with the scalar code as
 the fallback; the parsing is a pure function tested on every target.
 
@@ -708,9 +711,9 @@ host has no route to package mirrors), so there is no external reference.
   **ppc64le** has no vector-double arithmetic (no `XVADDDP`/`XVMADDADP`), which
   go-asmgen v0.13.0 now encodes as `WORD`s, so ppc64le has kernels;
   **loong64** has vector-double add/sub/mul/div (`VADDD` assembles to
-  `vfadd.d`, `VMULD` to `vfmul.d`, `XVADDD` to `xvfadd.d`) but no vector FMA
-  or broadcast load, which go-asmgen v0.14.0 encodes (transitionally), so
-  loong64 has kernels;
+  `vfadd.d`, `VMULD` to `vfmul.d`, `XVADDD` to `xvfadd.d`) and the broadcast
+  load (`XVMOVQ off(R), X.V4` = `xvldrepl.d`), but no vector FMA, which
+  go-asmgen v0.14.0 encodes (transitionally), so loong64 has kernels;
   **s390x** has them, FMA included (`VFADB`, `VFMADB`); **riscv64** has them
   (`VFADDVV`, `VFMACCVV`), but the V extension is optional and needs a run-time
   check. So s390x and riscv64 kernels are work not yet done, not a
