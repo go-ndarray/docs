@@ -607,6 +607,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#ppc64le-vsx-kernels-2026-10-04" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ppc64le: VSX kernels (2026-10-04)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#simd-coverage" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -873,6 +884,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#ppc64le-vsx-kernels-2026-10-04" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ppc64le: VSX kernels (2026-10-04)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#simd-coverage" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -905,7 +927,7 @@
 2.2.4</strong> on identical hardware. "On n'a pas le droit de se tromper": every number
 here is measured, every win is real, and where NumPy still leads it says so.</p>
 <blockquote>
-<p><strong>Where it stands at v0.2.2.</strong> This page grew round by round: the sections
+<p><strong>Where it stands at v0.2.3.</strong> This page grew round by round: the sections
 up to <em>Where go-ndarray still loses</em> were measured on an arm64 Tart VM
 (4 vCPU, NumPy 2.2.4, OpenBLAS 0.3.29); the dated sections after it on an
 AMD Zen 3, 16 cores, against <strong>NumPy 2.5.3 + OpenBLAS 0.3.34</strong>. On the Zen 3:</p>
@@ -926,9 +948,12 @@ AMD Zen 3, 16 cores, against <strong>NumPy 2.5.3 + OpenBLAS 0.3.34</strong>. On 
 <p>On Apple silicon the GEMM reached parity with tuned BLAS at 1024² (OpenBLAS in
 an arm64 VM, single-threaded vecLib on an M4 Max) and beats the pure-Go
 <code>gonum</code> 4–10× (<a href="https://github.com/go-ndarray/ndarray/blob/main/BENCHMARKS.md"><code>BENCHMARKS.md</code></a>).
-SIMD kernels exist on <strong>amd64 and arm64</strong>; the other targets run the pure-Go
-reference code. For loong64, s390x and riscv64 that is work not yet done, not
-a toolchain limit (see <em>SIMD coverage</em> at the end).</p>
+On a POWER9 the VSX kernels added in v0.2.3 double the serial GEMM (7.9 →
+15.8 GFLOP/s at 512²), which is 0.69× OpenBLAS 0.3.34 on one thread; <code>MatMul</code>
+at 1024² on 32 threads is at 0.56× (see <em>ppc64le: VSX kernels</em>).
+SIMD kernels exist on <strong>amd64, arm64 and ppc64le</strong>; the other targets run the
+pure-Go reference code. For loong64, s390x and riscv64 that is work not yet
+done, not a toolchain limit (see <em>SIMD coverage</em> at the end).</p>
 </blockquote>
 <h2 id="how-a-pure-go-library-can-beat-numpy">How a pure-Go library can beat NumPy<a class="headerlink" href="#how-a-pure-go-library-can-beat-numpy" title="Permanent link">&para;</a></h2>
 <p>NumPy's elementwise and reduction ufuncs (<code>+</code>, <code>*</code>, <code>sqrt</code>, <code>sum</code>, <code>max</code>, …) are
@@ -1849,6 +1874,88 @@ this log.</p>
 </ul>
 <p>Speed, 16 Ki elements, one core: M4 37 µs (<code>math.Log</code> 72), Zen 3 73 µs
 (<code>math.Log</code> 175, NumPy 69).</p>
+<h2 id="ppc64le-vsx-kernels-2026-10-04">ppc64le: VSX kernels (2026-10-04)<a class="headerlink" href="#ppc64le-vsx-kernels-2026-10-04" title="Permanent link">&para;</a></h2>
+<p>Go's ppc64 assembler has the VSX loads, stores and permutes but no vector
+double arithmetic, so ppc64le ran the scalar code. go-asmgen v0.13.0 encodes
+<code>xvadddp</code>, <code>xvsubdp</code>, <code>xvmuldp</code>, <code>xvdivdp</code>, <code>xvmaddadp</code>, <code>xvmaxdp</code>, <code>xvmindp</code>
+and <code>xvsqrtdp</code> as <code>WORD</code>s, pinned against GNU as 2.44 and run bit-identical to
+Go's arithmetic and <code>math.FMA</code> on POWER8 and POWER9. With them, go-ndarray has
+VSX kernels for sum, dot, sqrt, add/sub/mul/div and the GEMM.</p>
+<p>The GEMM micro-kernel (8×8, 32 accumulators) follows OpenBLAS's POWER9 dgemm:
+no splats. Each A pair and its swap multiply each B column pair, so one
+accumulator holds a diagonal (C[r][c], C[r+1][c+1]) and another the
+anti-diagonal; the store rebuilds the rows with <code>xxpermdi</code>. On one POWER9 core,
+measured in one binary: 13.3 GFLOP/s with <code>lxvdsx</code> splats, 14.8 with <code>xxpermdi</code>
+splats, 15.4 with those unrolled by two, <strong>16.9</strong> with the diagonal scheme
+unrolled by two (shipped).</p>
+<p>POWER9 (cfarm29, 8 cores × SMT4), against the scalar code (best of 3–4
+interleaved runs):</p>
+<table>
+<thead>
+<tr>
+<th>op</th>
+<th style="text-align: right;">before</th>
+<th style="text-align: right;">after</th>
+<th style="text-align: center;">gain</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>micro-kernel, 1 core</td>
+<td style="text-align: right;">8.3 GFLOP/s</td>
+<td style="text-align: right;">16.2 GFLOP/s</td>
+<td style="text-align: center;">×1.96</td>
+</tr>
+<tr>
+<td>serial GEMM 512², 1 core</td>
+<td style="text-align: right;">7.9 GFLOP/s</td>
+<td style="text-align: right;">15.8 GFLOP/s</td>
+<td style="text-align: center;">×2.0</td>
+</tr>
+<tr>
+<td>MatMul 1024², 32 threads</td>
+<td style="text-align: right;">39.2 ms</td>
+<td style="text-align: right;">23.6 ms</td>
+<td style="text-align: center;">×1.66</td>
+</tr>
+<tr>
+<td>MatMul 128² / 512²</td>
+<td style="text-align: right;"></td>
+<td style="text-align: right;"></td>
+<td style="text-align: center;">×1.8 / ×1.5</td>
+</tr>
+<tr>
+<td>MatVec 1024²</td>
+<td style="text-align: right;">823 µs</td>
+<td style="text-align: right;">267 µs</td>
+<td style="text-align: center;">×3.1</td>
+</tr>
+<tr>
+<td>Sum 1 Ki / 16 Ki / 256 Ki</td>
+<td style="text-align: right;"></td>
+<td style="text-align: right;"></td>
+<td style="text-align: center;">×6.6 / ×7.3 / ×3.2</td>
+</tr>
+<tr>
+<td>AddInto 1 Ki–256 Ki</td>
+<td style="text-align: right;"></td>
+<td style="text-align: right;"></td>
+<td style="text-align: center;">×2.7–4.1</td>
+</tr>
+<tr>
+<td>Sqrt, 1 core</td>
+<td style="text-align: right;"></td>
+<td style="text-align: right;"></td>
+<td style="text-align: center;">×1.05–1.18</td>
+</tr>
+</tbody>
+</table>
+<p>At 4 Mi elements sum and add are memory-bound (×1.1). <strong>Against OpenBLAS</strong>
+0.3.34 (its POWER9 kernel, loaded through <code>scipy-openblas64</code> on the same host;
+the ppc64le NumPy wheel there has no BLAS): one thread 22.8 GFLOP/s at 512²,
+so the serial GEMM is at 0.69×; 32 threads 13.1 ms at 1024², so MatMul is at
+0.56×. OpenBLAS unrolls further and uses POWER9-only <code>lxv</code> loads; Go's ppc64le
+baseline is POWER8.</p>
 <h2 id="simd-coverage">SIMD coverage<a class="headerlink" href="#simd-coverage" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong>amd64 (SSE2)</strong> ships hand-vectorized <code>sum</code> (4-accumulator <code>ADDPD</code>), <code>sqrt</code>
@@ -1872,13 +1979,17 @@ this log.</p>
   <code>FMAXD</code>/<code>FMIND</code>); the C-accumulate fold still uses <code>VFMLA</code> against <code>1.0</code> (no
   plain vector FP add exists). All beat/parity NumPy via SIMD + multicore, no
   <code>func</code>-pointer indirection.</li>
-<li>The other four 64-bit Go targets — <strong>riscv64, loong64, ppc64le, s390x</strong> — keep
+<li><strong>ppc64le (VSX)</strong>, since v0.2.3: sum, dot, sqrt, add/sub/mul/div and an 8×8
+  GEMM micro-kernel; max/min stay scalar (the ISA's <code>xvmaxdp</code> NaN rule is not
+  NumPy's). See the ppc64le section above.</li>
+<li>The other three 64-bit Go targets — <strong>riscv64, loong64, s390x</strong> — keep
   the validated scalar oracles, using the same four-accumulator max/min, direct
   sqrt loop, and a <strong>scalar 4×4 GEMM micro-kernel</strong> over the packed panels, and
   still get the <strong>packing + cache blocking + multicore</strong> structure (they have
   not been measured against NumPy). What the Go assembler offers them, checked
   on Go 1.26.4 and 1.27.1 by assembling and disassembling (2026-10-04):
-  <strong>ppc64le</strong> has no vector-double arithmetic (no <code>XVADDDP</code>/<code>XVMADDADP</code>);
+  <strong>ppc64le</strong> has no vector-double arithmetic (no <code>XVADDDP</code>/<code>XVMADDADP</code>), which
+  go-asmgen v0.13.0 now encodes as <code>WORD</code>s, so ppc64le has kernels;
   <strong>loong64</strong> has vector-double add/sub/mul/div (<code>VADDD</code> assembles to
   <code>vfadd.d</code>, <code>VMULD</code> to <code>vfmul.d</code>, <code>XVADDD</code> to <code>xvfadd.d</code>) but no vector FMA;
   <strong>s390x</strong> has them, FMA included (<code>VFADB</code>, <code>VFMADB</code>); <strong>riscv64</strong> has them

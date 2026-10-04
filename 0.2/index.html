@@ -531,8 +531,8 @@ broadcasting elementwise ops and ufuncs, reductions, manipulation and linear
 algebra, all with cgo disabled.</p>
 <p>Ruby has no cgo-free ndarray (<code>Numo::NArray</code>, <code>NMatrix</code> are C extensions) and
 <code>gonum</code>'s optimized assembly is amd64-only. go-ndarray pairs a portable pure-Go
-core with <strong>multicore fan-out + go-asmgen SIMD</strong> (amd64 and arm64), and a
-<strong><code>Workspace</code></strong> arena that takes the garbage collector out of loops. <strong>100%
+core with <strong>multicore fan-out + go-asmgen SIMD</strong> (amd64, arm64 and ppc64le),
+and a <strong><code>Workspace</code></strong> arena that takes the garbage collector out of loops. <strong>100%
 coverage</strong>, differentially checked against NumPy.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">import</span><span class="w"> </span><span class="nx">nd</span><span class="w"> </span><span class="s">"github.com/go-ndarray/ndarray"</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
@@ -608,14 +608,14 @@ single arena that <code>Reset</code> hands back:</p>
 <code>Reset</code></strong>; <code>Detach</code> returns a heap copy that survives it.</p>
 <h2 id="performance-architectures">Performance &amp; architectures<a class="headerlink" href="#performance-architectures" title="Permanent link">&para;</a></h2>
 <p>Large elementwise ops, reductions and products run <strong>multicore</strong> (across
-<code>GOMAXPROCS</code>). On <strong>amd64 and arm64</strong> the hot loops are go-asmgen SIMD kernels:
-sum, max/min, add/sub/mul/div, sqrt and the dot product (SSE2 or AVX2/FMA on
-amd64, NEON on arm64), and a <strong>panel-packed, cache-blocked GEMM</strong> with an
-SIMD-FMA micro-kernel (NEON 4×8; AVX2/FMA 6×8 chosen at run time by a CPUID
-probe, SSE2 fallback). riscv64, loong64, ppc64le, s390x and the 32-bit targets
-run the same pure-Go code those kernels are tested against. <code>Exp</code> and <code>Log</code> are
-ports of Arm's optimized-routines (worst 0.504 and 0.508 ULP measured, against
-up to 0.88 and 0.72 for Go's <code>math.Exp</code>/<code>math.Log</code> on arm64), and they are
+<code>GOMAXPROCS</code>). On <strong>amd64, arm64 and ppc64le</strong> the hot loops are go-asmgen SIMD
+kernels: sum, add/sub/mul/div, sqrt and the dot product (SSE2 or AVX2/FMA on
+amd64, NEON on arm64, VSX on ppc64le), max/min too on amd64, and a
+<strong>panel-packed, cache-blocked GEMM</strong> with an SIMD-FMA micro-kernel (NEON 4×8;
+AVX2/FMA 6×8 chosen at run time by a CPUID probe, SSE2 fallback; VSX 8×8).
+riscv64, loong64, s390x and the 32-bit targets run the same pure-Go code
+those kernels are tested against. <code>Exp</code> and <code>Log</code> are ports of Arm's
+optimized-routines (worst 0.504 and 0.508 ULP measured, against up to 0.88 and 0.72 for Go's <code>math.Exp</code>/<code>math.Log</code> on arm64), and they are
 correct where amd64's <code>math.Exp</code> returns +Inf
 (<a href="https://github.com/golang/go/issues/81995">golang/go#81995</a>) and <code>math.Log</code>
 is wrong on subnormals
