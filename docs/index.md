@@ -7,8 +7,8 @@ algebra, all with cgo disabled.
 
 Ruby has no cgo-free ndarray (`Numo::NArray`, `NMatrix` are C extensions) and
 `gonum`'s optimized assembly is amd64-only. go-ndarray pairs a portable pure-Go
-core with **multicore fan-out + go-asmgen SIMD** (amd64 and arm64), and a
-**`Workspace`** arena that takes the garbage collector out of loops. **100%
+core with **multicore fan-out + go-asmgen SIMD** (amd64, arm64 and ppc64le),
+and a **`Workspace`** arena that takes the garbage collector out of loops. **100%
 coverage**, differentially checked against NumPy.
 
 ```go
@@ -60,14 +60,14 @@ On an AMD Zen 3 (16 cores), `x + y` on 1 024 elements goes from 2.6 µs to
 ## Performance & architectures
 
 Large elementwise ops, reductions and products run **multicore** (across
-`GOMAXPROCS`). On **amd64 and arm64** the hot loops are go-asmgen SIMD kernels:
-sum, max/min, add/sub/mul/div, sqrt and the dot product (SSE2 or AVX2/FMA on
-amd64, NEON on arm64), and a **panel-packed, cache-blocked GEMM** with an
-SIMD-FMA micro-kernel (NEON 4×8; AVX2/FMA 6×8 chosen at run time by a CPUID
-probe, SSE2 fallback). riscv64, loong64, ppc64le, s390x and the 32-bit targets
-run the same pure-Go code those kernels are tested against. `Exp` and `Log` are
-ports of Arm's optimized-routines (worst 0.504 and 0.508 ULP measured, against
-up to 0.88 and 0.72 for Go's `math.Exp`/`math.Log` on arm64), and they are
+`GOMAXPROCS`). On **amd64, arm64 and ppc64le** the hot loops are go-asmgen SIMD
+kernels: sum, add/sub/mul/div, sqrt and the dot product (SSE2 or AVX2/FMA on
+amd64, NEON on arm64, VSX on ppc64le), max/min too on amd64, and a
+**panel-packed, cache-blocked GEMM** with an SIMD-FMA micro-kernel (NEON 4×8;
+AVX2/FMA 6×8 chosen at run time by a CPUID probe, SSE2 fallback; VSX 8×8).
+riscv64, loong64, s390x and the 32-bit targets run the same pure-Go code
+those kernels are tested against. `Exp` and `Log` are ports of Arm's
+optimized-routines (worst 0.504 and 0.508 ULP measured, against up to 0.88 and 0.72 for Go's `math.Exp`/`math.Log` on arm64), and they are
 correct where amd64's `math.Exp` returns +Inf
 ([golang/go#81995](https://github.com/golang/go/issues/81995)) and `math.Log`
 is wrong on subnormals
