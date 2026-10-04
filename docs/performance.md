@@ -7,7 +7,10 @@ here is measured, every win is real, and where NumPy still leads it says so.
 > **Where it stands at v0.2.5.** This page grew round by round: the sections
 > up to *Where go-ndarray still loses* were measured on an arm64 Tart VM
 > (4 vCPU, NumPy 2.2.4, OpenBLAS 0.3.29); the dated sections after it on an
-> AMD Zen 3, 16 cores, against **NumPy 2.5.3 + OpenBLAS 0.3.34**. On the Zen 3:
+> AMD Zen 3, 16 cores, against **NumPy 2.5.3 + OpenBLAS 0.3.34**, except the
+> ppc64le section (POWER9, against the scalar code and OpenBLAS's POWER9
+> kernel) and the loong64 section (Loongson 3C5000L, against the scalar code
+> only). On the Zen 3:
 >
 > - **Faster:** whole-array reductions (`Sum`/`Mean`/`Max` at 4 Mi: 2.3–4.5×),
 >   row reductions (`SumAxis(1)` 2.2×, `MaxAxis(1)` 1.7×), `Exp` from 256 Ki
