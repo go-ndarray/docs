@@ -53,11 +53,13 @@ contiguous `[]float64`. These are the **reference** and the **fallback**.
 64-bit Go SIMD targets: **amd64, arm64, riscv64, loong64, ppc64le (VSX),
 s390x (vector, big-endian)** — selected at runtime via build tags / CPU-feature
 detection, behind the *same* kernel signatures and the *same* tests. **Today
-(v0.2.3) amd64, arm64 and ppc64le have SIMD kernels**; riscv64, loong64, s390x
-and the 32-bit targets run the pure-Go reference code. Go's assembler has
-vector-double arithmetic on loong64, s390x and riscv64 (V optional), so those
-three are work not yet done, not a toolchain limit; it has none on ppc64le, whose
-VSX kernels use the float64 encoders go-asmgen v0.13.0 emits as `WORD`s. Because the
+(v0.2.5) amd64, arm64, ppc64le and loong64 have SIMD kernels** (loong64's LASX
+kernels run only when the CPU reports LASX); riscv64, s390x and the 32-bit
+targets run the pure-Go reference code. Go's assembler has vector-double
+arithmetic on s390x and riscv64 (V optional), so those two are work not yet
+done, not a toolchain limit; it has none on ppc64le, whose VSX kernels use the
+float64 encoders go-asmgen v0.13.0 emits as `WORD`s, and no vector FMA or
+broadcast load on loong64, which go-asmgen v0.14.0 encodes (transitionally). Because the
 public API and the test suite address the kernels through that narrow interface,
 no caller changes and correctness stays pinned by the existing 100%-coverage
 suite (plus the per-arch CI jobs already wired in `.github/workflows/ci.yml`).
@@ -125,8 +127,8 @@ suite (plus the per-arch CI jobs already wired in `.github/workflows/ci.yml`).
     validated per-arch in CI (bit-identical to the scalar oracle for the
     elementwise/sqrt/max ops; tight-tolerance for the sum reduction, whose
     lane-parallel grouping is a valid reordering — the same trade-off as NumPy's
-    pairwise sum). The other targets (riscv64, loong64, s390x; ppc64le until
-    its VSX kernels in v0.2.3) keep the validated scalar oracles plus a scalar
+    pairwise sum). The other targets (riscv64, s390x; ppc64le until its
+    VSX kernels in v0.2.3, loong64 until its LASX kernels in v0.2.5) keep the validated scalar oracles plus a scalar
     4×4 GEMM micro-kernel over the packed panels, and still win via packing + cache-blocking + multicore. Split-CI: the pure-Go core + multicore
     are held to 100% statement coverage; the generated `.s` is validated by the
     per-arch native/qemu execution jobs.
