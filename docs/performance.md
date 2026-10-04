@@ -4,18 +4,29 @@ Honest, reproducible head-to-head of `go-ndarray/ndarray` against **NumPy
 2.2.4** on identical hardware. "On n'a pas le droit de se tromper": every number
 here is measured, every win is real, and where NumPy still leads it says so.
 
-> **Two benchmark contexts, one verdict.** This page reports the arm64 Tart-VM
-> run (4 vCPU, OpenBLAS 0.3.29). The repo's
-> [`BENCHMARKS.md`](https://github.com/go-ndarray/ndarray/blob/main/BENCHMARKS.md)
-> reports a second run on an Apple **M4 Max** (16 cores, NumPy's tuned vecLib).
-> Both agree on the verdict: the elementwise/reduction core and the packed GEMM
-> beat single-threaded NumPy, and **MatMul reaches tuned-BLAS parity at 1024²**
-> (≈0.99× vs multi-threaded OpenBLAS here; ~1.00× of single-threaded vecLib at
-> ~373 GFLOP/s on the M4 Max). The M4-Max run also pits MatMul against the
-> pure-Go peer **gonum**, which go-ndarray beats **4–10× at every size**, and
-> measures **Dot (1-D) at parity** (~0.98×, a ~90× speed-up over the prior
-> per-element path). A many-core join panic in the parallel GEMM was fixed in
-> the same 2026-06-23 pass.
+> **Where it stands at v0.2.0.** This page grew round by round: the sections
+> up to *Where go-ndarray still loses* were measured on an arm64 Tart VM
+> (4 vCPU, NumPy 2.2.4, OpenBLAS 0.3.29); the dated sections after it on an
+> AMD Zen 3, 16 cores, against **NumPy 2.5.3 + OpenBLAS 0.3.34**. On the Zen 3:
+>
+> - **Faster:** whole-array reductions (`Sum`/`Mean`/`Max` at 4 Mi: 2.3–4.5×),
+>   row reductions (`SumAxis(1)` 2.2×, `MaxAxis(1)` 1.7×), `Exp` from 256 Ki
+>   elements (2.4–5.6×), and `MatMul` against single-threaded OpenBLAS
+>   (3.7–5.9× from 512²); in a `Workspace`, `x + y` and `sqrt(x*y + x)` match or
+>   beat NumPy at every size measured.
+> - **At parity:** `SumAxis(0)`, `Inner` against 16-thread OpenBLAS, `Log` on
+>   one core.
+> - **Slower:** `MatMul` against 16-thread OpenBLAS (0.55× at 1024², 0.3× at
+>   256² and below); `Dot`/mat·vec against NumPy's threaded BLAS (0.16×); `Exp`
+>   below 256 Ki elements (0.82×); the *allocating* forms of elementwise ops up
+>   to 256 Ki elements, `Concatenate`/`Stack` and slice copies outside a
+>   `Workspace` (0.2–0.5×).
+>
+> On Apple silicon the GEMM reached parity with tuned BLAS at 1024² (OpenBLAS in
+> an arm64 VM, single-threaded vecLib on an M4 Max) and beats the pure-Go
+> `gonum` 4–10× ([`BENCHMARKS.md`](https://github.com/go-ndarray/ndarray/blob/main/BENCHMARKS.md)).
+> SIMD kernels exist on **amd64 and arm64**; the other targets run the pure-Go
+> reference code (see *SIMD coverage* at the end).
 
 ## How a pure-Go library can beat NumPy
 
@@ -136,7 +147,7 @@ with no result array, so they have no separate *into* row.)
   path is the supported way to hit/beat NumPy there (and at large n even the alloc
   form wins, because the kernel time then dwarfs the one allocation). (Sum and Max are
   the exceptions — their reduction kernels need no result allocation and win even
-  serially.)
+  serially.) **Superseded for loops by `Workspace`, see below.**
 
 ### NaN convention for Max / Min (and the SIMD max kernel)
 
@@ -225,22 +236,25 @@ round implements the full OpenBLAS/BLIS structure and ships it for **all** sizes
   The micro-kernel then streams conflict-free memory **regardless of the source
   stride** — this is the precise fix for the power-of-two L1 set-conflicts that
   defeated the unpacked attempt. Edge tiles are zero-padded so the kernel always
-  sees a full MR×NR block; the ragged right/bottom borders take a scalar path.
+  sees a full MR×NR block; a ragged right/bottom tile runs the same micro-kernel
+  into a scratch tile, and only its valid corner is added to C.
 - **Cache blocking** — an `NC` (columns) → `KC` (contraction) → `MC` (rows) loop
   nest keeps the packed B panel L2-resident and each packed A panel in L1.
   Defaults `MC=256, KC=256, NC=512` (tuned on this VM).
 - **SIMD-FMA micro-kernel** (go-asmgen) — **NEON 4×8 on arm64** (16 D2
-  accumulators, the source of the win), **SSE2 4×4 on amd64** (8 XMM
-  accumulators; SSE2 has no FMA, so explicit MULPD+ADDPD), **scalar 4×4** on the
+  accumulators, the source of the win), **AVX2/FMA 6×8 on amd64** (12 YMM
+  accumulators, picked at run time by a CPUID probe; an SSE2 6×4 pair without
+  FMA is the fallback), **scalar 4×4** on the
   four arches without vector-double asm — which still gain from contiguous packed
   data + blocking + multicore.
 - **Parallelism** — the M rows are split into MR-aligned bands, one per core,
   each writing a disjoint region of C.
 
-The arithmetic is the standard ikj order `dst[i][j] += a[i][p]·b[p][j]`; packing
-only relocates the operands, so the result is **bit-for-bit identical** to the
-scalar oracle and to NumPy's `A@B` (max abs diff **0.0**, verified at 128×128
-against OpenBLAS).
+The arithmetic is the ikj order `dst[i][j] += a[i][p]·b[p][j]`, summed per KC
+block; for k ≤ KC that is the scalar oracle's order exactly, and above it the
+block partials regroup the sum (a valid reordering, as in every blocked BLAS).
+At 128×128 the result matched NumPy's `A@B` against OpenBLAS with max abs diff
+**0.0**.
 
 ### Packed GEMM vs the PRIOR kernel (why it ships)
 
@@ -274,8 +288,8 @@ there the gap is *fixed per-call overhead*, not compute:
 This is a small-matrix overhead ceiling. Closing it further would mean a
 serial-vs-parallel crossover tuned per size and a cheaper pack for tiny panels;
 it is not a Go-assembler or algorithm limit, and it does not affect the
-large-matrix parity result. (`GOAMD64=v3`/AVX2-FMA would likewise lift the amd64
-micro-kernel, which today is SSE2-only; the arm64 path already has its FMA.)
+large-matrix parity result. (amd64 now has its AVX2/FMA kernel too; see the
+real-hardware section below.)
 
 ### Footnote: vs reference BLAS
 
@@ -323,15 +337,268 @@ The SIMD kernels are also validated against the scalar oracle per-arch in CI:
 | `MatMul` vs tuned BLAS (OpenBLAS) | **FIXED — parity at n=1024 (~0.99×, ~203 GFLOP/s); 0.97× at n=512** | by-lane FMLA micro-kernel (`FMLA Vd.2D,Vn.2D,Vm.D[i]` via `WORD`) closed the prior 0.76× gap. Only small n=256 trails (0.67×) on per-call overhead, not throughput — see above |
 | other `Map` ufuncs (`Exp`, `Log`, `Sin`…) | NumPy ~parity (libm-bound) | a packed `VEXP`/`VLOG` is libm-accuracy work; the math, not the dispatch, dominates here |
 
+## Allocation: `Workspace` (2026-10-04)
+
+On real amd64 hardware the allocating forms were far worse than on the M4: on
+a Zen 3 (16 cores), `x + y` lost to NumPy 0.13–0.25× at every size up to 256 Ki
+elements, while `AddInto` won. Slicing copies, `Concatenate` and broadcasting
+adds (whose results also allocate) lost 5–9×. Measured causes, on M4:
+
+- **The garbage collector.** A benchmark's live heap is tiny, so a 128 KiB
+  result per call triggered a GC cycle every ~22 calls (912 cycles in 20 000).
+  With 256 MiB–2 GiB of live heap, which is closer to a real program, the
+  overhead halves: 8.3 → 3.6 µs at 16 Ki, against 2.4 µs for `AddInto`.
+- **The rest:** `make` zeroes memory the kernel overwrites anyway, and fresh
+  memory is cold or page-faulted. `GOGC=off` does not help: it trades the
+  cycles for page faults (9.4 µs).
+
+A library must not set `GOGC`, and Go has no unzeroed allocation. What NumPy's
+reference counting gets for free is scoped reuse. ND4J, the Java ndarray
+library, has the same problem and answers it with *workspaces*: an arena that
+results of one pass come from, recycled at the end of the pass. `Workspace` is
+that. `ws.Use(x)` binds an input, every result computed from a bound array is
+carved from the arena (64-byte aligned, capped so an `append` cannot spill),
+results stay bound so a chain stays in it, and `Reset` recycles everything,
+folding a pass that needed several blocks into one block. Sites whose kernel
+writes every element (elementwise, ufuncs, copies, broadcasts, concatenation,
+`Where`, `Clip`, scans, `Take`, `Outer`, mat·vec) skip the zeroing. Those that
+accumulate (GEMM, vec·mat, axis reductions) clear their slot.
+
+Zen 3, 16 cores pinned, NumPy 2.5.3 single-threaded, best of two runs:
+
+| op | n | heap | **Workspace** | `*Into` | NumPy | Workspace vs NumPy |
+|----|--:|--:|--:|--:|--:|:--:|
+| Add | 1 024 | 2.6 µs | **0.38 µs** | 0.31 µs | 0.82 µs | 2.1× |
+| Add | 16 Ki | 35 µs | **4.6 µs** | 4.3 µs | 5.1 µs | 1.1× |
+| Add | 256 Ki | 498 µs | **67 µs** | 75 µs | 150 µs | 2.2× |
+| Add | 4 Mi | 8.0 ms | **2.2 ms** | 2.2 ms | 6.3 ms | 2.9× |
+| sqrt(x·y+x) | 1 024 | 12.2 µs | **2.6 µs** | — | 3.6 µs | 1.4× |
+| sqrt(x·y+x) | 16 Ki | 112 µs | **33 µs** | — | 34 µs | 1.0× |
+| sqrt(x·y+x) | 256 Ki | 1.18 ms | **0.39 ms** | — | 2.97 ms | 7.5× |
+| sqrt(x·y+x) | 4 Mi | 23.4 ms | **9.1 ms** | — | 19.2 ms | 2.1× |
+
+On M4 the same chain gains ×5 at 1 024 and ×1.6 at 4 Mi. Correctness: every
+operation is checked bit for bit against its heap result, including on passes
+whose recycled memory was first filled with NaN (a site that skipped zeroing it
+needed would leak the NaN; planting that bug in the GEMM made the test fail).
+
+## amd64 on real hardware (2026-10-04)
+
+Every figure above was taken on Apple silicon. This round measured amd64 for
+the first time, on an AMD EPYC 7773X (Zen 3, GCC Compile Farm cfarm421), with
+go-ndarray and NumPy both pinned to the same 16 cores of one NUMA node
+(`taskset -c 16-31`; Go's GOMAXPROCS follows the affinity mask). NumPy 2.5.3
+with its bundled OpenBLAS 0.3.34 (DYNAMIC_ARCH, Haswell kernels on Zen 3),
+once with `OPENBLAS_NUM_THREADS=1` and once with 16. go rows are the minimum
+of three runs interleaved with the previous version, so drift on a shared host
+hits both alike.
+
+| op | before | after | gain | vs OpenBLAS 1 thread | vs OpenBLAS 16 threads |
+|----|------:|------:|:--:|:--:|:--:|
+| MatMul 1024² | 21.87 ms | **8.05 ms** | ×2.72 | 5.93× | 0.60× |
+| MatMul 512² | 3.69 ms | 1.56 ms | ×2.36 | 3.89× | 0.66× |
+| MatMul 256² | 0.661 ms | 0.558 ms | ×1.19 | 1.36× | 0.30× |
+| MatMul 128² | 0.210 ms | 0.141 ms | ×1.49 | 0.73× | 0.36× |
+| MatMul 1024×256·256×1024 | 5.72 ms | 2.71 ms | ×2.11 | 4.55× | 0.54× |
+| Inner 512² (a·bᵀ) | 5.87 ms | **1.47 ms** | ×4.00 | 4.19× | **0.96×** |
+
+Four changes, each measured on its own before the next:
+
+1. **AVX2/FMA 6×8 micro-kernel** (the BLIS Haswell shape). In L1 it runs at
+   43 GFLOP/s on one Cascade Lake core (16 flops per cycle at about 2.7 GHz,
+   if the virtual machine's unknown clock is near that); the SSE2 4×4 it
+   replaces had no FMA and half the vector width.
+2. **Edge tiles through the micro-kernel.** With MR=6, every 256-row MC block
+   ends in a 4-row edge panel, and the scalar edge loop took **40%** of one
+   profile covering serial 64² and 512² products. A partial tile now runs the
+   kernel into a scratch tile.
+3. **Prefetch** of the C tile at kernel entry and of the A panel eight steps
+   ahead: serial 768² went from 27.5 to 34.7 GFLOP/s (+26%). 90% of the time was
+   already in the kernel, which ran at 28 GFLOP/s there against 43 with its
+   panels in L1, so it was waiting on memory. A sweep of MC (48–252) and KC
+   (128–512) moved nothing (±3%), so the blocking is unchanged.
+4. **B packed by all workers.** MatMulP packs the shared B block once per
+   (jc, pc) round, and one goroutine did it while the others waited: +30–70%
+   in parallel. Below 64 Ki elements the launch costs more than the copy (M4:
+   −8–15% at 96³–128²), so small blocks are still packed by one.
+
+`Inner` gained the most because it used to materialise bᵀ before multiplying.
+The GEMM now reads any 2-D view through its strides while packing (the copy it
+makes anyway), so a transposed, sliced, reversed or broadcast operand costs no
+extra pass.
+
+**Still behind OpenBLAS with 16 threads** (0.54–0.66× on large products, 0.3×
+below 256²). Where the parallel loss is, measured on the Zen 3:
+
+- It is not the hardware: 16 *independent* serial 512² GEMMs, one per core,
+  each ran at 41 GFLOP/s (656 in total), while the parallel 1024² GEMM ran its
+  kernel at 15–17 GFLOP/s per core. Per-core efficiency already drops from 40
+  to ~30 GFLOP/s at 2 cores.
+- It is not scheduling overhead: 83% of the parallel profile is the
+  micro-kernel itself, so the kernel runs slower when cores share work. Why is
+  **not established**. The shared packed B panel is the suspect (on this part
+  the last-level cache is split between core complexes, so the panel is partly
+  remote), but the drop already shows at 2 cores of one complex, which that
+  explanation does not cover.
+- Taller row bands (more reuse of each B micro-panel) do not help: interleaved
+  over 5 runs they were worse at 1024² and equal at 2048².
+- **A 2-D tiling of C with private packing** (no barrier, nothing shared) was
+  built and measured, and is **not shipped**: ×1.24 at 1024² on the Zen 3, but
+  ×0.62 at 512² and Inner, and ×0.70–0.93 at every size on M4, whose cluster
+  L2 holds the shared panel well. A tile repacks (rows + cols)·k elements for
+  rows·cols·k multiply-adds, and a strided pack costs far more per element than
+  an FMA, so tiles under ~256×256 lose.
+
+The next step is to find where the kernel stalls at 2 cores (hardware
+counters: cache misses per FMA, serial against parallel) before choosing a
+lever; then an AVX-512 kernel for the hosts that have it.
+
+Correctness was checked on real hardware for five of the six 64-bit targets:
+amd64 (Zen 3, FMA path), arm64 (cfarm185), ppc64le (cfarm120), riscv64 (cfarm94)
+and loong64 (cfarm401). The s390x host (LinuxONE) did not answer; s390x stays
+covered by the qemu lane in CI.
+
+## Axis reductions (2026-10-04)
+
+On the Zen 3 the axis reductions of a 1024×1024 matrix lost to NumPy 0.23–0.43×.
+Two causes, both measured:
+
+- **An axis-0 reduction ran on one core.** It has a single outer slab, and the
+  driver only split outer slabs; the comment justifying that said a column split
+  would need a strided gather. It does not: a band of columns is a contiguous run
+  of every row. `RunAxisP` now splits the columns into bands of at least 512
+  when there are fewer slabs than workers, and each row run is added with the
+  elementwise SIMD kernel (exact per element, so the sum is still in axis order).
+- **A row reduction (axis 1, `inner` = 1) was a sequential scalar loop**,
+  latency-bound at one add per 4 cycles. Each row now goes through the SIMD
+  sum/max/min. Max and min are exact; the sum is regrouped lane-parallel, as
+  NumPy's own pairwise sum is.
+
+Zen 3, 16 cores pinned, minimum of three interleaved runs:
+
+| op (1024×1024) | before | after | NumPy 1 thread | after vs NumPy |
+|----|--:|--:|--:|:--:|
+| SumAxis(0) | 696 µs | **186 µs** | 180 µs | 0.97× |
+| SumAxis(1) | 531 µs | **92 µs** | 224 µs | 2.4× |
+| MaxAxis(1) | 601 µs | **93 µs** | 189 µs | 2.0× |
+
+On M4: MaxAxis(1) ×6–8, SumAxis(0) ×1.9.
+## Broadcasting a row without materialising it (2026-10-04)
+
+`M + row` (1024×1024 plus 1×1024) lost to NumPy 0.26× on the Zen 3 even with a
+`Workspace`: the broadcast path copied the row out to a full 8 MiB matrix
+before adding. When one operand has the full shape and the other, leading 1s
+dropped, is a suffix of it (a row, a 2-D mean subtracted from a 3-D stack), the
+second simply repeats in blocks of its own length, so `binOp` now streams the
+live slices block by block through the SIMD kernel (`kernels.RepeatP`), split
+across cores. Below 64 elements per block the old path is kept.
+
+| BroadcastAdd 1024²+row, Zen 3 | heap | `Workspace` | NumPy 1 thread |
+|----|--:|--:|--:|
+| before | 3.1 ms | 1.76 ms | 460 µs |
+| after | **0.84 ms** | **114–196 µs** | 460 µs |
+## Exp (2026-10-04)
+
+`Exp` went through `Map(math.Exp)`, and `math.Exp` itself was the cost: 13.2 ns
+per element on one Zen 3 core, 3.9 ns on M4 (the func-pointer call added only
+15–20%). It is now a port of the double-precision exp of Arm's
+optimized-routines (Szabolcs Nagy; glibc's exp since 2.28; MIT licence): x =
+k·ln2/128 + r, 2^(k/128) from a 128-entry table as scale·(1+tail), exp(r)−1 from
+a degree-5 polynomial. The common case is written out in the loop, because the
+function is too large to inline and a call per element cost a third of the
+time.
+
+- **Accuracy:** worst 0.504 ULP over 80 000 inputs across the whole finite
+  range, the region near 0, the overflow edge and the subnormal range,
+  measured against a 300-bit reference (`math/big`, ln 2 from its atanh
+  series), against Arm's documented 0.509; the committed test samples 20 000
+  of them and finds 0.501. `math.Exp` measured 0.879 ULP on the 80 000 inputs
+  on arm64 (0.841 on the test's 20 000). The table was not trusted as copied:
+  `TestExpTable` re-derives all 256 entries from 2^(k/128) at 300 bits.
+- **A Go bug it removes**, reported as
+  [golang/go#81995](https://github.com/golang/go/issues/81995): on amd64,
+  `math.Exp` returns **+Inf for 709.436139303104 ≤ x < 709.782712893384**,
+  although the result is finite there (NumPy, glibc and mpmath:
+  `exp(709.5)` = 1.3549863193146328e+308). Its assembly rounds k = x·log2(e) to
+  1024 from x = 1023.5·ln 2, and the biased-exponent check treats that as
+  overflow although the reduced factor is below 1. Reproduced with Go 1.26.8 and
+  1.27.1 on AMD Zen 3, Intel Cascade Lake and Intel Haswell, with and without
+  the FMA path; the assembly is unchanged on master. go-ndarray's `Exp`
+  inherited it until v0.2.0; `TestExpTopOfRange` pins the fix.
+- Just above ln(2^-1075), exp rounds up to the smallest subnormal, as glibc
+  and NumPy do. Go's arm64 `math.Exp` returns 0 there (amd64 does not); that is
+  one unit of the last subnormal place, not a contract violation.
+
+Speed, kernel only, 16 Ki elements: M4 30 µs (`math.Exp` 65 µs); one Zen 3 core
+62 µs (`math.Exp` 215 µs, NumPy single-threaded 78 µs). Whole `Exp` on Zen 3,
+16 cores: 1 Ki ×2.7, 16 Ki ×3, 256 Ki ×1.6, 4 Mi ×1.65; from 256 Ki on it is
+2–5× NumPy. A SIMD version (AVX2 gathers for the table) is the next step.
+## Dot and mat·vec (2026-10-04)
+
+`dotRange`, under `Dot` (1-D), `MatVec` and `Dot1DP`, was a four-chain scalar
+loop (gc does not vectorise it): on one Zen 3 core 2^20 elements took 464 µs,
+2× NumPy's single thread. Two generated kernels replace it: `dotFMA` on amd64
+(four YMM accumulators, b read straight from memory by VFMADD231PD; two loads
+per FMA make it load-bound, which four chains cover), gated on the FMA probe,
+and `dotNEON` on arm64 (eight D2 accumulators for the four FP pipes of an Apple
+core). The other targets keep `dotRange`. The lane-parallel sum is a regrouping,
+held to the n·ε·Σ|aᵢbᵢ| bound and exact on integer data.
+
+| Zen 3 | before | after | NumPy 1 thread |
+|----|--:|--:|--:|
+| Dot 2^20, 1 core | 464 µs | **229 µs** | 231 µs |
+| MatVec 1024², 1 core | 482 µs | **134 µs** | 153 µs |
+| Dot 2^20, 16 cores | 159 µs | 99 µs | — |
+| MatVec 1024², 16 cores | 165 µs | 89 µs | — |
+
+NumPy's multi-threaded dot still wins on this part (24 µs). The go-ndarray
+version stops scaling at about 90 GB/s from 4 cores on. A likely cause, **not
+verified**, is cache affinity: OpenMP keeps each thread on one core, so it
+rereads its own chunk from its own L3 slice on every repetition, while
+goroutines move between core complexes.
+
+## Log and Log10 (2026-10-04)
+
+`Log` went through `Map(math.Log)`: 11.6 ns per element on a Zen 3 core
+against NumPy's 4.2. It is now a port of the double-precision log of Arm's
+optimized-routines (the companion of `Exp`, also glibc's since 2.28; MIT
+licence): x = 2^k·z, z split into 128 subintervals, log(x) = k·ln2 + log(c) +
+log1p(z/c − 1) with 1/c and log(c) from a table and a degree-6 polynomial;
+inputs within 2⁻⁴ of 1 take a degree-12 polynomial. z/c − 1 is one
+`math.FMA` (exact on every target), so the second table the non-FMA variant
+needs is not used. `Log10` is log(x)·(1/ln10), the formula of `math.Log10`, on
+this log.
+
+- **Accuracy:** worst 0.508 ULP over the test's 10 000 inputs (whole range,
+  near 1, subnormals), against a 300-bit reference (log m =
+  2·atanh((m−1)/(m+1))); `math.Log` measured 0.724 on the same inputs on
+  arm64. `TestLogTable` checks each of the 128
+  entries against the properties `log_data.c` documents (1/invc inside its
+  subinterval, logc = log(c) within the rounding of invc, 0x1.8p9 + logc
+  exact).
+- **A second Go bug it removes**, known since 2022 as
+  [golang/go#56600](https://github.com/golang/go/issues/56600) (fix pending in
+  CL 448216): on amd64, `math.Log` is wrong for every subnormal input.
+  `math.Log(5e-324)` returns −709.09 instead of −744.44, and `math.Log(1e-310)`
+  −709.09 instead of −713.80 (NumPy, glibc: −744.44, −713.80). Its assembly
+  inlines `Frexp` with bit masks that assume a normal input. Reproduced with Go
+  1.26.8 and 1.27.1 on three x86 CPUs. `Log` and `Log10` inherited it; `TestLogSubnormal` pins the fix.
+  (`Log2` already normalised through `math.Frexp` and was right.)
+
+Speed, 16 Ki elements, one core: M4 37 µs (`math.Log` 72), Zen 3 73 µs
+(`math.Log` 175, NumPy 69).
+
 ## SIMD coverage
 
 - **amd64 (SSE2)** ships hand-vectorized `sum` (4-accumulator `ADDPD`), `sqrt`
   (packed `SQRTPD`), `max`/`min` (`MAXPD`/`MINPD` + `CMPPD` NaN scan), the
   **elementwise `add`/`sub`/`mul`/`div`** (packed `ADD/SUB/MUL/DIVPD`, 8
-  doubles/iter + scalar tail), and the **GEMM micro-kernel** (`gemmMicro4x4`: a
-  4×4 SSE2 `MULPD`+`ADDPD` tile, no FMA at the v1 baseline), generated by
-  go-asmgen and validated per-arch in CI (and cross-run under qemu-x86_64 — the
-  GEMM tile included).
+  doubles/iter + scalar tail), all at the GOAMD64=v1 baseline, and the **GEMM
+  micro-kernel**: `gemmMicro6x8FMA` (6×8, 12 YMM accumulators, `VBROADCASTSD` +
+  `VFMADD231PD`, C and A prefetched) when go-asmgen's CPUID probe reports FMA
+  with the OS saving YMM state, else a pair of SSE2 6×4 `MULPD`+`ADDPD` tiles
+  over the same packing. Generated by go-asmgen and validated per-arch in CI;
+  the FMA kernel on real Cascade Lake and Zen 3 hosts.
 - **arm64 (NEON)** ships hand-vectorized `sum`, **packed `sqrt`** (`FSQRT V.2D`),
   the **elementwise `add`/`sub`/`mul`** (via `VFMLA`/`VFMLS` against a `1.0`
   vector — `add: b+a·1`, `sub: a−b·1`, `mul: 0+a·b`, each FMA exact so
@@ -357,5 +624,5 @@ per-arch job regenerates the committed `.s`, fails if it is stale, vets
 (asmdecl), builds (cmd/asm encodes), and runs the bit/NaN-correctness suite. The
 multicore path and the packed/cache-blocked GEMM driver are
 architecture-independent; only the GEMM micro-kernel is per-arch (NEON 4×8 on
-arm64, SSE2 4×4 on amd64, scalar 4×4 on the other four — all bit-identical to the
+arm64, AVX2/FMA 6×8 or SSE2 on amd64, scalar 4×4 on the other four — all bit-identical to the
 scalar ikj oracle, validated per-arch in CI incl. amd64 under qemu-x86_64).
