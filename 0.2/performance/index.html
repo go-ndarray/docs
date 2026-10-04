@@ -962,7 +962,7 @@
 2.2.4</strong> on identical hardware. "On n'a pas le droit de se tromper": every number
 here is measured, every win is real, and where NumPy still leads it says so.</p>
 <blockquote>
-<p><strong>Where it stands at v0.2.5.</strong> This page grew round by round: the sections
+<p><strong>Where it stands at v0.2.6.</strong> This page grew round by round: the sections
 up to <em>Where go-ndarray still loses</em> were measured on an arm64 Tart VM
 (4 vCPU, NumPy 2.2.4, OpenBLAS 0.3.29); the dated sections after it on an
 AMD Zen 3, 16 cores, against <strong>NumPy 2.5.3 + OpenBLAS 0.3.34</strong>, except the
@@ -2000,13 +2000,16 @@ so the serial GEMM is at 0.69×; 32 threads 13.1 ms at 1024², so MatMul is at
 0.56×. OpenBLAS unrolls further and uses POWER9-only <code>lxv</code> loads; Go's ppc64le
 baseline is POWER8.</p>
 <h2 id="loong64-lasx-kernels-2026-10-04">loong64: LASX kernels (2026-10-04)<a class="headerlink" href="#loong64-lasx-kernels-2026-10-04" title="Permanent link">&para;</a></h2>
-<p>Go's loong64 assembler has LASX vector float64 add/sub/mul/div, square root and
-256-bit loads, but no fused multiply-add and no broadcast load; go-asmgen
-v0.14.0 encodes <code>xvfmadd.d</code> and <code>xvldrepl.d</code> as <code>WORD</code>s (pinned against GNU as
-2.43, bit-identical to <code>math.FMA</code> on a Loongson 3C5000L; transitional until
-cmd/asm names them). go-ndarray uses them for sum, dot, sqrt, add/sub/mul/div
-and an 8×8 GEMM micro-kernel (16 four-lane accumulators, A broadcast by
-<code>xvldrepl.d</code>). LASX is not on every LoongArch CPU, so the kernels run only when
+<p>Go's loong64 assembler has LASX vector float64 add/sub/mul/div, square root,
+256-bit loads and the broadcast load (spelled as an arrangement,
+<code>XVMOVQ off(R), X.V4</code>, which assembles to <code>xvldrepl.d</code>), but no fused
+multiply-add; go-asmgen v0.14.0 encodes <code>xvfmadd.d</code> as a <code>WORD</code> (pinned
+against GNU as 2.43, bit-identical to <code>math.FMA</code> on a Loongson 3C5000L;
+transitional until cmd/asm names it). go-ndarray uses them for sum, dot, sqrt,
+add/sub/mul/div and an 8×8 GEMM micro-kernel (16 four-lane accumulators, A
+broadcast by <code>xvldrepl.d</code>). (v0.2.5 said Go had no broadcast load and emitted
+it as a WORD too; it has one, and v0.2.6 emits the mnemonic, the same machine
+code.) LASX is not on every LoongArch CPU, so the kernels run only when
 the kernel reports it in AT_HWCAP (<code>/proc/self/auxv</code>), with the scalar code as
 the fallback; the parsing is a pure function tested on every target.</p>
 <p>Loongson 3C5000L (cfarm401, 32 cores), against the scalar code, best of 3
@@ -2108,9 +2111,9 @@ host has no route to package mirrors), so there is no external reference.</p>
   <strong>ppc64le</strong> has no vector-double arithmetic (no <code>XVADDDP</code>/<code>XVMADDADP</code>), which
   go-asmgen v0.13.0 now encodes as <code>WORD</code>s, so ppc64le has kernels;
   <strong>loong64</strong> has vector-double add/sub/mul/div (<code>VADDD</code> assembles to
-  <code>vfadd.d</code>, <code>VMULD</code> to <code>vfmul.d</code>, <code>XVADDD</code> to <code>xvfadd.d</code>) but no vector FMA
-  or broadcast load, which go-asmgen v0.14.0 encodes (transitionally), so
-  loong64 has kernels;
+  <code>vfadd.d</code>, <code>VMULD</code> to <code>vfmul.d</code>, <code>XVADDD</code> to <code>xvfadd.d</code>) and the broadcast
+  load (<code>XVMOVQ off(R), X.V4</code> = <code>xvldrepl.d</code>), but no vector FMA, which
+  go-asmgen v0.14.0 encodes (transitionally), so loong64 has kernels;
   <strong>s390x</strong> has them, FMA included (<code>VFADB</code>, <code>VFMADB</code>); <strong>riscv64</strong> has them
   (<code>VFADDVV</code>, <code>VFMACCVV</code>), but the V extension is optional and needs a run-time
   check. So s390x and riscv64 kernels are work not yet done, not a
