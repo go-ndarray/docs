@@ -24,7 +24,7 @@ m.Transpose().Shape() // [3 2]
 
 | Area | Functions / methods |
 | --- | --- |
-| Creation | `Zeros`, `Ones`, `Full`, `Arange`, `Linspace`, `Eye`, `FromData` |
+| Creation | `New`, `Zeros`, `Ones`, `Full`, `Arange`, `Linspace`, `Eye`, `Identity`, `FromData` |
 | Views & shape | `Slice` (`All`/`R`/`Rng`/`From`/`To`/`Step`), `Reshape`, `Ravel`, `Transpose`, `Copy` |
 | Elementwise | `Add`/`Sub`/`Mul`/`Div` (+`*Scalar`, +`*Into`), `Map`, `Neg`, `Abs` |
 | Ufuncs | `Sqrt`, `Exp`, `Log`/`Log2`/`Log10`, `Sin`/`Cos`/`Tan`, `Floor`/`Ceil`/`Round`, `Square`, `Power` |
@@ -33,6 +33,14 @@ m.Transpose().Shape() // [3 2]
 | Manipulation | `Flatten`, `ExpandDims`, `Squeeze`, `Concatenate`, `Stack`, `VStack`, `HStack` |
 | Linear algebra | `MatMul`, `Dot`, `Inner`, `Outer` |
 | Memory reuse | `NewWorkspace`, `Use`, `Reset`, `Detach` |
+
+## Untrusted input (v0.3.0)
+
+A shape the library cannot represent is an error wrapping `ErrShapeMismatch`,
+for results as well as inputs: `(2^32, 0) @ (0, 2^32)` holds no data, yet its
+result would have 2^64 elements, so `MatMul` refuses it, as NumPy does. Empty
+arrays with a huge axis cost nothing, and every assembly call is guarded and
+fence-tested. See [Security](security.md).
 
 ## Loops: `Workspace` (v0.2.0)
 

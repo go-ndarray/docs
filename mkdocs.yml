@@ -45,6 +45,7 @@ nav:
   - Home: index.md
   - Roadmap: roadmap.md
   - Performance: performance.md
+  - Security: security.md
 
 markdown_extensions:
   - admonition
