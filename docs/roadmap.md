@@ -53,8 +53,10 @@ contiguous `[]float64`. These are the **reference** and the **fallback**.
 64-bit Go SIMD targets: **amd64, arm64, riscv64, loong64, ppc64le (VSX),
 s390x (vector, big-endian)** — selected at runtime via build tags / CPU-feature
 detection, behind the *same* kernel signatures and the *same* tests. **Today
-(v0.2.0) only amd64 and arm64 have SIMD kernels**; riscv64, loong64, ppc64le,
-s390x and the 32-bit targets run the pure-Go reference code. Because the
+(v0.2.1) only amd64 and arm64 have SIMD kernels**; riscv64, loong64, ppc64le,
+s390x and the 32-bit targets run the pure-Go reference code. Go's assembler has
+vector-double arithmetic on loong64, s390x and riscv64 (V optional), but not on
+ppc64le, so those three are work not yet done, not a toolchain limit. Because the
 public API and the test suite address the kernels through that narrow interface,
 no caller changes and correctness stays pinned by the existing 100%-coverage
 suite (plus the per-arch CI jobs already wired in `.github/workflows/ci.yml`).

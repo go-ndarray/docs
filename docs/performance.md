@@ -4,7 +4,7 @@ Honest, reproducible head-to-head of `go-ndarray/ndarray` against **NumPy
 2.2.4** on identical hardware. "On n'a pas le droit de se tromper": every number
 here is measured, every win is real, and where NumPy still leads it says so.
 
-> **Where it stands at v0.2.0.** This page grew round by round: the sections
+> **Where it stands at v0.2.1.** This page grew round by round: the sections
 > up to *Where go-ndarray still loses* were measured on an arm64 Tart VM
 > (4 vCPU, NumPy 2.2.4, OpenBLAS 0.3.29); the dated sections after it on an
 > AMD Zen 3, 16 cores, against **NumPy 2.5.3 + OpenBLAS 0.3.34**. On the Zen 3:
@@ -26,7 +26,8 @@ here is measured, every win is real, and where NumPy still leads it says so.
 > an arm64 VM, single-threaded vecLib on an M4 Max) and beats the pure-Go
 > `gonum` 4–10× ([`BENCHMARKS.md`](https://github.com/go-ndarray/ndarray/blob/main/BENCHMARKS.md)).
 > SIMD kernels exist on **amd64 and arm64**; the other targets run the pure-Go
-> reference code (see *SIMD coverage* at the end).
+> reference code. For loong64, s390x and riscv64 that is work not yet done, not
+> a toolchain limit (see *SIMD coverage* at the end).
 
 ## How a pure-Go library can beat NumPy
 
@@ -612,12 +613,18 @@ Speed, 16 Ki elements, one core: M4 37 µs (`math.Log` 72), Zen 3 73 µs
   plain vector FP add exists). All beat/parity NumPy via SIMD + multicore, no
   `func`-pointer indirection.
 - The other four 64-bit Go targets — **riscv64, loong64, ppc64le, s390x** — keep
-  the validated scalar oracles (Go's loong64/ppc64le assemblers expose no
-  vector-double arithmetic; riscv64's V extension is optional), using the same
-  four-accumulator max/min, direct sqrt loop, and a **scalar 4×4 GEMM
-  micro-kernel** over the packed panels, and still get the **packing + cache
-  blocking + multicore** win, so they also beat single-threaded NumPy on large
-  arrays. (s390x additionally exercises the big-endian path in CI.)
+  the validated scalar oracles, using the same four-accumulator max/min, direct
+  sqrt loop, and a **scalar 4×4 GEMM micro-kernel** over the packed panels, and
+  still get the **packing + cache blocking + multicore** structure (they have
+  not been measured against NumPy). What the Go assembler offers them, checked
+  on Go 1.26.4 and 1.27.1 by assembling and disassembling (2026-10-04):
+  **ppc64le** has no vector-double arithmetic (no `XVADDDP`/`XVMADDADP`);
+  **loong64** has vector-double add/sub/mul/div (`VADDD` assembles to
+  `vfadd.d`, `VMULD` to `vfmul.d`, `XVADDD` to `xvfadd.d`) but no vector FMA;
+  **s390x** has them, FMA included (`VFADB`, `VFMADB`); **riscv64** has them
+  (`VFADDVV`, `VFMACCVV`), but the V extension is optional and needs a run-time
+  check. So loong64, s390x and riscv64 kernels are work not yet done, not a
+  toolchain wall. (s390x additionally exercises the big-endian path in CI.)
 
 All six are exercised in CI (native amd64/arm64 + qemu for the rest); each
 per-arch job regenerates the committed `.s`, fails if it is stale, vets
