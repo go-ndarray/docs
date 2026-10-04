@@ -631,6 +631,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#loong64-lasx-kernels-2026-10-04" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        loong64: LASX kernels (2026-10-04)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#simd-coverage" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -908,6 +919,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#loong64-lasx-kernels-2026-10-04" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        loong64: LASX kernels (2026-10-04)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#simd-coverage" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -940,7 +962,7 @@
 2.2.4</strong> on identical hardware. "On n'a pas le droit de se tromper": every number
 here is measured, every win is real, and where NumPy still leads it says so.</p>
 <blockquote>
-<p><strong>Where it stands at v0.2.3.</strong> This page grew round by round: the sections
+<p><strong>Where it stands at v0.2.5.</strong> This page grew round by round: the sections
 up to <em>Where go-ndarray still loses</em> were measured on an arm64 Tart VM
 (4 vCPU, NumPy 2.2.4, OpenBLAS 0.3.29); the dated sections after it on an
 AMD Zen 3, 16 cores, against <strong>NumPy 2.5.3 + OpenBLAS 0.3.34</strong>. On the Zen 3:</p>
@@ -964,9 +986,14 @@ an arm64 VM, single-threaded vecLib on an M4 Max) and beats the pure-Go
 On a POWER9 the VSX kernels added in v0.2.3 double the serial GEMM (7.9 →
 15.8 GFLOP/s at 512²), which is 0.69× OpenBLAS 0.3.34 on one thread; <code>MatMul</code>
 at 1024² on 32 threads is at 0.56× (see <em>ppc64le: VSX kernels</em>).
-SIMD kernels exist on <strong>amd64, arm64 and ppc64le</strong>; the other targets run the
-pure-Go reference code. For loong64, s390x and riscv64 that is work not yet
-done, not a toolchain limit (see <em>SIMD coverage</em> at the end).</p>
+On a Loongson 3C5000L the LASX kernels added in v0.2.5 lift the GEMM
+micro-kernel from 7.0 to 27.5 GFLOP/s and the serial GEMM from 5.3 to 20.0
+GFLOP/s at 512², against the scalar code; no NumPy or BLAS reference was
+available on that host (see <em>loong64: LASX kernels</em>).
+SIMD kernels exist on <strong>amd64, arm64, ppc64le and loong64</strong> (LASX, used only
+when the CPU reports it); the other targets run the pure-Go reference code.
+For s390x and riscv64 that is work not yet done, not a toolchain limit (see
+<em>SIMD coverage</em> at the end).</p>
 </blockquote>
 <h2 id="how-a-pure-go-library-can-beat-numpy">How a pure-Go library can beat NumPy<a class="headerlink" href="#how-a-pure-go-library-can-beat-numpy" title="Permanent link">&para;</a></h2>
 <p>NumPy's elementwise and reduction ufuncs (<code>+</code>, <code>*</code>, <code>sqrt</code>, <code>sum</code>, <code>max</code>, …) are
@@ -1969,6 +1996,77 @@ the ppc64le NumPy wheel there has no BLAS): one thread 22.8 GFLOP/s at 512²,
 so the serial GEMM is at 0.69×; 32 threads 13.1 ms at 1024², so MatMul is at
 0.56×. OpenBLAS unrolls further and uses POWER9-only <code>lxv</code> loads; Go's ppc64le
 baseline is POWER8.</p>
+<h2 id="loong64-lasx-kernels-2026-10-04">loong64: LASX kernels (2026-10-04)<a class="headerlink" href="#loong64-lasx-kernels-2026-10-04" title="Permanent link">&para;</a></h2>
+<p>Go's loong64 assembler has LASX vector float64 add/sub/mul/div, square root and
+256-bit loads, but no fused multiply-add and no broadcast load; go-asmgen
+v0.14.0 encodes <code>xvfmadd.d</code> and <code>xvldrepl.d</code> as <code>WORD</code>s (pinned against GNU as
+2.43, bit-identical to <code>math.FMA</code> on a Loongson 3C5000L; transitional until
+cmd/asm names them). go-ndarray uses them for sum, dot, sqrt, add/sub/mul/div
+and an 8×8 GEMM micro-kernel (16 four-lane accumulators, A broadcast by
+<code>xvldrepl.d</code>). LASX is not on every LoongArch CPU, so the kernels run only when
+the kernel reports it in AT_HWCAP (<code>/proc/self/auxv</code>), with the scalar code as
+the fallback; the parsing is a pure function tested on every target.</p>
+<p>Loongson 3C5000L (cfarm401, 32 cores), against the scalar code, best of 3
+interleaved runs (the host's load average of ~146 is processes stuck in
+uninterruptible sleep; its CPUs measured 100% idle):</p>
+<table>
+<thead>
+<tr>
+<th>op</th>
+<th style="text-align: right;">before</th>
+<th style="text-align: right;">after</th>
+<th style="text-align: center;">gain</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>micro-kernel, 1 core</td>
+<td style="text-align: right;">7.0 GFLOP/s</td>
+<td style="text-align: right;">27.5 GFLOP/s</td>
+<td style="text-align: center;">×3.95</td>
+</tr>
+<tr>
+<td>serial GEMM 512², 1 core</td>
+<td style="text-align: right;">5.3 GFLOP/s</td>
+<td style="text-align: right;">20.0 GFLOP/s</td>
+<td style="text-align: center;">×3.75</td>
+</tr>
+<tr>
+<td>MatMul 64² / 512² / 1024², 32 threads</td>
+<td style="text-align: right;"></td>
+<td style="text-align: right;"></td>
+<td style="text-align: center;">×1.9 / ×1.3 / ×1.1</td>
+</tr>
+<tr>
+<td>Sum 256 Ki / 4 Mi, 1 core</td>
+<td style="text-align: right;">658 / 11 750 µs</td>
+<td style="text-align: right;">65 / 4 615 µs</td>
+<td style="text-align: center;">×10.2 / ×2.5</td>
+</tr>
+<tr>
+<td>Sum 1 Ki / 16 Ki (below the parallel threshold: one core)</td>
+<td style="text-align: right;"></td>
+<td style="text-align: right;"></td>
+<td style="text-align: center;">×16 / ×13</td>
+</tr>
+<tr>
+<td>Sqrt 1 Ki–16 Ki</td>
+<td style="text-align: right;"></td>
+<td style="text-align: right;"></td>
+<td style="text-align: center;">×3.8</td>
+</tr>
+<tr>
+<td>MatVec 1024²</td>
+<td style="text-align: right;">364 µs</td>
+<td style="text-align: right;">224 µs</td>
+<td style="text-align: center;">×1.6</td>
+</tr>
+</tbody>
+</table>
+<p>At 4 Mi elements in parallel, sum and sqrt are memory-bound (parity); the
+parallel 4 Mi sum is bimodal on this host (1.6 ms or 7 ms in either version),
+so only the minima are compared. No NumPy or BLAS is installable there (the
+host has no route to package mirrors), so there is no external reference.</p>
 <h2 id="simd-coverage">SIMD coverage<a class="headerlink" href="#simd-coverage" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong>amd64 (SSE2)</strong> ships hand-vectorized <code>sum</code> (4-accumulator <code>ADDPD</code>), <code>sqrt</code>
@@ -1995,7 +2093,10 @@ baseline is POWER8.</p>
 <li><strong>ppc64le (VSX)</strong>, since v0.2.3: sum, dot, sqrt, add/sub/mul/div and an 8×8
   GEMM micro-kernel; max/min stay scalar (the ISA's <code>xvmaxdp</code> NaN rule is not
   NumPy's). See the ppc64le section above.</li>
-<li>The other three 64-bit Go targets — <strong>riscv64, loong64, s390x</strong> — keep
+<li><strong>loong64 (LASX)</strong>, since v0.2.5, when the kernel reports LASX in AT_HWCAP
+  (not every LoongArch CPU has it): sum, dot, sqrt, add/sub/mul/div and an 8×8
+  GEMM micro-kernel; max/min stay scalar. See the loong64 section above.</li>
+<li>The other two 64-bit Go targets — <strong>riscv64, s390x</strong> — keep
   the validated scalar oracles, using the same four-accumulator max/min, direct
   sqrt loop, and a <strong>scalar 4×4 GEMM micro-kernel</strong> over the packed panels, and
   still get the <strong>packing + cache blocking + multicore</strong> structure (they have
@@ -2004,10 +2105,12 @@ baseline is POWER8.</p>
   <strong>ppc64le</strong> has no vector-double arithmetic (no <code>XVADDDP</code>/<code>XVMADDADP</code>), which
   go-asmgen v0.13.0 now encodes as <code>WORD</code>s, so ppc64le has kernels;
   <strong>loong64</strong> has vector-double add/sub/mul/div (<code>VADDD</code> assembles to
-  <code>vfadd.d</code>, <code>VMULD</code> to <code>vfmul.d</code>, <code>XVADDD</code> to <code>xvfadd.d</code>) but no vector FMA;
+  <code>vfadd.d</code>, <code>VMULD</code> to <code>vfmul.d</code>, <code>XVADDD</code> to <code>xvfadd.d</code>) but no vector FMA
+  or broadcast load, which go-asmgen v0.14.0 encodes (transitionally), so
+  loong64 has kernels;
   <strong>s390x</strong> has them, FMA included (<code>VFADB</code>, <code>VFMADB</code>); <strong>riscv64</strong> has them
   (<code>VFADDVV</code>, <code>VFMACCVV</code>), but the V extension is optional and needs a run-time
-  check. So loong64, s390x and riscv64 kernels are work not yet done, not a
+  check. So s390x and riscv64 kernels are work not yet done, not a
   toolchain wall. (s390x additionally exercises the big-endian path in CI.)</li>
 </ul>
 <p>All six are exercised in CI (native amd64/arm64 + qemu for the rest); each
