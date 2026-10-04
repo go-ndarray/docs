@@ -356,6 +356,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#untrusted-input-v030" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Untrusted input (v0.3.0)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#loops-workspace-v020" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -450,6 +461,33 @@
   
 
     
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
   </ul>
 </nav>
                   </div>
@@ -481,6 +519,17 @@
     <span class="md-ellipsis">
       
         API surface
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#untrusted-input-v030" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Untrusted input (v0.3.0)
       
     </span>
   </a>
@@ -565,7 +614,7 @@ coverage</strong>, differentially checked against NumPy.</p>
 <tbody>
 <tr>
 <td>Creation</td>
-<td><code>Zeros</code>, <code>Ones</code>, <code>Full</code>, <code>Arange</code>, <code>Linspace</code>, <code>Eye</code>, <code>FromData</code></td>
+<td><code>New</code>, <code>Zeros</code>, <code>Ones</code>, <code>Full</code>, <code>Arange</code>, <code>Linspace</code>, <code>Eye</code>, <code>Identity</code>, <code>FromData</code></td>
 </tr>
 <tr>
 <td>Views &amp; shape</td>
@@ -601,6 +650,12 @@ coverage</strong>, differentially checked against NumPy.</p>
 </tr>
 </tbody>
 </table>
+<h2 id="untrusted-input-v030">Untrusted input (v0.3.0)<a class="headerlink" href="#untrusted-input-v030" title="Permanent link">&para;</a></h2>
+<p>A shape the library cannot represent is an error wrapping <code>ErrShapeMismatch</code>,
+for results as well as inputs: <code>(2^32, 0) @ (0, 2^32)</code> holds no data, yet its
+result would have 2^64 elements, so <code>MatMul</code> refuses it, as NumPy does. Empty
+arrays with a huge axis cost nothing, and every assembly call is guarded and
+fence-tested. See <a href="security/">Security</a>.</p>
 <h2 id="loops-workspace-v020">Loops: <code>Workspace</code> (v0.2.0)<a class="headerlink" href="#loops-workspace-v020" title="Permanent link">&para;</a></h2>
 <p>Every operation returns a new array, and in a loop those results are garbage
 the collector must chase. NumPy frees its temporaries the moment their

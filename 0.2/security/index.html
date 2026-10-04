@@ -10,25 +10,29 @@
       
       
       
+        <link rel="canonical" href="https://go-ndarray.github.io/docs/0.2/security/">
+      
+      
+        <link rel="prev" href="../performance/">
       
       
       
         
       
       
-      <link rel="icon" href="/docs/0.2/assets/logo.svg">
+      <link rel="icon" href="../assets/logo.svg">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
-        <title>go-ndarray docs</title>
+        <title>Security - go-ndarray docs</title>
       
     
     
-      <link rel="stylesheet" href="/docs/0.2/assets/stylesheets/main.ec1eaa64.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
       
         
-        <link rel="stylesheet" href="/docs/0.2/assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -47,7 +51,7 @@
       
     
     
-    <script>__md_scope=new URL("/docs/0.2",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -71,6 +75,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#security" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -83,12 +92,12 @@
               
   You are reading the documentation of an outdated version, whose text may
   no longer be accurate.
-  <a href="/docs/0.2/../">
+  <a href="../../">
     <strong>Go to the latest version.</strong>
   </a>
 
             </div>
-            <script>var el=document.querySelector("[data-md-component=outdated]"),base=new URL("/docs/0.2"),outdated=__md_get("__outdated",sessionStorage,base);!0===outdated&&el&&(el.hidden=!1)</script>
+            <script>var el=document.querySelector("[data-md-component=outdated]"),base=new URL(".."),outdated=__md_get("__outdated",sessionStorage,base);!0===outdated&&el&&(el.hidden=!1)</script>
           </aside>
         
       </div>
@@ -100,9 +109,9 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="/docs/0.2/." title="go-ndarray docs" class="md-header__button md-logo" aria-label="go-ndarray docs" data-md-component="logo">
+    <a href=".." title="go-ndarray docs" class="md-header__button md-logo" aria-label="go-ndarray docs" data-md-component="logo">
       
-  <img src="/docs/0.2/assets/logo.svg" alt="logo">
+  <img src="../assets/logo.svg" alt="logo">
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
@@ -119,7 +128,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              
+              Security
             
           </span>
         </div>
@@ -247,9 +256,9 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="/docs/0.2/." title="go-ndarray docs" class="md-nav__button md-logo" aria-label="go-ndarray docs" data-md-component="logo">
+    <a href=".." title="go-ndarray docs" class="md-nav__button md-logo" aria-label="go-ndarray docs" data-md-component="logo">
       
-  <img src="/docs/0.2/assets/logo.svg" alt="logo">
+  <img src="../assets/logo.svg" alt="logo">
 
     </a>
     go-ndarray docs
@@ -276,7 +285,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/docs/0.2/." class="md-nav__link">
+      <a href=".." class="md-nav__link">
         
   
   
@@ -303,7 +312,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/docs/0.2/roadmap/" class="md-nav__link">
+      <a href="../roadmap/" class="md-nav__link">
         
   
   
@@ -330,7 +339,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/docs/0.2/performance/" class="md-nav__link">
+      <a href="../performance/" class="md-nav__link">
         
   
   
@@ -354,10 +363,37 @@
       
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="/docs/0.2/security/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -373,6 +409,59 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#reporting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reporting
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-the-library-guarantees" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What the library guarantees
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#audit-log" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Audit log
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -394,6 +483,49 @@
   
   
   
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#reporting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reporting
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-the-library-guarantees" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What the library guarantees
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#audit-log" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Audit log
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
   
 </nav>
                   </div>
@@ -406,8 +538,88 @@
               
               <article class="md-content__inner md-typeset">
                 
-  <h1>404 - Not found</h1>
+                  
 
+
+
+<h1 id="security">Security<a class="headerlink" href="#security" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Mirrored from <a href="https://github.com/go-ndarray/ndarray/blob/main/SECURITY.md"><code>SECURITY.md</code></a> at v0.3.0.</p>
+</blockquote>
+<h2 id="reporting">Reporting<a class="headerlink" href="#reporting" title="Permanent link">&para;</a></h2>
+<p>Report a vulnerability privately through GitHub's <strong>Report a vulnerability</strong>
+button on <a href="https://github.com/go-ndarray/ndarray/security">the repository</a> (Security → Advisories). Please do not open a public
+issue for it.</p>
+<h2 id="what-the-library-guarantees">What the library guarantees<a class="headerlink" href="#what-the-library-guarantees" title="Permanent link">&para;</a></h2>
+<p>go-ndarray is pure Go (<code>CGO_ENABLED=0</code>) except for its SIMD kernels, which are
+Plan 9 assembly generated by <a href="https://github.com/go-asmgen/asmgen">go-asmgen</a>
+for amd64, arm64, ppc64le and loong64. Those kernels are the only code Go's
+bounds checks do not cover, so they are held to the following:</p>
+<ul>
+<li><strong>Every wrapper checks the reach of its kernel.</strong> Before an assembly call, the
+  Go wrapper indexes the last element of every operand the kernel reads or
+  writes (<code>internal/kernels/{reduce,gemm}_&lt;arch&gt;.go</code>). A caller's mistake is an
+  index-out-of-range panic in Go, never an access outside a slice.
+  <code>TestWrappersRefuseShortOperands</code> passes each wrapper an operand one element
+  short and requires the panic.</li>
+<li><strong>The kernels stay inside their slices.</strong> <code>TestKernelsStayInsideTheirSlices</code>
+  and <code>TestGemmMicroStaysInsideItsOperands</code> (<a href="https://github.com/go-ndarray/ndarray/blob/main/internal/kernels/fence_test.go"><code>internal/kernels/fence_test.go</code></a>,
+  Linux and macOS) map each operand flush against a <code>PROT_NONE</code> page, once
+  ending at it and once starting after one, for every length from 1 to 70 and
+  every GEMM depth from 1 to 9. A read or write one element past either end is a
+  fault. The fence itself was checked by a kernel deliberately reading one
+  element too far, which faults on amd64 (4 KiB pages), arm64 (16 KiB), loong64
+  (16 KiB) and ppc64le (64 KiB). Prefetch instructions may point past the end:
+  they are hints and do not fault.</li>
+<li><strong>Shapes are validated, results included.</strong> A shape whose element count, or
+  whose size in bytes, does not fit in an <code>int</code> is an error wrapping
+  <code>ErrShapeMismatch</code>, even when a zero dimension makes it empty, as in NumPy.
+  This applies to the shapes operations compute: <code>MatMul</code>, <code>Dot</code>, <code>Inner</code>,
+  <code>Concatenate</code>, <code>Stack</code>, broadcasting and <code>Linspace</code>. <code>Outer</code> has no error
+  result and panics instead.</li>
+<li><strong>Empty arrays cost nothing.</strong> Operations on an empty array with a huge axis,
+  such as <code>(2^58, 0)</code>, return at once instead of walking that axis.
+  <code>TestEmptyArraysWithHugeAxesReturnPromptly</code> covers concatenation, the axis
+  reductions and the scans.</li>
+</ul>
+<p>The minimum Go version (<code>go</code> in <code>go.mod</code>) is kept on a release that fixes the
+standard library's known vulnerabilities; <code>govulncheck ./...</code> reports none.</p>
+<h2 id="audit-log">Audit log<a class="headerlink" href="#audit-log" title="Permanent link">&para;</a></h2>
+<p><strong>2026-10-04 (v0.3.0).</strong></p>
+<ul>
+<li><code>govulncheck</code> found no reachable vulnerability. At <code>go 1.26.4</code>, 10 standard
+  library vulnerabilities were in modules the library requires but did not
+  call; <code>go 1.26.6</code> fixes all of them.</li>
+<li>Found and fixed:</li>
+<li><code>Concatenate</code> summed the axis lengths without an overflow check, so 17
+    arrays of shape <code>(2^59, 0)</code> gave a <strong>negative</strong> dimension.</li>
+<li><code>MatMul</code> of <code>(2^32, 0)</code> by <code>(0, 2^32)</code> returned a <code>(2^32, 2^32)</code> array whose
+    <code>Size()</code> was 0. A product wrapping to −1 panicked in <code>makeslice</code>.</li>
+<li><code>Linspace</code> with a count above the limit panicked in <code>makeslice</code>.</li>
+<li><code>Stack</code> of 9 arrays <code>(2^58, 0)</code> returned <code>(9, 2^58, 0)</code>, which <code>New</code>
+    rejects.</li>
+<li>Reducing <code>(2^58, 0)</code> over axis 0, concatenating it along its last axis, or
+    scanning <code>(0, 2^58)</code> walked the 2^58-long axis: effectively a hang.</li>
+<li>Hardened: the operand checks in front of every assembly call (above). The
+  fence test found no out-of-bounds access in any kernel, on real amd64
+  (Zen 3), arm64, ppc64le (POWER9) and loong64 (3C5000L, with LASX).</li>
+<li>Cost: none measurable. A single-core A/B on Zen 3 (10 interleaved rounds)
+  measured <code>MatMul</code> 256², <code>Dot1D</code> and <code>AddInto</code> 16 Ki within ±2%, inside the
+  run-to-run spread.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
               </article>
             </div>
           
@@ -450,10 +662,10 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "/docs/0.2", "features": ["navigation.sections", "navigation.top", "navigation.instant", "content.code.copy", "search.suggest"], "search": "/docs/0.2/assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "latest", "provider": "mike"}}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.sections", "navigation.top", "navigation.instant", "content.code.copy", "search.suggest"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "latest", "provider": "mike"}}</script>
     
     
-      <script src="/docs/0.2/assets/javascripts/bundle.d7400e89.min.js"></script>
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>
