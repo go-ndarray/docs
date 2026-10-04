@@ -544,7 +544,7 @@
 
 <h1 id="security">Security<a class="headerlink" href="#security" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p>Mirrored from <a href="https://github.com/go-ndarray/ndarray/blob/main/SECURITY.md"><code>SECURITY.md</code></a> at v0.3.0.</p>
+<p>Mirrored from <a href="https://github.com/go-ndarray/ndarray/blob/main/SECURITY.md"><code>SECURITY.md</code></a> at v0.4.1.</p>
 </blockquote>
 <h2 id="reporting">Reporting<a class="headerlink" href="#reporting" title="Permanent link">&para;</a></h2>
 <p>Report a vulnerability privately through GitHub's <strong>Report a vulnerability</strong>
@@ -577,14 +577,46 @@ bounds checks do not cover, so they are held to the following:</p>
   This applies to the shapes operations compute: <code>MatMul</code>, <code>Dot</code>, <code>Inner</code>,
   <code>Concatenate</code>, <code>Stack</code>, broadcasting and <code>Linspace</code>. <code>Outer</code> has no error
   result and panics instead.</li>
-<li><strong>Empty arrays cost nothing.</strong> Operations on an empty array with a huge axis,
+<li>
+<p><strong>Empty arrays cost nothing.</strong> Operations on an empty array with a huge axis,
   such as <code>(2^58, 0)</code>, return at once instead of walking that axis.
   <code>TestEmptyArraysWithHugeAxesReturnPromptly</code> covers concatenation, the axis
-  reductions and the scans.</li>
+  reductions and the scans.</p>
+</li>
+<li>
+<p><strong>Memory is the caller's to bound.</strong> Validation guarantees a shape is
+  representable, not that it fits in memory, and a Go program that runs out of
+  memory dies (NumPy raises <code>MemoryError</code>). Broadcasting, <code>Outer</code>, <code>MatMul</code> and
+  summing the empty axis of <code>(0, n)</code> produce more than their operands hold;
+  with untrusted shapes, check the result's size first.</p>
+</li>
+<li><strong>Fuzzed against an oracle.</strong> <code>FuzzOps</code> (<a href="https://github.com/go-ndarray/ndarray/blob/main/fuzz_test.go"><code>fuzz_test.go</code></a>) drives slices,
+  reshapes, transposes, squeezes, broadcasting arithmetic, axis reductions,
+  <code>Take</code>, <code>MaskSelect</code>, concatenation, <code>MatMul</code> and scans from arbitrary bytes,
+  and compares every result element by element with an oracle written in the
+  test from NumPy's definitions (Python's <code>slice.indices</code>, the broadcasting
+  rule, ...). The library must reject exactly the calls the oracle rejects and
+  never panic.</li>
 </ul>
 <p>The minimum Go version (<code>go</code> in <code>go.mod</code>) is kept on a release that fixes the
 standard library's known vulnerabilities; <code>govulncheck ./...</code> reports none.</p>
 <h2 id="audit-log">Audit log<a class="headerlink" href="#audit-log" title="Permanent link">&para;</a></h2>
+<p><strong>2026-10-04 (v0.4.0).</strong></p>
+<ul>
+<li><code>FuzzOps</code> ran 47 million executions without a divergence. A first version
+  that only checked an array against its own <code>Copy</code> was <strong>blind</strong>: with
+  <code>Squeeze</code> deliberately given wrong strides it found nothing in 31 million
+  executions, because a wrong view reads the same wrong values both ways. The
+  oracle version finds the same sabotage in 11 seconds; its failing input is
+  kept in <code>testdata/fuzz/FuzzOps</code>.</li>
+<li>It found two places where the library and NumPy differ. <code>Slice</code> with fewer
+  indices than axes was an error; it now takes the rest whole, as NumPy does.
+  <code>MaskSelect</code> accepts a mask that broadcasts to the array, which NumPy
+  rejects; this is kept as a documented extension.</li>
+<li><code>SumAxis</code>/<code>ProdAxis</code> along a zero-length axis now return 0s/1s as NumPy does
+  (they were errors, unlike <code>Sum</code>/<code>Prod</code> of an empty array). This makes the
+  memory caveat above concrete, and it is documented there.</li>
+</ul>
 <p><strong>2026-10-04 (v0.3.0).</strong></p>
 <ul>
 <li><code>govulncheck</code> found no reachable vulnerability. At <code>go 1.26.4</code>, 10 standard
