@@ -1,0 +1,95 @@
+name: redeploy an older version
+
+# docs.yml publishes main as the current version, aliased "latest". An older
+# version stays on gh-pages exactly as it was last built, so a change to the
+# theme (such as the outdated-version banner in overrides/main.html) never
+# reaches it. This workflow rebuilds ONE older version:
+#
+#   - its text (docs/) comes from `source`, the commit that version was
+#     last deployed from ("Deployed <sha> to <version>" in the gh-pages log),
+#     so the content readers see does not change;
+#   - the configuration and theme overrides (mkdocs.yml, overrides/) come
+#     from main, which is the point of the rebuild.
+#
+# It refuses to touch the version that carries the "latest" alias (docs.yml
+# owns that one) or a version that does not already exist, and it never
+# changes aliases or the default version.
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Existing non-latest version to rebuild (e.g. 0.1)"
+        required: true
+        type: string
+      source:
+        description: "Commit whose docs/ that version was deployed from"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  redeploy:
+    # Same group as docs.yml's deploy job: two mike pushes to gh-pages must
+    # never run at once.
+    concurrency:
+      group: gh-pages-deploy
+      cancel-in-progress: false
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      VERSION: ${{ inputs.version }}
+      SOURCE: ${{ inputs.source }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
+
+      - name: Install MkDocs Material + mike
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Refuse anything but an existing, non-latest version
+        run: |
+          git fetch origin gh-pages --depth=1
+          git show origin/gh-pages:versions.json > "$RUNNER_TEMP/versions.json"
+          python3 - "$RUNNER_TEMP/versions.json" <<'PY'
+          import json, os, sys
+          version = os.environ["VERSION"]
+          entries = {e["version"]: e for e in json.load(open(sys.argv[1]))}
+          if version not in entries:
+              sys.exit(f"version {version!r} is not on gh-pages; nothing to rebuild")
+          if "latest" in entries[version]["aliases"]:
+              sys.exit(f"version {version!r} is latest; docs.yml publishes it")
+          print(f"rebuilding {version!r} (aliases: {entries[version]['aliases']})")
+          PY
+
+      - name: Take docs/ from the source commit
+        run: |
+          git cat-file -e "$SOURCE^{commit}"
+          git rm -r -q docs
+          git checkout "$SOURCE" -- docs
+          git log -1 --format='source: %H %s' "$SOURCE"
+
+      - name: Build the site (strict)
+        run: mkdocs build --strict
+
+      - name: Configure git for mike
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Redeploy the version
+        run: |
+          mike deploy --push "$VERSION" \
+            --message "Redeployed $VERSION: docs/ from ${SOURCE}, config from $(git rev-parse --short HEAD)"
