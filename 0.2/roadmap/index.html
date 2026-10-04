@@ -625,8 +625,10 @@ suite (plus the per-arch CI jobs already wired in <code>.github/workflows/ci.yml
 <li><strong>More creation — DONE.</strong> <code>Linspace(start,stop,num)</code> (endpoint inclusive,
   final sample pinned to stop), <code>Eye(n,m,k)</code> / <code>Identity(n)</code> (k-th diagonal,
   non-positive m defaults to square), and <code>Reshape</code> <code>-1</code> dimension inference.</li>
-<li><strong>Ufuncs — DONE.</strong> Unary math via the <code>Map</code> seam (<code>Sqrt</code>/<code>Exp</code>/<code>Log</code>/<code>Log2</code>/
-  <code>Log10</code>/<code>Sin</code>/<code>Cos</code>/<code>Tan</code>/<code>Floor</code>/<code>Ceil</code>/<code>Round</code>/<code>Square</code>/<code>Power</code>) and
+<li><strong>Ufuncs — DONE.</strong> Unary math (<code>Sqrt</code>/<code>Exp</code>/<code>Log</code>/<code>Log2</code>/<code>Log10</code>/<code>Sin</code>/<code>Cos</code>/
+  <code>Tan</code>/<code>Floor</code>/<code>Ceil</code>/<code>Round</code>/<code>Square</code>/<code>Power</code>): <code>Sqrt</code> has a SIMD kernel,
+  <code>Exp</code>/<code>Log</code>/<code>Log10</code> run ports of Arm's optimized-routines (v0.2.0), and the
+  rest go through the <code>Map</code> seam over Go's <code>math</code>; and
   broadcasting comparisons returning 0/1 float masks (<code>Equal</code>/<code>NotEqual</code>/
   <code>Greater</code>/<code>GreaterEqual</code>/<code>Less</code>/<code>LessEqual</code>) plus pairwise <code>Maximum</code>/<code>Minimum</code>.
   (<code>Round</code> is math.Round / half-away-from-zero, unlike numpy's banker's

@@ -905,7 +905,7 @@
 2.2.4</strong> on identical hardware. "On n'a pas le droit de se tromper": every number
 here is measured, every win is real, and where NumPy still leads it says so.</p>
 <blockquote>
-<p><strong>Where it stands at v0.2.1.</strong> This page grew round by round: the sections
+<p><strong>Where it stands at v0.2.2.</strong> This page grew round by round: the sections
 up to <em>Where go-ndarray still loses</em> were measured on an arm64 Tart VM
 (4 vCPU, NumPy 2.2.4, OpenBLAS 0.3.29); the dated sections after it on an
 AMD Zen 3, 16 cores, against <strong>NumPy 2.5.3 + OpenBLAS 0.3.34</strong>. On the Zen 3:</p>
@@ -1395,9 +1395,14 @@ NumPy at n = 100 000 / 80×80.</p>
 <td>by-lane FMLA micro-kernel (<code>FMLA Vd.2D,Vn.2D,Vm.D[i]</code> via <code>WORD</code>) closed the prior 0.76× gap. Only small n=256 trails (0.67×) on per-call overhead, not throughput — see above</td>
 </tr>
 <tr>
-<td>other <code>Map</code> ufuncs (<code>Exp</code>, <code>Log</code>, <code>Sin</code>…)</td>
-<td>NumPy ~parity (libm-bound)</td>
-<td>a packed <code>VEXP</code>/<code>VLOG</code> is libm-accuracy work; the math, not the dispatch, dominates here</td>
+<td><code>Exp</code>, <code>Log</code>, <code>Log10</code></td>
+<td><strong>FIXED in v0.2.0</strong> — own kernels</td>
+<td>ports of Arm's optimized-routines, 2–3.5× <code>math.Exp</code>/<code>math.Log</code>; see the Exp and Log sections below</td>
+</tr>
+<tr>
+<td><code>Sin</code>, <code>Cos</code>, <code>Tan</code>, … (through <code>Map</code>)</td>
+<td>~parity with NumPy</td>
+<td>per element on one Zen 3 core: Go <code>math.Sin</code> 10.5 ns vs NumPy 10.4, <code>math.Cos</code> 11.1 vs 10.7, <code>math.Tanh</code> 16.5 vs 13.5 (2026-10-04); <code>Map</code>'s call per element adds 15–20%</td>
 </tr>
 </tbody>
 </table>
@@ -1886,8 +1891,10 @@ per-arch job regenerates the committed <code>.s</code>, fails if it is stale, ve
 (asmdecl), builds (cmd/asm encodes), and runs the bit/NaN-correctness suite. The
 multicore path and the packed/cache-blocked GEMM driver are
 architecture-independent; only the GEMM micro-kernel is per-arch (NEON 4×8 on
-arm64, AVX2/FMA 6×8 or SSE2 on amd64, scalar 4×4 on the other four — all bit-identical to the
-scalar ikj oracle, validated per-arch in CI incl. amd64 under qemu-x86_64).</p>
+arm64, AVX2/FMA 6×8 or SSE2 on amd64, scalar 4×4 on the other four), each held to
+the scalar ikj oracle in CI: exactly on integer-valued data, within tolerance on
+general data, since above KC the block partials regroup the sum and the FMA
+kernels round once per step where the scalar oracle may round twice.</p>
 
 
 
