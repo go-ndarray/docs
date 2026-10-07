@@ -34,6 +34,15 @@ m.Transpose().Shape() // [3 2]
 | Linear algebra | `MatMul`, `Dot`, `Inner`, `Outer` |
 | Memory reuse | `NewWorkspace`, `Use`, `Reset`, `Detach` |
 
+## Goroutines (v0.6.0)
+
+Operations on large arrays are spread over `GOMAXPROCS` goroutines. After the
+first one, the package keeps up to `GOMAXPROCS-1` helper goroutines alive. They
+poll for the next operation for 200 µs, then block, so back-to-back operations
+do not pay to wake threads. On 8 POWER9 cores that took a 2^20-element dot from
+625 to 58 µs. The helpers are never stopped: a goroutine-leak check that runs
+after ndarray operations will list them. See [Performance](performance.md).
+
 ## Untrusted input (v0.3.0)
 
 A shape the library cannot represent is an error wrapping `ErrShapeMismatch`,
