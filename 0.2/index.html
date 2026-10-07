@@ -356,6 +356,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#goroutines-v060" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Goroutines (v0.6.0)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#untrusted-input-v030" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -526,6 +537,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#goroutines-v060" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Goroutines (v0.6.0)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#untrusted-input-v030" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -650,6 +672,13 @@ coverage</strong>, differentially checked against NumPy.</p>
 </tr>
 </tbody>
 </table>
+<h2 id="goroutines-v060">Goroutines (v0.6.0)<a class="headerlink" href="#goroutines-v060" title="Permanent link">&para;</a></h2>
+<p>Operations on large arrays are spread over <code>GOMAXPROCS</code> goroutines. After the
+first one, the package keeps up to <code>GOMAXPROCS-1</code> helper goroutines alive. They
+poll for the next operation for 200 µs, then block, so back-to-back operations
+do not pay to wake threads. On 8 POWER9 cores that took a 2^20-element dot from
+625 to 58 µs. The helpers are never stopped: a goroutine-leak check that runs
+after ndarray operations will list them. See <a href="performance/">Performance</a>.</p>
 <h2 id="untrusted-input-v030">Untrusted input (v0.3.0)<a class="headerlink" href="#untrusted-input-v030" title="Permanent link">&para;</a></h2>
 <p>A shape the library cannot represent is an error wrapping <code>ErrShapeMismatch</code>,
 for results as well as inputs: <code>(2^32, 0) @ (0, 2^32)</code> holds no data, yet its
