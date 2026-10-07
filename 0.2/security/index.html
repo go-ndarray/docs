@@ -544,7 +544,7 @@
 
 <h1 id="security">Security<a class="headerlink" href="#security" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p>Mirrored from <a href="https://github.com/go-ndarray/ndarray/blob/main/SECURITY.md"><code>SECURITY.md</code></a> at v0.5.2.</p>
+<p>Mirrored from <a href="https://github.com/go-ndarray/ndarray/blob/main/SECURITY.md"><code>SECURITY.md</code></a> at v0.6.1.</p>
 </blockquote>
 <h2 id="reporting">Reporting<a class="headerlink" href="#reporting" title="Permanent link">&para;</a></h2>
 <p>Report a vulnerability privately through GitHub's <strong>Report a vulnerability</strong>
@@ -601,6 +601,24 @@ bounds checks do not cover, so they are held to the following:</p>
 <p>The minimum Go version (<code>go</code> in <code>go.mod</code>) is kept on a release that fixes the
 standard library's known vulnerabilities; <code>govulncheck ./...</code> reports none.</p>
 <h2 id="audit-log">Audit log<a class="headerlink" href="#audit-log" title="Permanent link">&para;</a></h2>
+<p><strong>2026-10-07 (v0.6.1).</strong> An audit of the helper pool added in v0.6.0 found
+two defects. Both are fixed, each with a test that fails without the fix.</p>
+<ul>
+<li><strong>Retention.</strong> The pool kept the last job, whose closure holds the
+  operation's arrays, so the arrays of the last parallel operation could not
+  be collected until another one replaced it: up to the size of the largest
+  array, for as long as the program ran. <code>TestPoolDoesNotRetainLastJob</code> checks
+  the data is collectable once <code>parallelFor</code> returns. A first version of that
+  test passed on the defective code, because its closure captured a variable
+  the test then set to nil.</li>
+<li><strong>Writes after a recovered panic.</strong> Since v0.6.0 the caller runs blocks
+  itself. If one panicked there, for example a <code>Map</code> function, the panic
+  propagated while the helpers went on writing. A caller that recovered could
+  find its arrays changing under it. The caller now stops handing out blocks
+  and waits for the running ones before the panic propagates
+  (<code>TestPoolCallerPanicStopsTheHelpers</code>). A panic on a helper goroutine still
+  ends the program, as it did before v0.6.0; <code>Map</code>'s documentation says so.</li>
+</ul>
 <p><strong>2026-10-06 (v0.5.1).</strong></p>
 <ul>
 <li>The Go floor is 1.27.1 since v0.5.0. <code>govulncheck</code> reports no vulnerability
