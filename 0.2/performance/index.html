@@ -1013,7 +1013,7 @@
 2.2.4</strong> on identical hardware. "On n'a pas le droit de se tromper": every number
 here is measured, every win is real, and where NumPy still leads it says so.</p>
 <blockquote>
-<p><strong>Where it stands at v0.4.1.</strong> This page grew round by round: the sections
+<p><strong>Where it stands at v0.5.2.</strong> This page grew round by round: the sections
 up to <em>Where go-ndarray still loses</em> were measured on an arm64 Tart VM
 (4 vCPU, NumPy 2.2.4, OpenBLAS 0.3.29); the dated sections after it on an
 AMD Zen 3, 16 cores, against <strong>NumPy 2.5.3 + OpenBLAS 0.3.34</strong>, except the
@@ -1227,8 +1227,8 @@ with no result array, so they have no separate <em>into</em> row.)</p>
   arm64/others — plus the existing multicore fan-out is what turns the loss into
   a win. The kernel is <strong>bit-identical</strong> to a scalar <code>math.Sqrt</code> loop (validated
   per-arch and bit-for-bit against NumPy's <code>np.sqrt</code>). arm64 now also has a
-  <strong>packed NEON <code>FSQRT V.2D</code></strong> kernel (two doubles per instruction, emitted by
-  <code>WORD</code> since Go's assembler has no vector-sqrt mnemonic), replacing the prior
+  <strong>packed NEON <code>FSQRT V.2D</code></strong> kernel (two doubles per instruction; emitted by
+  <code>WORD</code> until v0.5.2, <code>VFSQRT</code> since Go 1.27 names it), replacing the prior
   one-lane-at-a-time scalar <code>FSQRTD</code> loop. Small <code>n=1 024</code>: the <em>alloc</em> form loses
   to NumPy on allocation cost (as Add/Mul), but <code>a.SqrtInto(out)</code> wins 1.8×.</li>
 <li><strong>Max: go-ndarray now WINS — 4.0× small, 1.34× at 4 M (was 0.62 / 0.31
@@ -1507,7 +1507,7 @@ NumPy at n = 100 000 / 80×80.</p>
 <tr>
 <td><code>Max</code> / <code>Min</code></td>
 <td><strong>FIXED — go wins 1.4× at 4 M, ~4× small</strong></td>
-<td>builtin-<code>max</code> NaN-propagating oracle + 4-accumulator reducer + amd64 <code>MAXPD</code>+NaN-scan</td>
+<td>builtin-<code>max</code> NaN-propagating oracle + 4-accumulator reducer + amd64 <code>MAXPD</code>+NaN-scan; NEON <code>FMAX</code>/<code>FMIN</code> on arm64 since v0.5.2</td>
 </tr>
 <tr>
 <td><code>MatMul</code> vs tuned BLAS (OpenBLAS)</td>
@@ -1939,10 +1939,51 @@ held to the n·ε·Σ|aᵢbᵢ| bound and exact on integer data.</p>
 </tbody>
 </table>
 <p>NumPy's multi-threaded dot still wins on this part (24 µs). The go-ndarray
-version stops scaling at about 90 GB/s from 4 cores on. A likely cause, <strong>not
-verified</strong>, is cache affinity: OpenMP keeps each thread on one core, so it
+version stops scaling at about 90 GB/s from 4 cores on. ~~A likely cause, not
+verified, is cache affinity: OpenMP keeps each thread on one core, so it
 rereads its own chunk from its own L3 slice on every repetition, while
-goroutines move between core complexes.</p>
+goroutines move between core complexes.~~</p>
+<p><strong>Measured 2026-10-07 (POWER9 bare metal, cfarm29, one thread per core):</strong>
+the cache-affinity guess does not hold. The pattern is the fork/join of
+<code>parallelFor</code>, the same as the GEMM's (see <em>Parallel GEMM: start once, wait on
+work</em>). A 2^20 dot took 212 µs on 4 cores and 553 µs on 8, close to the 688 µs
+of one core. With 8 workers, only 2.4 CPUs were busy (<code>perf stat</code>). Three
+replacements for <code>parallelFor</code> were built and measured against it
+(8–10 interleaved rounds); <strong>none is shipped</strong>:</p>
+<table>
+<thead>
+<tr>
+<th>scheduler</th>
+<th>8 workers</th>
+<th>4 workers</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>shared queue of 4w blocks, caller works</td>
+<td>Dot 1.55×, MatVec 2.0×, SumAxis(1) 2.0×</td>
+<td>Sum 4 Mi 0.51×, Dot 0.55×</td>
+</tr>
+<tr>
+<td>owned runs (the static chunks) + stealing, caller works</td>
+<td>Dot 2.18×, MatVec 2.0×</td>
+<td>Sum 4 Mi 0.63×, Dot 0.68×</td>
+</tr>
+<tr>
+<td>owned runs + stealing, caller blocks, last block wakes it</td>
+<td>mostly 1.0–1.4×, Exp 1.87×</td>
+<td>Sum and AddInto at 256 Ki 0.51–0.55×</td>
+</tr>
+</tbody>
+</table>
+<p>The second row keeps exactly the static chunks of the original and still
+loses at 4 workers, so affinity is not the cause. <code>perf stat</code> places the loss
+in scheduling instead: with the caller working, 2.1 of 4 CPUs were busy
+against 3.4 for the original. Its goroutines wait in the run queue of the
+caller's processor until another one is woken to steal them. With the caller
+blocking, the 4-worker case recovers, but the 8-worker gains go with it. The
+code is on the <code>experiment/parallel-for-scheduling</code> branch. Not yet solved:
+a scheduler that keeps both.</p>
 <h2 id="log-and-log10-2026-10-04">Log and Log10 (2026-10-04)<a class="headerlink" href="#log-and-log10-2026-10-04" title="Permanent link">&para;</a></h2>
 <p><code>Log</code> went through <code>Map(math.Log)</code>: 11.6 ns per element on a Zen 3 core
 against NumPy's 4.2. It is now a port of the double-precision log of Arm's
@@ -2313,25 +2354,55 @@ stay dynamic, so its slower efficiency cores are handled as before.</p>
   with the OS saving YMM state, else a pair of SSE2 6×4 <code>MULPD</code>+<code>ADDPD</code> tiles
   over the same packing. Generated by go-asmgen and validated per-arch in CI;
   the FMA kernel on real Cascade Lake and Zen 3 hosts.</li>
-<li><strong>arm64 (NEON)</strong> ships hand-vectorized <code>sum</code>, <strong>packed <code>sqrt</code></strong> (<code>FSQRT V.2D</code>),
-  the <strong>elementwise <code>add</code>/<code>sub</code>/<code>mul</code></strong> (via <code>VFMLA</code>/<code>VFMLS</code> against a <code>1.0</code>
-  vector — <code>add: b+a·1</code>, <code>sub: a−b·1</code>, <code>mul: 0+a·b</code>, each FMA exact so
-  bit-identical to the plain op; <code>div</code> stays on scalar <code>FDIVD</code>, no vector form),
-  and the <strong>GEMM micro-kernel</strong> (<code>gemmMicro4x8</code>: a 4×8 tile, 16 D2 accumulators,
-  using the <strong>by-lane FMLA</strong> <code>FMLA Vd.2D, Vn.2D, Vm.D[i]</code>). Three instructions are
-  emitted by raw <code>WORD</code> because Go's arm64 assembler cannot name them: the vector
-  <code>FSQRT V.2D</code>, and the indexed-element <code>FMLA …D[i]</code> (both verified vs <code>objdump</code>).
-  <code>max</code>/<code>min</code> use the four-accumulator builtin-<code>max</code>/<code>min</code> (lowering to
-  <code>FMAXD</code>/<code>FMIND</code>); the C-accumulate fold still uses <code>VFMLA</code> against <code>1.0</code> (no
-  plain vector FP add exists). All beat/parity NumPy via SIMD + multicore, no
-  <code>func</code>-pointer indirection.</li>
-<li><strong>ppc64le (VSX)</strong>, since v0.2.3: sum, dot, sqrt, add/sub/mul/div and an 8×8
+<li><strong>arm64 (NEON)</strong> ships hand-vectorized <code>sum</code>, <code>dot</code>, <strong>packed <code>sqrt</code></strong>
+  (<code>VFSQRT</code>), the <strong>elementwise <code>add</code>/<code>sub</code>/<code>mul</code>/<code>div</code></strong> (<code>VFADD</code>/<code>VFSUB</code>/
+  <code>VFMUL</code>/<code>VFDIV</code>), <strong><code>max</code>/<code>min</code></strong> (<code>VFMAX</code>/<code>VFMIN</code>, four D2 accumulators from
+  8 elements up) and the <strong>GEMM micro-kernel</strong> (<code>gemmMicro4x8</code>: a 4×8 tile, 16 D2
+  accumulators, using the <strong>by-lane FMLA</strong> <code>FMLA Vd.2D, Vn.2D, Vm.D[i]</code>). Only
+  the indexed-element FMLA is still a raw <code>WORD</code> (16 of them): Go's assembler
+  does not name it yet (pending as CL 764224).</li>
+</ul>
+<p>⚠ <strong>Corrected in v0.5.2.</strong> Up to v0.5.1 this paragraph said Go's arm64
+  assembler had no vector <code>FSQRT</code>, no plain vector FP add, and no vector form for
+  <code>div</code>, so <code>add</code>/<code>sub</code>/<code>mul</code> went through an exact FMA against <code>1.0</code>, <code>sqrt</code> was
+  a <code>WORD</code>, and <code>div</code> and <code>max</code>/<code>min</code> stayed scalar. Go 1.27 (the floor since
+  v0.5.0) names all of them; the ISA always had them. Measured on one core,
+  interleaved against v0.5.1 (8 rounds, median; <code>Sum</code>, <code>SqrtInto</code> and <code>AddInto</code>,
+  unchanged, measured at 1.00× as the control):</p>
+<table>
+<thead>
+<tr>
+<th>one core</th>
+<th><code>DivInto</code></th>
+<th><code>Max</code></th>
+<th><code>MulInto</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Apple M (local)</td>
+<td>1.34–2.19×</td>
+<td>1.87–2.24×</td>
+<td>1.21× at 1 Ki, 1.00× above</td>
+</tr>
+<tr>
+<td>X-Gene (cfarm185)</td>
+<td>1.00×</td>
+<td>1.18–1.41×</td>
+<td>1.08–1.35×</td>
+</tr>
+</tbody>
+</table>
+<p>X-Gene's vector divide is no faster than its scalar one. The sum, dot and
+  GEMM C-accumulate still fold with an exact <code>VFMLA</code> against <code>1.0</code>, written
+  before <code>VFADD</code> existed in Go; the result is the same.
+- <strong>ppc64le (VSX)</strong>, since v0.2.3: sum, dot, sqrt, add/sub/mul/div and an 8×8
   GEMM micro-kernel; max/min stay scalar (the ISA's <code>xvmaxdp</code> NaN rule is not
-  NumPy's). See the ppc64le section above.</li>
-<li><strong>loong64 (LASX)</strong>, since v0.2.5, when the kernel reports LASX in AT_HWCAP
+  NumPy's). See the ppc64le section above.
+- <strong>loong64 (LASX)</strong>, since v0.2.5, when the kernel reports LASX in AT_HWCAP
   (not every LoongArch CPU has it): sum, dot, sqrt, add/sub/mul/div and an 8×8
-  GEMM micro-kernel; max/min stay scalar. See the loong64 section above.</li>
-<li>The other two 64-bit Go targets — <strong>riscv64, s390x</strong> — keep
+  GEMM micro-kernel; max/min stay scalar. See the loong64 section above.
+- The other two 64-bit Go targets — <strong>riscv64, s390x</strong> — keep
   the validated scalar oracles, using the same four-accumulator max/min, direct
   sqrt loop, and a <strong>scalar 4×4 GEMM micro-kernel</strong> over the packed panels, and
   still get the <strong>packing + cache blocking + multicore</strong> structure (they have
@@ -2346,8 +2417,7 @@ stay dynamic, so its slower efficiency cores are handled as before.</p>
   <strong>s390x</strong> has them, FMA included (<code>VFADB</code>, <code>VFMADB</code>); <strong>riscv64</strong> has them
   (<code>VFADDVV</code>, <code>VFMACCVV</code>), but the V extension is optional and needs a run-time
   check. So s390x and riscv64 kernels are work not yet done, not a
-  toolchain wall. (s390x additionally exercises the big-endian path in CI.)</li>
-</ul>
+  toolchain wall. (s390x additionally exercises the big-endian path in CI.)</p>
 <p>All six are exercised in CI (native amd64/arm64 + qemu for the rest); each
 per-arch job regenerates the committed <code>.s</code>, fails if it is stale, vets
 (asmdecl), builds (cmd/asm encodes), and runs the bit/NaN-correctness suite. The
