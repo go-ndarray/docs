@@ -4,7 +4,7 @@ Honest, reproducible head-to-head of `go-ndarray/ndarray` against **NumPy
 2.2.4** on identical hardware. "On n'a pas le droit de se tromper": every number
 here is measured, every win is real, and where NumPy still leads it says so.
 
-> **Where it stands at v0.6.0.** This page grew round by round: the sections
+> **Where it stands at v0.6.1.** This page grew round by round: the sections
 > up to *Where go-ndarray still loses* were measured on an arm64 Tart VM
 > (4 vCPU, NumPy 2.2.4, OpenBLAS 0.3.29); the dated sections after it on an
 > AMD Zen 3, 16 cores, against **NumPy 2.5.3 + OpenBLAS 0.3.34**, except the
