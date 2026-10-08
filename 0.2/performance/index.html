@@ -1013,7 +1013,7 @@
 2.2.4</strong> on identical hardware. "On n'a pas le droit de se tromper": every number
 here is measured, every win is real, and where NumPy still leads it says so.</p>
 <blockquote>
-<p><strong>Where it stands at v0.7.1.</strong> This page grew round by round: the sections
+<p><strong>Where it stands at v0.8.0.</strong> This page grew round by round: the sections
 up to <em>Where go-ndarray still loses</em> were measured on an arm64 Tart VM
 (4 vCPU, NumPy 2.2.4, OpenBLAS 0.3.29); the dated sections after it on an
 AMD Zen 3, 16 cores, against <strong>NumPy 2.5.3 + OpenBLAS 0.3.34</strong>, except the
@@ -1045,10 +1045,10 @@ On a Loongson 3C5000L the LASX kernels added in v0.2.5 lift the GEMM
 micro-kernel from 7.0 to 27.5 GFLOP/s and the serial GEMM from 5.3 to 20.0
 GFLOP/s at 512², against the scalar code; no NumPy or BLAS reference was
 available on that host (see <em>loong64: LASX kernels</em>).
-SIMD kernels exist on <strong>amd64, arm64, ppc64le, loong64 and riscv64</strong> (LASX
-and RVV used only when the CPU reports them); the other targets run the
-pure-Go reference code. For s390x that is work not yet done, not a toolchain
-limit (see <em>SIMD coverage</em> at the end).</p>
+SIMD kernels exist on <strong>amd64, arm64, ppc64le, loong64, riscv64 and s390x</strong> (LASX,
+RVV and the s390x vector facility used only when the CPU reports them); the
+32-bit targets run the pure-Go reference code; the s390x kernels are validated
+under emulation only (see <em>SIMD coverage</em> at the end).</p>
 </blockquote>
 <h2 id="how-a-pure-go-library-can-beat-numpy">How a pure-Go library can beat NumPy<a class="headerlink" href="#how-a-pure-go-library-can-beat-numpy" title="Permanent link">&para;</a></h2>
 <p>NumPy's elementwise and reduction ufuncs (<code>+</code>, <code>*</code>, <code>sqrt</code>, <code>sum</code>, <code>max</code>, …) are
@@ -2685,7 +2685,19 @@ stay dynamic, so its slower efficiency cores are handled as before.</p>
   2.1 GFLOP/s on one core this is still far from the hardware: VLEN = 256 with
   LMUL=4 uses half of each register group, which keeps one tile portable to
   every VLEN at that cost.
-- The remaining 64-bit Go target — <strong>s390x</strong> — keeps
+- <strong>s390x (vector facility)</strong>, since v0.8.0, when AT_HWCAP reports it:
+  sum, dot, sqrt and add/sub/mul/div, eight float64 per loop in four
+  two-lane registers plus a scalar tail, every instruction a Go mnemonic.
+  max/min and the GEMM micro-kernel stay scalar (the vector max with NumPy's
+  NaN rule needs the z14, beyond the z13 Go supports). The operand order of
+  <code>VFSDB</code>/<code>VFDDB</code>/<code>VFMADB</code> was <strong>measured</strong>, not read: each run once on known
+  inputs (<code>VFSDB V1, V2, V3</code> is V3 = V2 − V1). ⚠ <strong>Validated under emulation
+  only</strong> (Docker's qemu-s390x locally, qemu-s390x in CI): the whole suite, the
+  fence tests, and two sabotaged kernels that both failed. <strong>Not measured</strong>:
+  the LinuxONE host did not answer. AT_HWCAP is read in the machine's byte
+  order, which on big-endian s390x is not the little-endian the parser first
+  assumed.
+- The 32-bit targets keep
   the validated scalar oracles, using the same four-accumulator max/min, direct
   sqrt loop, and a <strong>scalar 4×4 GEMM micro-kernel</strong> over the packed panels, and
   still get the <strong>packing + cache blocking + multicore</strong> structure (they have
@@ -2698,8 +2710,8 @@ stay dynamic, so its slower efficiency cores are handled as before.</p>
   load (<code>XVMOVQ off(R), X.V4</code> = <code>xvldrepl.d</code>), but no vector FMA, which
   go-asmgen v0.14.0 encodes (transitionally), so loong64 has kernels;
   <strong>s390x</strong> has them, FMA included (<code>VFADB</code>, <code>VFMADB</code>); <strong>riscv64</strong> has them
-  (<code>VFADDVV</code>, <code>VFMACCVV</code>) and has had kernels since v0.7.0. So s390x kernels are
-  work not yet done, not a toolchain wall. (s390x additionally exercises the big-endian path in CI.)</p>
+  (<code>VFADDVV</code>, <code>VFMACCVV</code>) and has had kernels since v0.7.0, s390x since v0.8.0.
+  (s390x additionally exercises the big-endian path in CI.)</p>
 <p>All six are exercised in CI (native amd64/arm64 + qemu for the rest); each
 per-arch job regenerates the committed <code>.s</code>, fails if it is stale, vets
 (asmdecl), builds (cmd/asm encodes), and runs the bit/NaN-correctness suite. The
