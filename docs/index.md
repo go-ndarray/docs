@@ -20,6 +20,9 @@ m.Sum()               // 15
 m.Transpose().Shape() // [3 2]
 ```
 
+**Try it in your browser:** the [playground](https://go-ndarray.github.io/playground/) runs go-ndarray compiled to
+WebAssembly, with nothing to install — build a pipeline step by step (creation, views, broadcasting, ufuncs, reductions, linear algebra), inspect each step's shape, strides and shared memory, and copy the equivalent Go program and NumPy code.
+
 ## API surface
 
 | Area | Functions / methods |
