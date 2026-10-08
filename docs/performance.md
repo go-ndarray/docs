@@ -36,7 +36,7 @@ here is measured, every win is real, and where NumPy still leads it says so.
 > micro-kernel from 7.0 to 27.5 GFLOP/s and the serial GEMM from 5.3 to 20.0
 > GFLOP/s at 512², against the scalar code; no NumPy or BLAS reference was
 > available on that host (see *loong64: LASX kernels*).
-> SIMD kernels exist on **amd64, arm64, ppc64le, loong64, riscv64 and s390x** (LASX
+> SIMD kernels exist on **amd64, arm64, ppc64le, loong64, riscv64 and s390x** (LASX,
 > RVV and the s390x vector facility used only when the CPU reports them); the
 > 32-bit targets run the pure-Go reference code; the s390x kernels are validated
 > under emulation only (see *SIMD coverage* at the end).
