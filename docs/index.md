@@ -7,7 +7,7 @@ algebra, all with cgo disabled.
 
 Ruby has no cgo-free ndarray (`Numo::NArray`, `NMatrix` are C extensions) and
 `gonum`'s optimized assembly is amd64-only. go-ndarray pairs a portable pure-Go
-core with **multicore fan-out + go-asmgen SIMD** (amd64, arm64, ppc64le, loong64 and riscv64),
+core with **multicore fan-out + go-asmgen SIMD** (amd64, arm64, ppc64le, loong64, riscv64 and s390x),
 and a **`Workspace`** arena that takes the garbage collector out of loops. **100%
 coverage**, differentially checked against NumPy.
 
