@@ -1013,7 +1013,7 @@
 2.2.4</strong> on identical hardware. "On n'a pas le droit de se tromper": every number
 here is measured, every win is real, and where NumPy still leads it says so.</p>
 <blockquote>
-<p><strong>Where it stands at v0.6.1.</strong> This page grew round by round: the sections
+<p><strong>Where it stands at v0.7.0.</strong> This page grew round by round: the sections
 up to <em>Where go-ndarray still loses</em> were measured on an arm64 Tart VM
 (4 vCPU, NumPy 2.2.4, OpenBLAS 0.3.29); the dated sections after it on an
 AMD Zen 3, 16 cores, against <strong>NumPy 2.5.3 + OpenBLAS 0.3.34</strong>, except the
@@ -1045,10 +1045,10 @@ On a Loongson 3C5000L the LASX kernels added in v0.2.5 lift the GEMM
 micro-kernel from 7.0 to 27.5 GFLOP/s and the serial GEMM from 5.3 to 20.0
 GFLOP/s at 512², against the scalar code; no NumPy or BLAS reference was
 available on that host (see <em>loong64: LASX kernels</em>).
-SIMD kernels exist on <strong>amd64, arm64, ppc64le and loong64</strong> (LASX, used only
-when the CPU reports it); the other targets run the pure-Go reference code.
-For s390x and riscv64 that is work not yet done, not a toolchain limit (see
-<em>SIMD coverage</em> at the end).</p>
+SIMD kernels exist on <strong>amd64, arm64, ppc64le, loong64 and riscv64</strong> (LASX
+and RVV used only when the CPU reports them); the other targets run the
+pure-Go reference code. For s390x that is work not yet done, not a toolchain
+limit (see <em>SIMD coverage</em> at the end).</p>
 </blockquote>
 <h2 id="how-a-pure-go-library-can-beat-numpy">How a pure-Go library can beat NumPy<a class="headerlink" href="#how-a-pure-go-library-can-beat-numpy" title="Permanent link">&para;</a></h2>
 <p>NumPy's elementwise and reduction ufuncs (<code>+</code>, <code>*</code>, <code>sqrt</code>, <code>sum</code>, <code>max</code>, …) are
@@ -2604,7 +2604,54 @@ stay dynamic, so its slower efficiency cores are handled as before.</p>
 - <strong>loong64 (LASX)</strong>, since v0.2.5, when the kernel reports LASX in AT_HWCAP
   (not every LoongArch CPU has it): sum, dot, sqrt, add/sub/mul/div and an 8×8
   GEMM micro-kernel; max/min stay scalar. See the loong64 section above.
-- The other two 64-bit Go targets — <strong>riscv64, s390x</strong> — keep
+- <strong>riscv64 (RVV)</strong>, since v0.7.0, when the kernel reports V in AT_HWCAP (the
+  vector extension is optional): sum, dot, sqrt and add/sub/mul/div, in
+  vector-length-agnostic loops (<code>VSETVLI</code> strip-mining, LMUL=8, no scalar
+  tail), every instruction a Go mnemonic. max/min stay scalar: RVV's
+  <code>vfmax</code>/<code>vfmin</code> implement IEEE 754-2019 maximumNumber, which drops a NaN
+  that NumPy propagates. The GEMM micro-kernel is still the scalar 4×4. On a
+  SpacemiT X60 (cfarm95, VLEN = 256), one core pinned to an idle CPU, 6
+  interleaved rounds against the scalar code (median):</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>1 Ki</th>
+<th>16 Ki</th>
+<th>256 Ki</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Sum</code></td>
+<td>5.81×</td>
+<td>2.51×</td>
+<td>1.84×</td>
+</tr>
+<tr>
+<td><code>AddInto</code> / <code>MulInto</code></td>
+<td>3.2–3.3×</td>
+<td>1.11–1.13×</td>
+<td>1.07–1.12×</td>
+</tr>
+<tr>
+<td><code>DivInto</code></td>
+<td>2.27×</td>
+<td>2.30×</td>
+<td>2.28×</td>
+</tr>
+<tr>
+<td><code>SqrtInto</code></td>
+<td>2.43×</td>
+<td>2.44×</td>
+<td>2.47×</td>
+</tr>
+</tbody>
+</table>
+<p><code>MatVec</code> 1024² is 2.02× faster and <code>Dot</code> 2^20 1.29×. On a riscv64 CPU without V
+  (cfarm94, SiFive U74), the same build runs the scalar path and passes the same
+  tests.
+- The remaining 64-bit Go target — <strong>s390x</strong> — keeps
   the validated scalar oracles, using the same four-accumulator max/min, direct
   sqrt loop, and a <strong>scalar 4×4 GEMM micro-kernel</strong> over the packed panels, and
   still get the <strong>packing + cache blocking + multicore</strong> structure (they have
@@ -2617,9 +2664,8 @@ stay dynamic, so its slower efficiency cores are handled as before.</p>
   load (<code>XVMOVQ off(R), X.V4</code> = <code>xvldrepl.d</code>), but no vector FMA, which
   go-asmgen v0.14.0 encodes (transitionally), so loong64 has kernels;
   <strong>s390x</strong> has them, FMA included (<code>VFADB</code>, <code>VFMADB</code>); <strong>riscv64</strong> has them
-  (<code>VFADDVV</code>, <code>VFMACCVV</code>), but the V extension is optional and needs a run-time
-  check. So s390x and riscv64 kernels are work not yet done, not a
-  toolchain wall. (s390x additionally exercises the big-endian path in CI.)</p>
+  (<code>VFADDVV</code>, <code>VFMACCVV</code>) and has had kernels since v0.7.0. So s390x kernels are
+  work not yet done, not a toolchain wall. (s390x additionally exercises the big-endian path in CI.)</p>
 <p>All six are exercised in CI (native amd64/arm64 + qemu for the rest); each
 per-arch job regenerates the committed <code>.s</code>, fails if it is stale, vets
 (asmdecl), builds (cmd/asm encodes), and runs the bit/NaN-correctness suite. The

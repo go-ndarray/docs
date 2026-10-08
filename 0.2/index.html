@@ -615,7 +615,7 @@ broadcasting elementwise ops and ufuncs, reductions, manipulation and linear
 algebra, all with cgo disabled.</p>
 <p>Ruby has no cgo-free ndarray (<code>Numo::NArray</code>, <code>NMatrix</code> are C extensions) and
 <code>gonum</code>'s optimized assembly is amd64-only. go-ndarray pairs a portable pure-Go
-core with <strong>multicore fan-out + go-asmgen SIMD</strong> (amd64, arm64, ppc64le and loong64),
+core with <strong>multicore fan-out + go-asmgen SIMD</strong> (amd64, arm64, ppc64le, loong64 and riscv64),
 and a <strong><code>Workspace</code></strong> arena that takes the garbage collector out of loops. <strong>100%
 coverage</strong>, differentially checked against NumPy.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">import</span><span class="w"> </span><span class="nx">nd</span><span class="w"> </span><span class="s">"github.com/go-ndarray/ndarray"</span>
