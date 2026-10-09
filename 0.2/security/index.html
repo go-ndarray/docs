@@ -544,7 +544,7 @@
 
 <h1 id="security">Security<a class="headerlink" href="#security" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p>Mirrored from <a href="https://github.com/go-ndarray/ndarray/blob/main/SECURITY.md"><code>SECURITY.md</code></a> at v0.9.0.</p>
+<p>Mirrored from <a href="https://github.com/go-ndarray/ndarray/blob/main/SECURITY.md"><code>SECURITY.md</code></a> at v0.9.1.</p>
 </blockquote>
 <h2 id="reporting">Reporting<a class="headerlink" href="#reporting" title="Permanent link">&para;</a></h2>
 <p>Report a vulnerability privately through GitHub's <strong>Report a vulnerability</strong>
@@ -601,6 +601,13 @@ bounds checks do not cover, so they are held to the following:</p>
 <p>The minimum Go version (<code>go</code> in <code>go.mod</code>) is kept on a release that fixes the
 standard library's known vulnerabilities; <code>govulncheck ./...</code> reports none.</p>
 <h2 id="audit-log">Audit log<a class="headerlink" href="#audit-log" title="Permanent link">&para;</a></h2>
+<p><strong>2026-10-09 (v0.9.1).</strong> New s390x <code>maxVXE</code>/<code>minVXE</code> kernels, gated on
+AT_HWCAP VXRS_EXT (z14 and later), each behind its wrapper: from eight
+elements up, with no pointer arithmetic beyond <code>len(a)</code>. On the real z17 they
+pass <code>TestMaxMinSIMD</code>, the specials-in-every-lane test, the fence tests and the
+parallel stress test. A copy using mode 0 (IEEE maxNum, which returns the
+number when the other operand is a NaN) fails there, so the NaN rule is
+checked, not assumed.</p>
 <p><strong>2026-10-09 (v0.9.0).</strong></p>
 <ul>
 <li><strong>The Go floor is 1.27.2.</strong> At 1.27.1, <code>govulncheck</code> listed standard-library

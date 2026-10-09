@@ -1013,7 +1013,7 @@
 2.2.4</strong> on identical hardware. "On n'a pas le droit de se tromper": every number
 here is measured, every win is real, and where NumPy still leads it says so.</p>
 <blockquote>
-<p><strong>Where it stands at v0.9.0.</strong> This page grew round by round: the sections
+<p><strong>Where it stands at v0.9.1.</strong> This page grew round by round: the sections
 up to <em>Where go-ndarray still loses</em> were measured on an arm64 Tart VM
 (4 vCPU, NumPy 2.2.4, OpenBLAS 0.3.29); the dated sections after it on an
 AMD Zen 3, 16 cores, against <strong>NumPy 2.5.3 + OpenBLAS 0.3.34</strong>, except the
@@ -2690,8 +2690,16 @@ stay dynamic, so its slower efficiency cores are handled as before.</p>
   two-lane registers plus a scalar tail, every instruction a Go mnemonic.
   Since v0.9.0 the GEMM micro-kernel is a 4×8 tile: sixteen two-lane
   accumulators, the B row in one <code>VLM</code>, each A value replicated with <code>VLREPG</code>
-  and fused in with <code>VFMADB</code>. max/min stay scalar: the vector max with NumPy's
-  NaN rule needs the z14, beyond the z13 Go supports. The operand order of
+  and fused in with <code>VFMADB</code>. Since v0.9.1, max/min are vector too on a z14
+  or later: <code>VFMAXDB</code>/<code>VFMINDB</code> in mode 1, Java's Math.max/min, which gives NaN
+  for a NaN operand and orders −0 below +0, NumPy's rule. They come with the
+  vector-enhancements facility 1 (AT_HWCAP VXRS_EXT), beyond the z13 that Go
+  also supports, where the scalar reducers remain. On the z17, one core,
+  <code>benchstat</code> over 8 interleaved runs, all at p = 0.000: <code>Max</code> takes 92% to 96%
+  less time (1 Ki: 2.58 µs → 112 ns; 4 Mi: 10.7 ms → 0.81 ms), and <code>MaxAxis(1)</code>
+  94% less. <code>Sum</code>, untouched, measured within ±0.6%: the control. A sabotaged copy in
+  mode 0 (IEEE maxNum, which drops a NaN) failed <code>TestMaxMinSIMD</code> on the z17.
+  The operand order of
   <code>VFSDB</code>/<code>VFDDB</code>/<code>VFMADB</code> was <strong>measured</strong>, not read: each run once on known
   inputs (<code>VFSDB V1, V2, V3</code> is V3 = V2 − V1). AT_HWCAP is read in the
   machine's byte order, which on big-endian s390x is not the little-endian the
