@@ -1,0 +1,30 @@
+{{- /* Outdated-version banner, as the MkDocs site had (overrides/main.html).
+
+  A build cannot know whether a newer version was published after it, so the
+  banner is hidden and the browser reveals it when <docs root>/versions.json
+  gives the alias "latest" to another version than this one. The link goes to
+  the docs root, which redirects to latest/; it is set with the banner, so
+  the offline link check (where only this version exists) never sees it. */ -}}
+{{- $basePath := strings.TrimSuffix "/" (urls.Parse site.BaseURL).Path -}}
+{{- $current := path.Base $basePath -}}
+{{- $docsRoot := printf "%s/" (strings.TrimSuffix "/" (path.Dir $basePath)) -}}
+<div class="nd-outdated" role="note" hidden data-docs-root="{{ $docsRoot }}" data-current="{{ $current }}">
+  {{ T "outdated" }} <a>{{ T "outdatedLink" }}</a>
+</div>
+<script>
+  (function () {
+    var box = document.currentScript.previousElementSibling;
+    fetch(box.dataset.docsRoot + "versions.json", { cache: "no-cache" })
+      .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+      .then(function (versions) {
+        var latest = (versions || []).filter(function (v) {
+          return v && Array.isArray(v.aliases) && v.aliases.indexOf("latest") >= 0;
+        })[0];
+        if (latest && latest.version !== box.dataset.current) {
+          box.querySelector("a").href = box.dataset.docsRoot;
+          box.hidden = false;
+        }
+      })
+      .catch(function () { /* no versions.json (local build): no banner */ });
+  })();
+</script>
