@@ -36,6 +36,12 @@ here is measured, every win is real, and where NumPy still leads it says so.
 > micro-kernel from 7.0 to 27.5 GFLOP/s and the serial GEMM from 5.3 to 20.0
 > GFLOP/s at 512², against the scalar code; no NumPy or BLAS reference was
 > available on that host (see *loong64: LASX kernels*).
+> On a RISC-V SpacemiT X60 (VLEN 256) the RVV kernels added in v0.7.0 make
+> `Sum` up to 5.8× faster and, with v0.7.1's 6×8 micro-kernel, cut `MatMul`
+> time by 31–45%, one core against the scalar code. On an IBM z17 (a z/VM guest
+> on real hardware) the s390x kernels cut `MatMul` 1024² from 340 to 70 ms
+> (v0.9.0) and `Max` by 92–96% (v0.9.1), likewise. Neither host had a NumPy or
+> BLAS reference (see *SIMD coverage*).
 > SIMD kernels exist on **amd64, arm64, ppc64le, loong64, riscv64 and s390x** (LASX,
 > RVV and the s390x vector facility used only when the CPU reports them); the
 > 32-bit targets run the pure-Go reference code; the s390x kernels are measured
