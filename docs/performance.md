@@ -4,7 +4,7 @@ Honest, reproducible head-to-head of `go-ndarray/ndarray` against **NumPy
 2.2.4** on identical hardware. "On n'a pas le droit de se tromper": every number
 here is measured, every win is real, and where NumPy still leads it says so.
 
-> **Where it stands at v0.9.0.** This page grew round by round: the sections
+> **Where it stands at v0.9.1.** This page grew round by round: the sections
 > up to *Where go-ndarray still loses* were measured on an arm64 Tart VM
 > (4 vCPU, NumPy 2.2.4, OpenBLAS 0.3.29); the dated sections after it on an
 > AMD Zen 3, 16 cores, against **NumPy 2.5.3 + OpenBLAS 0.3.34**, except the
@@ -917,8 +917,16 @@ stay dynamic, so its slower efficiency cores are handled as before.
   two-lane registers plus a scalar tail, every instruction a Go mnemonic.
   Since v0.9.0 the GEMM micro-kernel is a 4×8 tile: sixteen two-lane
   accumulators, the B row in one `VLM`, each A value replicated with `VLREPG`
-  and fused in with `VFMADB`. max/min stay scalar: the vector max with NumPy's
-  NaN rule needs the z14, beyond the z13 Go supports. The operand order of
+  and fused in with `VFMADB`. Since v0.9.1, max/min are vector too on a z14
+  or later: `VFMAXDB`/`VFMINDB` in mode 1, Java's Math.max/min, which gives NaN
+  for a NaN operand and orders −0 below +0, NumPy's rule. They come with the
+  vector-enhancements facility 1 (AT_HWCAP VXRS_EXT), beyond the z13 that Go
+  also supports, where the scalar reducers remain. On the z17, one core,
+  `benchstat` over 8 interleaved runs, all at p = 0.000: `Max` takes 92% to 96%
+  less time (1 Ki: 2.58 µs → 112 ns; 4 Mi: 10.7 ms → 0.81 ms), and `MaxAxis(1)`
+  94% less. `Sum`, untouched, measured within ±0.6%: the control. A sabotaged copy in
+  mode 0 (IEEE maxNum, which drops a NaN) failed `TestMaxMinSIMD` on the z17.
+  The operand order of
   `VFSDB`/`VFDDB`/`VFMADB` was **measured**, not read: each run once on known
   inputs (`VFSDB V1, V2, V3` is V3 = V2 − V1). AT_HWCAP is read in the
   machine's byte order, which on big-endian s390x is not the little-endian the
