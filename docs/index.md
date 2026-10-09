@@ -101,15 +101,21 @@ is wrong on subnormals
   (3.7–5.9× from 512²).
 - **At parity:** `SumAxis(0)`, `Inner` against 16-thread OpenBLAS, `Log` on
   one core.
-- **Slower:** `MatMul` against 16-thread OpenBLAS (0.55× at 1024², 0.3× at
-  256² and below); `Dot`/mat·vec against NumPy's threaded BLAS (0.16×); `Exp`
+- **Slower:** `MatMul` against 16-thread OpenBLAS at 512² and up (0.42× at
+  512², 0.51× at 1024², measured in one run; at 256² ours is 1.44× faster);
+  `Dot` and mat·vec against NumPy's 16-thread BLAS (0.69× and 0.52× since
+  v0.6.0's helper pool; 0.16× before); `Exp`
   below 256 Ki elements (0.82×); the *allocating* forms of elementwise ops up
   to 256 Ki elements, `Concatenate`/`Stack` and slice copies outside a
   `Workspace` (0.2–0.5×).
 
 On Apple silicon the GEMM reached parity with tuned BLAS at 1024² (OpenBLAS in
 an arm64 VM, single-threaded vecLib on an M4 Max) and beats the pure-Go
-**gonum 4–10×**.
+**gonum 4–10×**. On the other targets, against go-ndarray's own scalar code on
+one core: on a RISC-V SpacemiT X60 the RVV kernels cut `Sum` by up to 5.8× and
+`MatMul` time by 31–45%; on an IBM z17 the s390x kernels cut `MatMul` 1024²
+from 340 to 70 ms and `Max` by 92–96% (see [Performance](performance.md),
+*SIMD coverage*).
 
 CI runs the suite on amd64, arm64 and 386 natively and on
 riscv64/loong64/ppc64le/s390x/arm under qemu, on Linux, macOS and Windows,
