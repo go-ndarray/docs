@@ -1,5 +1,5 @@
 ---
-title: "Implementation plan — N-dimensional arrays in pure Go (`go-ndarray/ndarray`)"
+title: "Implementation plan — N-dimensional arrays in pure Go (go-ndarray/ndarray)"
 linkTitle: "Roadmap"
 weight: 10
 description: "The plan for go-ndarray and what ships today."
