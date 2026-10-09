@@ -1,0 +1,1776 @@
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>go-ndarray – Simd</title><link>https://go-ndarray.github.io/docs/0.9/tags/simd/</link><description>Recent content in Simd on go-ndarray</description><generator>Hugo -- gohugo.io</generator><language>en</language><atom:link href="https://go-ndarray.github.io/docs/0.9/tags/simd/index.xml" rel="self" type="application/rss+xml"/><item><title>Performance — go-ndarray vs NumPy</title><link>https://go-ndarray.github.io/docs/0.9/performance/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://go-ndarray.github.io/docs/0.9/performance/</guid><description>
+&lt;p&gt;Honest, reproducible head-to-head of &lt;code&gt;go-ndarray/ndarray&lt;/code&gt; against &lt;strong&gt;NumPy
+2.2.4&lt;/strong&gt; on identical hardware. &amp;ldquo;On n&amp;rsquo;a pas le droit de se tromper&amp;rdquo;: every number
+here is measured, every win is real, and where NumPy still leads it says so.&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;&lt;strong&gt;Where it stands at v0.9.1.&lt;/strong&gt; This page grew round by round: the sections
+up to &lt;em&gt;Where go-ndarray still loses&lt;/em&gt; were measured on an arm64 Tart VM
+(4 vCPU, NumPy 2.2.4, OpenBLAS 0.3.29); the dated sections after it on an
+AMD Zen 3, 16 cores, against &lt;strong&gt;NumPy 2.5.3 + OpenBLAS 0.3.34&lt;/strong&gt;, except the
+ppc64le section (POWER9, against the scalar code and OpenBLAS&amp;rsquo;s POWER9
+kernel) and the loong64 section (Loongson 3C5000L, against the scalar code
+only). On the Zen 3:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Faster:&lt;/strong&gt; whole-array reductions (&lt;code&gt;Sum&lt;/code&gt;/&lt;code&gt;Mean&lt;/code&gt;/&lt;code&gt;Max&lt;/code&gt; at 4 Mi: 2.3–4.5×),
+row reductions (&lt;code&gt;SumAxis(1)&lt;/code&gt; 2.2×, &lt;code&gt;MaxAxis(1)&lt;/code&gt; 1.7×), &lt;code&gt;Exp&lt;/code&gt; from 256 Ki
+elements (2.4–5.6×), and &lt;code&gt;MatMul&lt;/code&gt; against single-threaded OpenBLAS
+(3.7–5.9× from 512²); in a &lt;code&gt;Workspace&lt;/code&gt;, &lt;code&gt;x + y&lt;/code&gt; and &lt;code&gt;sqrt(x*y + x)&lt;/code&gt; match or
+beat NumPy at every size measured.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;At parity:&lt;/strong&gt; &lt;code&gt;SumAxis(0)&lt;/code&gt;, &lt;code&gt;Inner&lt;/code&gt; against 16-thread OpenBLAS, &lt;code&gt;Log&lt;/code&gt; on
+one core.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Slower:&lt;/strong&gt; &lt;code&gt;MatMul&lt;/code&gt; against 16-thread OpenBLAS at 512² and up (0.42× at
+512², 0.51× at 1024², measured in one run with OpenBLAS; at 256² ours is
+1.44× faster, see &lt;em&gt;Parallel GEMM: start once, wait on work&lt;/em&gt;); &lt;code&gt;Dot&lt;/code&gt; and mat·vec against NumPy&amp;rsquo;s 16-thread BLAS (0.69× and 0.52× since v0.6.0, measured in one run; 0.16× before); &lt;code&gt;Exp&lt;/code&gt;
+below 256 Ki elements (0.82×); the &lt;em&gt;allocating&lt;/em&gt; forms of elementwise ops up
+to 256 Ki elements, &lt;code&gt;Concatenate&lt;/code&gt;/&lt;code&gt;Stack&lt;/code&gt; and slice copies outside a
+&lt;code&gt;Workspace&lt;/code&gt; (0.2–0.5×).&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;On Apple silicon the GEMM reached parity with tuned BLAS at 1024² (OpenBLAS in
+an arm64 VM, single-threaded vecLib on an M4 Max) and beats the pure-Go
+&lt;code&gt;gonum&lt;/code&gt; 4–10× (&lt;a href="https://github.com/go-ndarray/ndarray/blob/main/BENCHMARKS.md" target="_blank" rel="noopener"&gt;&lt;code&gt;BENCHMARKS.md&lt;/code&gt;&lt;/a&gt;).
+On a POWER9 the VSX kernels added in v0.2.3 double the serial GEMM (7.9 →
+15.8 GFLOP/s at 512²), which is 0.69× OpenBLAS 0.3.34 on one thread; &lt;code&gt;MatMul&lt;/code&gt;
+at 1024² on 32 threads is at 0.56× (see &lt;em&gt;ppc64le: VSX kernels&lt;/em&gt;).
+On a Loongson 3C5000L the LASX kernels added in v0.2.5 lift the GEMM
+micro-kernel from 7.0 to 27.5 GFLOP/s and the serial GEMM from 5.3 to 20.0
+GFLOP/s at 512², against the scalar code; no NumPy or BLAS reference was
+available on that host (see &lt;em&gt;loong64: LASX kernels&lt;/em&gt;).
+On a RISC-V SpacemiT X60 (VLEN 256) the RVV kernels added in v0.7.0 make
+&lt;code&gt;Sum&lt;/code&gt; up to 5.8× faster and, with v0.7.1&amp;rsquo;s 6×8 micro-kernel, cut &lt;code&gt;MatMul&lt;/code&gt;
+time by 31–45%, one core against the scalar code. On an IBM z17 (a z/VM guest
+on real hardware) the s390x kernels cut &lt;code&gt;MatMul&lt;/code&gt; 1024² from 340 to 70 ms
+(v0.9.0) and &lt;code&gt;Max&lt;/code&gt; by 92–96% (v0.9.1), likewise. Neither host had a NumPy or
+BLAS reference (see &lt;em&gt;SIMD coverage&lt;/em&gt;).
+SIMD kernels exist on &lt;strong&gt;amd64, arm64, ppc64le, loong64, riscv64 and s390x&lt;/strong&gt; (LASX,
+RVV and the s390x vector facility used only when the CPU reports them); the
+32-bit targets run the pure-Go reference code; the s390x kernels are measured
+on a real IBM z17 (see &lt;em&gt;SIMD coverage&lt;/em&gt; at the end).&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 data-hextra-search-id="how-a-pure-go-library-can-beat-numpy"&gt;How a pure-Go library can beat NumPy&lt;span class="hx:absolute hx:-mt-20" id="how-a-pure-go-library-can-beat-numpy"&gt;&lt;/span&gt;&lt;a href="#how-a-pure-go-library-can-beat-numpy" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;NumPy&amp;rsquo;s elementwise and reduction ufuncs (&lt;code&gt;+&lt;/code&gt;, &lt;code&gt;*&lt;/code&gt;, &lt;code&gt;sqrt&lt;/code&gt;, &lt;code&gt;sum&lt;/code&gt;, &lt;code&gt;max&lt;/code&gt;, …) are
+&lt;strong&gt;single-threaded SIMD C&lt;/strong&gt;. So a pure-Go library wins them by combining two
+levers NumPy does not use for these ops:&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;Multicore&lt;/strong&gt; — fan the contiguous loop across &lt;code&gt;GOMAXPROCS&lt;/code&gt; goroutines above a
+size threshold (small arrays stay serial so scheduling never dominates).&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;SIMD via &lt;a href="https://github.com/go-asmgen" target="_blank" rel="noopener"&gt;go-asmgen&lt;/a&gt;&lt;/strong&gt; — for the sum
+reduction, whose scalar &lt;code&gt;s += v&lt;/code&gt; loop the Go compiler will not auto-vectorize
+(it would change FP grouping), a hand-written NEON/SSE2 kernel with four
+independent accumulators recovers the lane parallelism NumPy&amp;rsquo;s C has.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;A third lever — &lt;strong&gt;eliminating allocation&lt;/strong&gt; — turned out to be the single biggest
+factor: the old elementwise path materialised two full broadcast copies &lt;em&gt;and&lt;/em&gt; a
+destination per op (3×N). The same-shape contiguous fast path now passes the
+operands&amp;rsquo; live backing slices to the kernel and allocates only the result.&lt;/p&gt;
+&lt;p&gt;NumPy&amp;rsquo;s &lt;code&gt;matmul&lt;/code&gt; is BLAS, a different fight: go-ndarray answers it with its own
+&lt;strong&gt;panel-packed, cache-blocked GEMM&lt;/strong&gt; + go-asmgen SIMD-FMA micro-kernel (the
+OpenBLAS/BLIS structure). With the by-lane-FMLA micro-kernel it reaches &lt;strong&gt;parity
+with tuned multi-threaded OpenBLAS 0.3.29 at n=1024 (≈0.99×, ~203 GFLOP/s)&lt;/strong&gt; and
+~0.97× at n=512; only small n=256 still trails (per-call overhead). See the
+matmul section below.&lt;/p&gt;
+&lt;h2 data-hextra-search-id="test-bench"&gt;Test bench&lt;span class="hx:absolute hx:-mt-20" id="test-bench"&gt;&lt;/span&gt;&lt;a href="#test-bench" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Machine&lt;/strong&gt;: debian arm64 (Apple-silicon Tart VM), 4 vCPU.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;NumPy&lt;/strong&gt;: 2.2.4. Elementwise/reduction rows use Debian &lt;strong&gt;reference BLAS
+3.12.1&lt;/strong&gt; (irrelevant to those ufuncs). The matmul rows are measured against
+&lt;strong&gt;OpenBLAS 0.3.29 (pthread, multi-threaded)&lt;/strong&gt; — the tuned BLAS — selected via
+&lt;code&gt;update-alternatives --set libblas.so.3 …/openblas-pthread/libblas.so.3&lt;/code&gt; and
+confirmed loaded by reading &lt;code&gt;/proc/self/maps&lt;/code&gt; (libopenblasp-r0.3.29.so). This
+is the meaningful bar: the earlier reference-BLAS matmul comparison is kept only
+as a footnote.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Go&lt;/strong&gt;: 1.26.4, &lt;code&gt;CGO_ENABLED=0&lt;/code&gt;, &lt;code&gt;GOWORK=off&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;go-ndarray bench&lt;/strong&gt;: &lt;code&gt;go test -bench=. -benchtime=1s&lt;/code&gt; (&lt;code&gt;bench_test.go&lt;/code&gt;),
+ns/op. Multi-core = default &lt;code&gt;GOMAXPROCS=4&lt;/code&gt;; single-core = &lt;code&gt;GOMAXPROCS=1&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;NumPy bench&lt;/strong&gt;: &lt;code&gt;docs/bench_numpy.py&lt;/code&gt; (matched ops/sizes), min-of-7 ns/op.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Reproduce: rsync the repo to the VM, then
+&lt;code&gt;go test -bench=. -benchtime=1s .&lt;/code&gt; and &lt;code&gt;python3 docs/bench_numpy.py&lt;/code&gt;.&lt;/p&gt;
+&lt;h2 data-hextra-search-id="elementwise-and-reductions-nsop-lower-is-better"&gt;Elementwise and reductions (ns/op; lower is better)&lt;span class="hx:absolute hx:-mt-20" id="elementwise-and-reductions-nsop-lower-is-better"&gt;&lt;/span&gt;&lt;a href="#elementwise-and-reductions-nsop-lower-is-better" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;&lt;code&gt;go ×&lt;/code&gt; is NumPy ÷ go-ndarray: &lt;strong&gt;&amp;gt; 1 means go-ndarray wins.&lt;/strong&gt; Two go forms are
+shown for the binary/sqrt ops:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;alloc&lt;/strong&gt; — &lt;code&gt;a + b&lt;/code&gt; / &lt;code&gt;np.sqrt(a)&lt;/code&gt;: returns a fresh array (NumPy &lt;code&gt;x + y&lt;/code&gt;).&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;into&lt;/strong&gt; — &lt;code&gt;a.AddInto(out, b)&lt;/code&gt; / &lt;code&gt;a.SqrtInto(out)&lt;/code&gt;: writes a caller-supplied
+buffer, the no-allocation form (NumPy &lt;code&gt;np.add(x, y, out=z)&lt;/code&gt; / &lt;code&gt;np.sqrt(x, out=z)&lt;/code&gt;).
+This is the apples-to-apples small-N comparison: it removes the per-op result
+allocation, which is the &lt;em&gt;only&lt;/em&gt; thing NumPy beats us on at small n (see below).&lt;/li&gt;
+&lt;/ul&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;op&lt;/th&gt;
+&lt;th style="text-align: right"&gt;n&lt;/th&gt;
+&lt;th style="text-align: right"&gt;NumPy 2.2.4&lt;/th&gt;
+&lt;th style="text-align: right"&gt;go alloc&lt;/th&gt;
+&lt;th style="text-align: right"&gt;go into&lt;/th&gt;
+&lt;th style="text-align: center"&gt;go × alloc&lt;/th&gt;
+&lt;th style="text-align: center"&gt;go × into&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;Add&lt;/td&gt;
+&lt;td style="text-align: right"&gt;1 024&lt;/td&gt;
+&lt;td style="text-align: right"&gt;432&lt;/td&gt;
+&lt;td style="text-align: right"&gt;1 049&lt;/td&gt;
+&lt;td style="text-align: right"&gt;&lt;strong&gt;148&lt;/strong&gt;&lt;/td&gt;
+&lt;td style="text-align: center"&gt;0.41 (numpy)&lt;/td&gt;
+&lt;td style="text-align: center"&gt;&lt;strong&gt;2.41&lt;/strong&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Add&lt;/td&gt;
+&lt;td style="text-align: right"&gt;4 194 304&lt;/td&gt;
+&lt;td style="text-align: right"&gt;1 600 974&lt;/td&gt;
+&lt;td style="text-align: right"&gt;&lt;strong&gt;768 722&lt;/strong&gt;&lt;/td&gt;
+&lt;td style="text-align: right"&gt;&lt;strong&gt;429 410&lt;/strong&gt;&lt;/td&gt;
+&lt;td style="text-align: center"&gt;&lt;strong&gt;2.08&lt;/strong&gt;&lt;/td&gt;
+&lt;td style="text-align: center"&gt;&lt;strong&gt;2.10&lt;/strong&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Mul&lt;/td&gt;
+&lt;td style="text-align: right"&gt;1 024&lt;/td&gt;
+&lt;td style="text-align: right"&gt;424&lt;/td&gt;
+&lt;td style="text-align: right"&gt;978&lt;/td&gt;
+&lt;td style="text-align: right"&gt;&lt;strong&gt;168&lt;/strong&gt;&lt;/td&gt;
+&lt;td style="text-align: center"&gt;0.43 (numpy)&lt;/td&gt;
+&lt;td style="text-align: center"&gt;&lt;strong&gt;2.08&lt;/strong&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Mul&lt;/td&gt;
+&lt;td style="text-align: right"&gt;4 194 304&lt;/td&gt;
+&lt;td style="text-align: right"&gt;1 572 361&lt;/td&gt;
+&lt;td style="text-align: right"&gt;&lt;strong&gt;763 339&lt;/strong&gt;&lt;/td&gt;
+&lt;td style="text-align: right"&gt;&lt;strong&gt;435 109&lt;/strong&gt;&lt;/td&gt;
+&lt;td style="text-align: center"&gt;&lt;strong&gt;2.06&lt;/strong&gt;&lt;/td&gt;
+&lt;td style="text-align: center"&gt;&lt;strong&gt;1.81&lt;/strong&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Sqrt&lt;/td&gt;
+&lt;td style="text-align: right"&gt;1 024&lt;/td&gt;
+&lt;td style="text-align: right"&gt;496&lt;/td&gt;
+&lt;td style="text-align: right"&gt;1 299&lt;/td&gt;
+&lt;td style="text-align: right"&gt;&lt;strong&gt;263&lt;/strong&gt;&lt;/td&gt;
+&lt;td style="text-align: center"&gt;0.38 (numpy)&lt;/td&gt;
+&lt;td style="text-align: center"&gt;&lt;strong&gt;1.80&lt;/strong&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Sqrt&lt;/td&gt;
+&lt;td style="text-align: right"&gt;4 194 304&lt;/td&gt;
+&lt;td style="text-align: right"&gt;1 669 901&lt;/td&gt;
+&lt;td style="text-align: right"&gt;&lt;strong&gt;605 561&lt;/strong&gt;&lt;/td&gt;
+&lt;td style="text-align: right"&gt;&lt;strong&gt;333 289&lt;/strong&gt;&lt;/td&gt;
+&lt;td style="text-align: center"&gt;&lt;strong&gt;2.76&lt;/strong&gt;&lt;/td&gt;
+&lt;td style="text-align: center"&gt;&lt;strong&gt;3.22&lt;/strong&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Sum&lt;/td&gt;
+&lt;td style="text-align: right"&gt;1 024&lt;/td&gt;
+&lt;td style="text-align: right"&gt;637&lt;/td&gt;
+&lt;td style="text-align: right"&gt;&lt;strong&gt;130&lt;/strong&gt;&lt;/td&gt;
+&lt;td style="text-align: right"&gt;—&lt;/td&gt;
+&lt;td style="text-align: center"&gt;&lt;strong&gt;4.90&lt;/strong&gt;&lt;/td&gt;
+&lt;td style="text-align: center"&gt;—&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Sum&lt;/td&gt;
+&lt;td style="text-align: right"&gt;4 194 304&lt;/td&gt;
+&lt;td style="text-align: right"&gt;496 000&lt;/td&gt;
+&lt;td style="text-align: right"&gt;&lt;strong&gt;193 679&lt;/strong&gt;&lt;/td&gt;
+&lt;td style="text-align: right"&gt;—&lt;/td&gt;
+&lt;td style="text-align: center"&gt;&lt;strong&gt;2.56&lt;/strong&gt;&lt;/td&gt;
+&lt;td style="text-align: center"&gt;—&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Max&lt;/td&gt;
+&lt;td style="text-align: right"&gt;1 024&lt;/td&gt;
+&lt;td style="text-align: right"&gt;611&lt;/td&gt;
+&lt;td style="text-align: right"&gt;&lt;strong&gt;160&lt;/strong&gt;&lt;/td&gt;
+&lt;td style="text-align: right"&gt;—&lt;/td&gt;
+&lt;td style="text-align: center"&gt;&lt;strong&gt;3.83&lt;/strong&gt;&lt;/td&gt;
+&lt;td style="text-align: center"&gt;—&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Max&lt;/td&gt;
+&lt;td style="text-align: right"&gt;4 194 304&lt;/td&gt;
+&lt;td style="text-align: right"&gt;326 466&lt;/td&gt;
+&lt;td style="text-align: right"&gt;&lt;strong&gt;231 626&lt;/strong&gt;&lt;/td&gt;
+&lt;td style="text-align: right"&gt;—&lt;/td&gt;
+&lt;td style="text-align: center"&gt;&lt;strong&gt;1.41&lt;/strong&gt;&lt;/td&gt;
+&lt;td style="text-align: center"&gt;—&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;(All numbers measured back-to-back in one VM session, 2026-06; go is
+&lt;code&gt;-benchtime=1s&lt;/code&gt;, NumPy &lt;code&gt;min&lt;/code&gt;-of-runs in &lt;code&gt;docs/bench_numpy.py&lt;/code&gt;. Add/Sub/Mul/Div
+now run a SIMD kernel — packed SSE2 &lt;code&gt;ADD/SUB/MUL/DIVPD&lt;/code&gt; on amd64, NEON &lt;code&gt;VFMLA&lt;/code&gt;
+on arm64 — so even the &lt;em&gt;alloc&lt;/em&gt; form wins ~2× at large n. Sum/Max are reductions
+with no result array, so they have no separate &lt;em&gt;into&lt;/em&gt; row.)&lt;/p&gt;
+&lt;h3 data-hextra-search-id="reading-the-table"&gt;Reading the table&lt;span class="hx:absolute hx:-mt-20" id="reading-the-table"&gt;&lt;/span&gt;&lt;a href="#reading-the-table" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Add / Mul on large arrays: go-ndarray wins ~2×.&lt;/strong&gt; Allocation elimination +
+multicore. Note even single-core large Mul edges out NumPy now (the kernel is
+memory-bandwidth bound and the old copies were the bottleneck).&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Sum: go-ndarray wins everywhere — up to ~5× on small, 2.4× on large.&lt;/strong&gt; The
+SIMD 4-accumulator kernel already beats NumPy single-core (493 µs vs 506 µs at
+4 M); multicore then roughly halves it again. Small sums are dominated by
+NumPy&amp;rsquo;s per-call Python/dispatch overhead, which Go does not pay.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Sqrt: go-ndarray now WINS 1.75× at 4 M (was a ~1.3× loss).&lt;/strong&gt; The fix was to
+stop routing &lt;code&gt;Sqrt&lt;/code&gt; through &lt;code&gt;Map&lt;/code&gt;&amp;rsquo;s &lt;code&gt;func(float64) float64&lt;/code&gt;: that indirection
+blocked &lt;em&gt;both&lt;/em&gt; the Go compiler&amp;rsquo;s &lt;code&gt;FSQRTD&lt;/code&gt; intrinsic (arm64) and a packed SSE2
+&lt;code&gt;SQRTPD&lt;/code&gt; (amd64), making the old path pay a real function call &lt;em&gt;per element&lt;/em&gt;
+(~2.7× slower single-core). A dedicated &lt;code&gt;sqrt&lt;/code&gt; kernel behind the kernels seam —
+packed &lt;code&gt;SQRTPD&lt;/code&gt; on amd64, the intrinsic-lowered scalar &lt;code&gt;FSQRTD&lt;/code&gt; loop on
+arm64/others — plus the existing multicore fan-out is what turns the loss into
+a win. The kernel is &lt;strong&gt;bit-identical&lt;/strong&gt; to a scalar &lt;code&gt;math.Sqrt&lt;/code&gt; loop (validated
+per-arch and bit-for-bit against NumPy&amp;rsquo;s &lt;code&gt;np.sqrt&lt;/code&gt;). arm64 now also has a
+&lt;strong&gt;packed NEON &lt;code&gt;FSQRT V.2D&lt;/code&gt;&lt;/strong&gt; kernel (two doubles per instruction; emitted by
+&lt;code&gt;WORD&lt;/code&gt; until v0.5.2, &lt;code&gt;VFSQRT&lt;/code&gt; since Go 1.27 names it), replacing the prior
+one-lane-at-a-time scalar &lt;code&gt;FSQRTD&lt;/code&gt; loop. Small &lt;code&gt;n=1 024&lt;/code&gt;: the &lt;em&gt;alloc&lt;/em&gt; form loses
+to NumPy on allocation cost (as Add/Mul), but &lt;code&gt;a.SqrtInto(out)&lt;/code&gt; wins 1.8×.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Max: go-ndarray now WINS — 4.0× small, 1.34× at 4 M (was 0.62 / 0.31
+losses).&lt;/strong&gt; Two changes. (1) The scalar oracle was switched from &lt;code&gt;if v &amp;gt; m&lt;/code&gt;
+(which silently &lt;em&gt;ignored&lt;/em&gt; NaNs, diverging from NumPy) to the &lt;strong&gt;builtin
+&lt;code&gt;max&lt;/code&gt;/&lt;code&gt;min&lt;/code&gt;&lt;/strong&gt;, which is NaN-propagating &lt;em&gt;and&lt;/em&gt; lowers to the hardware &lt;code&gt;FMAXD&lt;/code&gt;/
+&lt;code&gt;FMIND&lt;/code&gt; intrinsic — &lt;code&gt;math.Max&lt;/code&gt; would also propagate NaN but is an
+un-intrinsified call ~12× slower in this hot loop. (2) The SIMD max/min
+reduction uses &lt;strong&gt;four independent accumulators&lt;/strong&gt; to break the dependency chain
+(~3.6× over one), exactly like the sum kernel: packed &lt;code&gt;MAXPD&lt;/code&gt;/&lt;code&gt;MINPD&lt;/code&gt; + a NaN
+scan on amd64, register-unrolled builtin &lt;code&gt;max&lt;/code&gt;/&lt;code&gt;min&lt;/code&gt; on arm64/others. See the
+NaN convention note below.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Small arrays (n≈1 024) for Add/Mul/Sqrt — the &lt;em&gt;alloc&lt;/em&gt; form: NumPy wins; the
+&lt;em&gt;into&lt;/em&gt; form: go-ndarray wins ~2×.&lt;/strong&gt; The entire gap is the result allocation.
+&lt;code&gt;make([]float64, 1024)&lt;/code&gt; measures ~900–1 080 ns on this VM&amp;rsquo;s allocator (it zeroes
+the 8 KiB the kernel then fully overwrites), while NumPy serves the temp from a
+cached free-list for ~150 ns. So &lt;code&gt;a + b&lt;/code&gt; at n=1024 is allocator-bound (≈1 µs,
+of which the SIMD compute is only ~150 ns) and loses 0.4×; &lt;strong&gt;&lt;code&gt;a.AddInto(out, b)&lt;/code&gt;
+— the no-allocation form, NumPy&amp;rsquo;s &lt;code&gt;np.add(x, y, out=z)&lt;/code&gt; — removes that cost and
+wins 1.8–2.4× at the same size.&lt;/strong&gt; This is a Go-allocator ceiling, not a kernel
+one: Go&amp;rsquo;s &lt;code&gt;make&lt;/code&gt; always zeroes and offers no unsafe &amp;ldquo;give me raw bytes&amp;rdquo; escape,
+and returning pooled memory would break the caller-owns-the-result contract, so
+the allocating small-N form cannot match NumPy&amp;rsquo;s free-list — the &lt;code&gt;*Into&lt;/code&gt; parity
+path is the supported way to hit/beat NumPy there (and at large n even the alloc
+form wins, because the kernel time then dwarfs the one allocation). (Sum and Max are
+the exceptions — their reduction kernels need no result allocation and win even
+serially.) &lt;strong&gt;Superseded for loops by &lt;code&gt;Workspace&lt;/code&gt;, see below.&lt;/strong&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 data-hextra-search-id="nan-convention-for-max--min-and-the-simd-max-kernel"&gt;NaN convention for Max / Min (and the SIMD max kernel)&lt;span class="hx:absolute hx:-mt-20" id="nan-convention-for-max--min-and-the-simd-max-kernel"&gt;&lt;/span&gt;&lt;span class="hx:absolute hx:-mt-20" id="nan-convention-for-max-min-and-the-simd-max-kernel"&gt;&lt;/span&gt;&lt;a href="#nan-convention-for-max--min-and-the-simd-max-kernel" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;&lt;code&gt;Max&lt;/code&gt;/&lt;code&gt;Min&lt;/code&gt; are &lt;strong&gt;NaN-propagating&lt;/strong&gt;: if any element is NaN the result is NaN.
+This matches &lt;code&gt;numpy.max&lt;/code&gt;/&lt;code&gt;numpy.min&lt;/code&gt;, Go&amp;rsquo;s builtin &lt;code&gt;max&lt;/code&gt;/&lt;code&gt;min&lt;/code&gt;, and IEEE-754
+&lt;em&gt;maximum&lt;/em&gt; (not the C &lt;code&gt;fmax&lt;/code&gt; / IEEE &lt;code&gt;maxNum&lt;/code&gt; &amp;ldquo;ignore NaN&amp;rdquo; rule); on signed zeros
+it returns &lt;code&gt;+0&lt;/code&gt; for &lt;code&gt;max(-0,+0)&lt;/code&gt; and &lt;code&gt;-0&lt;/code&gt; for &lt;code&gt;min(-0,+0)&lt;/code&gt;, also matching NumPy.
+The previous &lt;code&gt;if v &amp;gt; m&lt;/code&gt; scalar form silently skipped NaNs (and a &lt;em&gt;leading&lt;/em&gt; NaN
+poisoned the scan), so it disagreed with NumPy; this is the corrected, documented
+semantics, and the entire stack — scalar oracle, the four-accumulator reducer,
+the amd64 &lt;code&gt;MAXPD&lt;/code&gt;/&lt;code&gt;MINPD&lt;/code&gt; kernel, and the multicore fold — is held &lt;strong&gt;bit-for-bit
+identical&lt;/strong&gt; to it (NaN at any position → NaN; exact extreme otherwise), validated
+across every length residue and NaN placement in CI. The amd64 kernel gets this
+despite &lt;code&gt;MAXPD&lt;/code&gt;&amp;rsquo;s own non-propagating NaN rule by carrying a parallel
+&lt;code&gt;CMPPD&lt;/code&gt;-unordered OR-mask and forcing the result to NaN if any lane ever held
+one — so the value &lt;code&gt;MAXPD&lt;/code&gt; leaves in a NaN lane is irrelevant.&lt;/p&gt;
+&lt;h2 data-hextra-search-id="matrix-multiply-vs-tuned-blas-openblas--the-hard-frontier"&gt;Matrix multiply vs TUNED BLAS (OpenBLAS) — the hard frontier&lt;span class="hx:absolute hx:-mt-20" id="matrix-multiply-vs-tuned-blas-openblas--the-hard-frontier"&gt;&lt;/span&gt;&lt;span class="hx:absolute hx:-mt-20" id="matrix-multiply-vs-tuned-blas-openblas-the-hard-frontier"&gt;&lt;/span&gt;&lt;a href="#matrix-multiply-vs-tuned-blas-openblas--the-hard-frontier" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;This is the honest fight: go-ndarray&amp;rsquo;s pure-Go (+ generated asm) GEMM against
+&lt;strong&gt;OpenBLAS 0.3.29 pthread&lt;/strong&gt;, decades-tuned multi-threaded assembly. Both run on
+the same 4-vCPU Apple-silicon VM, back-to-back. GFLOP/s = &lt;code&gt;2·n³ / time&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;All rows measured &lt;strong&gt;back-to-back, interleaved, in the same VM session&lt;/strong&gt; (the only
+fair way on a shared host whose load drifts), 4 samples each, &lt;code&gt;go ÷ OB&lt;/code&gt; reported
+as the per-sample ratio (robust to the absolute time drifting between sessions).&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th style="text-align: right"&gt;n (N×N)&lt;/th&gt;
+&lt;th style="text-align: right"&gt;go-ndarray (4 core)&lt;/th&gt;
+&lt;th style="text-align: right"&gt;OpenBLAS-mt&lt;/th&gt;
+&lt;th style="text-align: right"&gt;go GFLOP/s&lt;/th&gt;
+&lt;th style="text-align: right"&gt;OB GFLOP/s&lt;/th&gt;
+&lt;th style="text-align: center"&gt;go ÷ OB&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td style="text-align: right"&gt;256&lt;/td&gt;
+&lt;td style="text-align: right"&gt;261 000&lt;/td&gt;
+&lt;td style="text-align: right"&gt;174 000&lt;/td&gt;
+&lt;td style="text-align: right"&gt;102.8&lt;/td&gt;
+&lt;td style="text-align: right"&gt;154.2&lt;/td&gt;
+&lt;td style="text-align: center"&gt;0.67×&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style="text-align: right"&gt;512&lt;/td&gt;
+&lt;td style="text-align: right"&gt;1 530 000&lt;/td&gt;
+&lt;td style="text-align: right"&gt;1 500 000&lt;/td&gt;
+&lt;td style="text-align: right"&gt;175.4&lt;/td&gt;
+&lt;td style="text-align: right"&gt;178.9&lt;/td&gt;
+&lt;td style="text-align: center"&gt;0.97×&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style="text-align: right"&gt;1024&lt;/td&gt;
+&lt;td style="text-align: right"&gt;10 600 000&lt;/td&gt;
+&lt;td style="text-align: right"&gt;10 580 000&lt;/td&gt;
+&lt;td style="text-align: right"&gt;202.6&lt;/td&gt;
+&lt;td style="text-align: right"&gt;203.0&lt;/td&gt;
+&lt;td style="text-align: center"&gt;&lt;strong&gt;≈0.99× (parity; samples 0.96–1.00)&lt;/strong&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;&lt;strong&gt;Verdict: at n=1024 the pure-Go (+ generated asm) GEMM reaches PARITY with tuned
+OpenBLAS&lt;/strong&gt; (~0.99×, individual samples straddling 1.00×), sustaining &lt;strong&gt;~203
+GFLOP/s&lt;/strong&gt; — up from the prior kernel&amp;rsquo;s ~23 GFLOP/s and from this kernel&amp;rsquo;s own 0.76×
+before the by-lane-FMLA fix below. n=512 is ~0.97×; only small n=256, where fixed
+per-call overhead (panel packing + the 4-way goroutine fan-out) dominates the
+~250 µs of compute, still trails at 0.67× — a small-matrix overhead ceiling, not a
+kernel-throughput one (the same kernel hits parity once the matrix is large enough
+to amortise the setup).&lt;/p&gt;
+&lt;h3 data-hextra-search-id="the-fix-that-reached-parity-the-by-lane-fmla"&gt;The fix that reached parity: the by-lane FMLA&lt;span class="hx:absolute hx:-mt-20" id="the-fix-that-reached-parity-the-by-lane-fmla"&gt;&lt;/span&gt;&lt;a href="#the-fix-that-reached-parity-the-by-lane-fmla" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;The single change that took n=1024 from &lt;strong&gt;0.76× to ≈0.99×&lt;/strong&gt; was the arm64
+micro-kernel&amp;rsquo;s inner FMA. The kernel broadcasts one packed A value into every
+column of its row; the prior version did this with &lt;code&gt;MOVD&lt;/code&gt; (A double → GP register)&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;VDUP&lt;/code&gt; (GP → all lanes of a vector) before a plain vector &lt;code&gt;VFMLA&lt;/code&gt; — an extra
+instruction &lt;em&gt;and&lt;/em&gt; a GP↔SIMD register-file round-trip per A value, every k-step.
+The fix uses the indexed-element double FMLA &lt;code&gt;FMLA Vd.2D, Vn.2D, Vm.D[i]&lt;/code&gt; that
+every tuned arm64 dgemm uses: load the four packed A doubles of a k-step as two
+&lt;code&gt;D2&lt;/code&gt; vectors and have each row&amp;rsquo;s FMA read its A scalar straight from a lane — no
+GP detour, no &lt;code&gt;VDUP&lt;/code&gt;. Go&amp;rsquo;s arm64 assembler cannot &lt;em&gt;name&lt;/em&gt; this indexed form
+(&amp;ldquo;illegal combination … ELEM&amp;rdquo;), so it is emitted by its raw 32-bit &lt;code&gt;WORD&lt;/code&gt;
+encoding (see &lt;code&gt;fmlaElem&lt;/code&gt; in &lt;code&gt;asmgen/arm64/gen.go&lt;/code&gt;, cross-checked against
+&lt;code&gt;objdump&lt;/code&gt;); this is still pure Go assembly, CGO=0.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Measured on this Apple-silicon core: the L1-resident micro-kernel went &lt;strong&gt;~44 →
+~58 GFLOP/s/core (~1.28×)&lt;/strong&gt;, and the full GEMM tracked it to parity. (An earlier
+note on this page claimed the indexed form was &lt;em&gt;slower&lt;/em&gt; on Apple silicon — that
+was wrong; it had never actually been measured against a correct encoding.)&lt;/p&gt;
+&lt;p&gt;Two further levers were prototyped and &lt;strong&gt;measured to NOT help on this core&lt;/strong&gt;, so
+they were not shipped (documented here so they are not re-attempted blindly):&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Software pipelining&lt;/strong&gt; (prefetch + double-buffer the next k-step&amp;rsquo;s A/B into
+shadow registers, rotate after the FMAs): ~2% on the L1 micro-kernel but &lt;strong&gt;1–9%
+&lt;em&gt;slower&lt;/em&gt; on the full GEMM&lt;/strong&gt; — the M-series out-of-order window already hides the
+L1/L2 load latency, and the extra &lt;code&gt;VMOV&lt;/code&gt; rotations + register pressure cost more
+than they save.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Wider 6×8 tile&lt;/strong&gt; (24 accumulators vs 16): same GFLOP/s as the 4×8 — the loop
+is FMA-latency-bound, not register-pressure-bound, so a wider tile adds no
+throughput.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;MC/KC/NC retuning&lt;/strong&gt;: a 12-point sweep confirmed the shipped 256/256/512 is
+already the optimum on this core.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 data-hextra-search-id="what-shipped-a-panel-packed-cache-blocked-gemm"&gt;What shipped: a panel-packed, cache-blocked GEMM&lt;span class="hx:absolute hx:-mt-20" id="what-shipped-a-panel-packed-cache-blocked-gemm"&gt;&lt;/span&gt;&lt;a href="#what-shipped-a-panel-packed-cache-blocked-gemm" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;The earlier register-blocked attempt read A and B straight from the source
+matrices; on power-of-two row strides its destination rows collided in L1 and it
+lost to the autovectorized ikj kernel at large n, so it was capped to &lt;code&gt;n ≤ 224&lt;/code&gt;
+and &lt;strong&gt;packing was prototyped but not shipped&lt;/strong&gt; (the previous note here). This
+round implements the full OpenBLAS/BLIS structure and ships it for &lt;strong&gt;all&lt;/strong&gt; sizes:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Packing&lt;/strong&gt; — A is copied into MR-tall row panels and B into NR-wide column
+panels in contiguous, unit-stride scratch (pooled, allocation-free per call).
+The micro-kernel then streams conflict-free memory &lt;strong&gt;regardless of the source
+stride&lt;/strong&gt; — this is the precise fix for the power-of-two L1 set-conflicts that
+defeated the unpacked attempt. Edge tiles are zero-padded so the kernel always
+sees a full MR×NR block; a ragged right/bottom tile runs the same micro-kernel
+into a scratch tile, and only its valid corner is added to C.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Cache blocking&lt;/strong&gt; — an &lt;code&gt;NC&lt;/code&gt; (columns) → &lt;code&gt;KC&lt;/code&gt; (contraction) → &lt;code&gt;MC&lt;/code&gt; (rows) loop
+nest keeps the packed B panel L2-resident and each packed A panel in L1.
+Defaults &lt;code&gt;MC=256, KC=256, NC=512&lt;/code&gt; (tuned on this VM).&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;SIMD-FMA micro-kernel&lt;/strong&gt; (go-asmgen) — &lt;strong&gt;NEON 4×8 on arm64&lt;/strong&gt; (16 D2
+accumulators, the source of the win), &lt;strong&gt;AVX2/FMA 6×8 on amd64&lt;/strong&gt; (12 YMM
+accumulators, picked at run time by a CPUID probe; an SSE2 6×4 pair without
+FMA is the fallback), &lt;strong&gt;scalar 4×4&lt;/strong&gt; on the
+four arches without vector-double asm — which still gain from contiguous packed
+data + blocking + multicore.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Parallelism&lt;/strong&gt; — the M rows are split into MR-aligned bands, one per core,
+each writing a disjoint region of C.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;The arithmetic is the ikj order &lt;code&gt;dst[i][j] += a[i][p]·b[p][j]&lt;/code&gt;, summed per KC
+block; for k ≤ KC that is the scalar oracle&amp;rsquo;s order exactly, and above it the
+block partials regroup the sum (a valid reordering, as in every blocked BLAS).
+At 128×128 the result matched NumPy&amp;rsquo;s &lt;code&gt;A@B&lt;/code&gt; against OpenBLAS with max abs diff
+&lt;strong&gt;0.0&lt;/strong&gt;.&lt;/p&gt;
+&lt;h3 data-hextra-search-id="packed-gemm-vs-the-prior-kernel-why-it-ships"&gt;Packed GEMM vs the PRIOR kernel (why it ships)&lt;span class="hx:absolute hx:-mt-20" id="packed-gemm-vs-the-prior-kernel-why-it-ships"&gt;&lt;/span&gt;&lt;a href="#packed-gemm-vs-the-prior-kernel-why-it-ships" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;Measured back-to-back in one binary under identical load (so the ratio is robust
+to the noisy VM); the prior kernel is the register-blocked/ikj path this replaces:&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th style="text-align: right"&gt;n&lt;/th&gt;
+&lt;th style="text-align: right"&gt;prior kernel&lt;/th&gt;
+&lt;th style="text-align: right"&gt;packed&lt;/th&gt;
+&lt;th style="text-align: center"&gt;speedup&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td style="text-align: right"&gt;64&lt;/td&gt;
+&lt;td style="text-align: right"&gt;6–9 GF&lt;/td&gt;
+&lt;td style="text-align: right"&gt;20–21 GF&lt;/td&gt;
+&lt;td style="text-align: center"&gt;&lt;strong&gt;2.2–3.4×&lt;/strong&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style="text-align: right"&gt;128&lt;/td&gt;
+&lt;td style="text-align: right"&gt;16 GF&lt;/td&gt;
+&lt;td style="text-align: right"&gt;32–52 GF&lt;/td&gt;
+&lt;td style="text-align: center"&gt;&lt;strong&gt;3.1–4.2×&lt;/strong&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style="text-align: right"&gt;256&lt;/td&gt;
+&lt;td style="text-align: right"&gt;10–19 GF&lt;/td&gt;
+&lt;td style="text-align: right"&gt;53–119 GF&lt;/td&gt;
+&lt;td style="text-align: center"&gt;&lt;strong&gt;5.0–6.2×&lt;/strong&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style="text-align: right"&gt;512&lt;/td&gt;
+&lt;td style="text-align: right"&gt;13–21 GF&lt;/td&gt;
+&lt;td style="text-align: right"&gt;80–156 GF&lt;/td&gt;
+&lt;td style="text-align: center"&gt;&lt;strong&gt;6.0–7.3×&lt;/strong&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style="text-align: right"&gt;1024&lt;/td&gt;
+&lt;td style="text-align: right"&gt;16–22 GF&lt;/td&gt;
+&lt;td style="text-align: right"&gt;99–156 GF&lt;/td&gt;
+&lt;td style="text-align: center"&gt;&lt;strong&gt;6.2–7.2×&lt;/strong&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;The packed kernel wins at &lt;strong&gt;every&lt;/strong&gt; size, so it is shipped uniformly — no
+size-routing — and the old &lt;code&gt;n ≤ 224&lt;/code&gt; blocked/ikj split is removed.&lt;/p&gt;
+&lt;h3 data-hextra-search-id="where-the-remaining-gap-is-small-n-only"&gt;Where the remaining gap is (small n only)&lt;span class="hx:absolute hx:-mt-20" id="where-the-remaining-gap-is-small-n-only"&gt;&lt;/span&gt;&lt;a href="#where-the-remaining-gap-is-small-n-only" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;At n=1024 there is effectively &lt;strong&gt;no&lt;/strong&gt; kernel-throughput gap left: the by-lane
+FMLA inner loop runs ~58 GFLOP/s/core, the full GEMM hits ~203 GFLOP/s, and
+go ÷ OB straddles 1.00×. The only sizes still short are &lt;strong&gt;small&lt;/strong&gt; matrices, and
+there the gap is &lt;em&gt;fixed per-call overhead&lt;/em&gt;, not compute:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;At n=256 the matmul is ~250 µs of real work, but every call still pays the full
+panel-pack pass and a 4-way goroutine fan-out. OpenBLAS amortises that setup
+far better (smaller pack cost, a thread pool that is already warm), so it leads
+0.67× here even though the per-core FMA rate is the same. As n grows the setup
+is amortised away — n=512 is already 0.97×.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;This is a small-matrix overhead ceiling. Closing it further would mean a
+serial-vs-parallel crossover tuned per size and a cheaper pack for tiny panels;
+it is not a Go-assembler or algorithm limit, and it does not affect the
+large-matrix parity result. (amd64 now has its AVX2/FMA kernel too; see the
+real-hardware section below.)&lt;/p&gt;
+&lt;h3 data-hextra-search-id="footnote-vs-reference-blas"&gt;Footnote: vs reference BLAS&lt;span class="hx:absolute hx:-mt-20" id="footnote-vs-reference-blas"&gt;&lt;/span&gt;&lt;a href="#footnote-vs-reference-blas" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;Against Debian&amp;rsquo;s single-threaded &lt;strong&gt;reference BLAS 3.12.1&lt;/strong&gt; (the prior comparison
+on this page), the packed GEMM wins by a wide margin at every size — but that is
+not a meaningful bar for a matmul claim, so the table above uses OpenBLAS.&lt;/p&gt;
+&lt;h2 data-hextra-search-id="correctness"&gt;Correctness&lt;span class="hx:absolute hx:-mt-20" id="correctness"&gt;&lt;/span&gt;&lt;a href="#correctness" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;Every result is validated &lt;strong&gt;bit-for-bit against NumPy&lt;/strong&gt; (shapes and values), not
+just timed — see the cross-check in the work log: &lt;code&gt;Sqrt&lt;/code&gt; (bit-identical to
+&lt;code&gt;np.sqrt&lt;/code&gt; via a &lt;code&gt;uint64&lt;/code&gt; view), &lt;code&gt;Max&lt;/code&gt;, &lt;code&gt;Min&lt;/code&gt; (exact, incl. NaN propagation),
+&lt;code&gt;Add&lt;/code&gt;, &lt;code&gt;Mul&lt;/code&gt; and the full &lt;code&gt;MatMul&lt;/code&gt; (zero max-abs-diff against &lt;code&gt;A @ A&lt;/code&gt;) match
+NumPy at n = 100 000 / 80×80.&lt;/p&gt;
+&lt;p&gt;The SIMD kernels are also validated against the scalar oracle per-arch in CI:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Sqrt&lt;/strong&gt; — &lt;code&gt;SQRTPD&lt;/code&gt; (amd64) is held &lt;strong&gt;bit-identical&lt;/strong&gt; to a scalar &lt;code&gt;math.Sqrt&lt;/code&gt;
+loop across every length residue mod 8 and the IEEE edge cases (negatives →
+NaN, ±Inf, signed zeros, explicit NaN); sqrt is a single correctly-rounded
+operation, so bit-identity (not mere closeness) is the contract.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Max / Min&lt;/strong&gt; — the four-accumulator reducer and the amd64 &lt;code&gt;MAXPD&lt;/code&gt;/&lt;code&gt;MINPD&lt;/code&gt;
+kernel are held &lt;strong&gt;bit-identical&lt;/strong&gt; to the builtin-&lt;code&gt;max&lt;/code&gt;/&lt;code&gt;min&lt;/code&gt; oracle across
+every length and with a NaN injected at the start, middle, end, and as the sole
+element (all must return NaN); ±Inf and signed zeros bit-match too.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Add / Sub / Mul / Div&lt;/strong&gt; — the elementwise SIMD kernels are held
+&lt;strong&gt;bit-identical&lt;/strong&gt; to the scalar oracle across every length residue mod 8 and the
+IEEE edge inputs (signed zeros, ±Inf, NaN, extremes): each lane is a single
+independent correctly-rounded IEEE op (no reduction grouping), and on arm64 the
+FMA-against-an-exact-constant form (&lt;code&gt;b+a·1&lt;/code&gt;, &lt;code&gt;a−b·1&lt;/code&gt;, &lt;code&gt;0+a·b&lt;/code&gt;) rounds identically
+to the plain op, so bit-identity is the contract.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Sum&lt;/strong&gt; — validated to a tight &lt;em&gt;relative tolerance&lt;/em&gt; (not bit-identity): its
+lane-parallel grouping is a valid reordering, the same kind NumPy&amp;rsquo;s pairwise
+summation uses, so closeness — not bit-identity — is the contract for a
+floating-point reduction.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 data-hextra-search-id="where-go-ndarray-still-loses-and-the-plan"&gt;Where go-ndarray still loses, and the plan&lt;span class="hx:absolute hx:-mt-20" id="where-go-ndarray-still-loses-and-the-plan"&gt;&lt;/span&gt;&lt;a href="#where-go-ndarray-still-loses-and-the-plan" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;op&lt;/th&gt;
+&lt;th&gt;status&lt;/th&gt;
+&lt;th&gt;note&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;Add&lt;/code&gt;/&lt;code&gt;Sub&lt;/code&gt;/&lt;code&gt;Mul&lt;/code&gt;/&lt;code&gt;Div&lt;/code&gt;/&lt;code&gt;Sqrt&lt;/code&gt;, &lt;strong&gt;alloc&lt;/strong&gt; form, small n (≈1 K)&lt;/td&gt;
+&lt;td&gt;NumPy wins (Go-allocator ceiling)&lt;/td&gt;
+&lt;td&gt;the result &lt;code&gt;make&lt;/code&gt; (~900 ns zeroing 8 KiB) is the whole cost; Go has no unzeroed-alloc escape and pooling would break result ownership. The &lt;code&gt;*Into&lt;/code&gt; no-alloc form &lt;strong&gt;wins 1.8–2.4×&lt;/strong&gt; — the supported parity path. Large-n alloc form already wins ~2×.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;Add&lt;/code&gt;/&lt;code&gt;Sub&lt;/code&gt;/&lt;code&gt;Mul&lt;/code&gt;/&lt;code&gt;Div&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;strong&gt;FIXED — go wins ~2× large n, &lt;em&gt;Into&lt;/em&gt; wins all n&lt;/strong&gt;&lt;/td&gt;
+&lt;td&gt;new SIMD kernels: packed SSE2 &lt;code&gt;ADD/SUB/MUL/DIVPD&lt;/code&gt; (amd64), NEON &lt;code&gt;VFMLA&lt;/code&gt;/&lt;code&gt;VFMLS&lt;/code&gt; (arm64); bit-identical to the scalar oracle&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;Sqrt&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;strong&gt;FIXED — go wins 2.8× at 4 M, &lt;em&gt;Into&lt;/em&gt; 1.8× small&lt;/strong&gt;&lt;/td&gt;
+&lt;td&gt;packed &lt;code&gt;SQRTPD&lt;/code&gt; (amd64) / packed NEON &lt;code&gt;FSQRT V.2D&lt;/code&gt; (arm64) / intrinsic &lt;code&gt;FSQRTD&lt;/code&gt; (others), off a non-&lt;code&gt;func&lt;/code&gt;-pointer seam&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;Max&lt;/code&gt; / &lt;code&gt;Min&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;strong&gt;FIXED — go wins 1.4× at 4 M, ~4× small&lt;/strong&gt;&lt;/td&gt;
+&lt;td&gt;builtin-&lt;code&gt;max&lt;/code&gt; NaN-propagating oracle + 4-accumulator reducer + amd64 &lt;code&gt;MAXPD&lt;/code&gt;+NaN-scan; NEON &lt;code&gt;FMAX&lt;/code&gt;/&lt;code&gt;FMIN&lt;/code&gt; on arm64 since v0.5.2&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;MatMul&lt;/code&gt; vs tuned BLAS (OpenBLAS)&lt;/td&gt;
+&lt;td&gt;&lt;strong&gt;FIXED — parity at n=1024 (~0.99×, ~203 GFLOP/s); 0.97× at n=512&lt;/strong&gt;&lt;/td&gt;
+&lt;td&gt;by-lane FMLA micro-kernel (&lt;code&gt;FMLA Vd.2D,Vn.2D,Vm.D[i]&lt;/code&gt; via &lt;code&gt;WORD&lt;/code&gt;) closed the prior 0.76× gap. Only small n=256 trails (0.67×) on per-call overhead, not throughput — see above&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;Exp&lt;/code&gt;, &lt;code&gt;Log&lt;/code&gt;, &lt;code&gt;Log10&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;strong&gt;FIXED in v0.2.0&lt;/strong&gt; — own kernels&lt;/td&gt;
+&lt;td&gt;ports of Arm&amp;rsquo;s optimized-routines, 2–3.5× &lt;code&gt;math.Exp&lt;/code&gt;/&lt;code&gt;math.Log&lt;/code&gt;; see the Exp and Log sections below&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;Sin&lt;/code&gt;, &lt;code&gt;Cos&lt;/code&gt;, &lt;code&gt;Tan&lt;/code&gt;, … (through &lt;code&gt;Map&lt;/code&gt;)&lt;/td&gt;
+&lt;td&gt;~parity with NumPy&lt;/td&gt;
+&lt;td&gt;per element on one Zen 3 core: Go &lt;code&gt;math.Sin&lt;/code&gt; 10.5 ns vs NumPy 10.4, &lt;code&gt;math.Cos&lt;/code&gt; 11.1 vs 10.7, &lt;code&gt;math.Tanh&lt;/code&gt; 16.5 vs 13.5 (2026-10-04); &lt;code&gt;Map&lt;/code&gt;&amp;rsquo;s call per element adds 15–20%&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;h2 data-hextra-search-id="allocation-workspace-2026-10-04"&gt;Allocation: &lt;code&gt;Workspace&lt;/code&gt; (2026-10-04)&lt;span class="hx:absolute hx:-mt-20" id="allocation-workspace-2026-10-04"&gt;&lt;/span&gt;&lt;a href="#allocation-workspace-2026-10-04" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;On real amd64 hardware the allocating forms were far worse than on the M4: on
+a Zen 3 (16 cores), &lt;code&gt;x + y&lt;/code&gt; lost to NumPy 0.13–0.25× at every size up to 256 Ki
+elements, while &lt;code&gt;AddInto&lt;/code&gt; won. Slicing copies, &lt;code&gt;Concatenate&lt;/code&gt; and broadcasting
+adds (whose results also allocate) lost 5–9×. Measured causes, on M4:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;The garbage collector.&lt;/strong&gt; A benchmark&amp;rsquo;s live heap is tiny, so a 128 KiB
+result per call triggered a GC cycle every ~22 calls (912 cycles in 20 000).
+With 256 MiB–2 GiB of live heap, which is closer to a real program, the
+overhead halves: 8.3 → 3.6 µs at 16 Ki, against 2.4 µs for &lt;code&gt;AddInto&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;The rest:&lt;/strong&gt; &lt;code&gt;make&lt;/code&gt; zeroes memory the kernel overwrites anyway, and fresh
+memory is cold or page-faulted. &lt;code&gt;GOGC=off&lt;/code&gt; does not help: it trades the
+cycles for page faults (9.4 µs).&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;A library must not set &lt;code&gt;GOGC&lt;/code&gt;, and Go has no unzeroed allocation. What NumPy&amp;rsquo;s
+reference counting gets for free is scoped reuse. ND4J, the Java ndarray
+library, has the same problem and answers it with &lt;em&gt;workspaces&lt;/em&gt;: an arena that
+results of one pass come from, recycled at the end of the pass. &lt;code&gt;Workspace&lt;/code&gt; is
+that. &lt;code&gt;ws.Use(x)&lt;/code&gt; binds an input, every result computed from a bound array is
+carved from the arena (64-byte aligned, capped so an &lt;code&gt;append&lt;/code&gt; cannot spill),
+results stay bound so a chain stays in it, and &lt;code&gt;Reset&lt;/code&gt; recycles everything,
+folding a pass that needed several blocks into one block. Sites whose kernel
+writes every element (elementwise, ufuncs, copies, broadcasts, concatenation,
+&lt;code&gt;Where&lt;/code&gt;, &lt;code&gt;Clip&lt;/code&gt;, scans, &lt;code&gt;Take&lt;/code&gt;, &lt;code&gt;Outer&lt;/code&gt;, mat·vec) skip the zeroing. Those that
+accumulate (GEMM, vec·mat, axis reductions) clear their slot.&lt;/p&gt;
+&lt;p&gt;Zen 3, 16 cores pinned, NumPy 2.5.3 single-threaded, best of two runs:&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;op&lt;/th&gt;
+&lt;th style="text-align: right"&gt;n&lt;/th&gt;
+&lt;th style="text-align: right"&gt;heap&lt;/th&gt;
+&lt;th style="text-align: right"&gt;&lt;strong&gt;Workspace&lt;/strong&gt;&lt;/th&gt;
+&lt;th style="text-align: right"&gt;&lt;code&gt;*Into&lt;/code&gt;&lt;/th&gt;
+&lt;th style="text-align: right"&gt;NumPy&lt;/th&gt;
+&lt;th style="text-align: center"&gt;Workspace vs NumPy&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;Add&lt;/td&gt;
+&lt;td style="text-align: right"&gt;1 024&lt;/td&gt;
+&lt;td style="text-align: right"&gt;2.6 µs&lt;/td&gt;
+&lt;td style="text-align: right"&gt;&lt;strong&gt;0.38 µs&lt;/strong&gt;&lt;/td&gt;
+&lt;td style="text-align: right"&gt;0.31 µs&lt;/td&gt;
+&lt;td style="text-align: right"&gt;0.82 µs&lt;/td&gt;
+&lt;td style="text-align: center"&gt;2.1×&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Add&lt;/td&gt;
+&lt;td style="text-align: right"&gt;16 Ki&lt;/td&gt;
+&lt;td style="text-align: right"&gt;35 µs&lt;/td&gt;
+&lt;td style="text-align: right"&gt;&lt;strong&gt;4.6 µs&lt;/strong&gt;&lt;/td&gt;
+&lt;td style="text-align: right"&gt;4.3 µs&lt;/td&gt;
+&lt;td style="text-align: right"&gt;5.1 µs&lt;/td&gt;
+&lt;td style="text-align: center"&gt;1.1×&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Add&lt;/td&gt;
+&lt;td style="text-align: right"&gt;256 Ki&lt;/td&gt;
+&lt;td style="text-align: right"&gt;498 µs&lt;/td&gt;
+&lt;td style="text-align: right"&gt;&lt;strong&gt;67 µs&lt;/strong&gt;&lt;/td&gt;
+&lt;td style="text-align: right"&gt;75 µs&lt;/td&gt;
+&lt;td style="text-align: right"&gt;150 µs&lt;/td&gt;
+&lt;td style="text-align: center"&gt;2.2×&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Add&lt;/td&gt;
+&lt;td style="text-align: right"&gt;4 Mi&lt;/td&gt;
+&lt;td style="text-align: right"&gt;8.0 ms&lt;/td&gt;
+&lt;td style="text-align: right"&gt;&lt;strong&gt;2.2 ms&lt;/strong&gt;&lt;/td&gt;
+&lt;td style="text-align: right"&gt;2.2 ms&lt;/td&gt;
+&lt;td style="text-align: right"&gt;6.3 ms&lt;/td&gt;
+&lt;td style="text-align: center"&gt;2.9×&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;sqrt(x·y+x)&lt;/td&gt;
+&lt;td style="text-align: right"&gt;1 024&lt;/td&gt;
+&lt;td style="text-align: right"&gt;12.2 µs&lt;/td&gt;
+&lt;td style="text-align: right"&gt;&lt;strong&gt;2.6 µs&lt;/strong&gt;&lt;/td&gt;
+&lt;td style="text-align: right"&gt;—&lt;/td&gt;
+&lt;td style="text-align: right"&gt;3.6 µs&lt;/td&gt;
+&lt;td style="text-align: center"&gt;1.4×&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;sqrt(x·y+x)&lt;/td&gt;
+&lt;td style="text-align: right"&gt;16 Ki&lt;/td&gt;
+&lt;td style="text-align: right"&gt;112 µs&lt;/td&gt;
+&lt;td style="text-align: right"&gt;&lt;strong&gt;33 µs&lt;/strong&gt;&lt;/td&gt;
+&lt;td style="text-align: right"&gt;—&lt;/td&gt;
+&lt;td style="text-align: right"&gt;34 µs&lt;/td&gt;
+&lt;td style="text-align: center"&gt;1.0×&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;sqrt(x·y+x)&lt;/td&gt;
+&lt;td style="text-align: right"&gt;256 Ki&lt;/td&gt;
+&lt;td style="text-align: right"&gt;1.18 ms&lt;/td&gt;
+&lt;td style="text-align: right"&gt;&lt;strong&gt;0.39 ms&lt;/strong&gt;&lt;/td&gt;
+&lt;td style="text-align: right"&gt;—&lt;/td&gt;
+&lt;td style="text-align: right"&gt;2.97 ms&lt;/td&gt;
+&lt;td style="text-align: center"&gt;7.5×&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;sqrt(x·y+x)&lt;/td&gt;
+&lt;td style="text-align: right"&gt;4 Mi&lt;/td&gt;
+&lt;td style="text-align: right"&gt;23.4 ms&lt;/td&gt;
+&lt;td style="text-align: right"&gt;&lt;strong&gt;9.1 ms&lt;/strong&gt;&lt;/td&gt;
+&lt;td style="text-align: right"&gt;—&lt;/td&gt;
+&lt;td style="text-align: right"&gt;19.2 ms&lt;/td&gt;
+&lt;td style="text-align: center"&gt;2.1×&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;On M4 the same chain gains ×5 at 1 024 and ×1.6 at 4 Mi. Correctness: every
+operation is checked bit for bit against its heap result, including on passes
+whose recycled memory was first filled with NaN (a site that skipped zeroing it
+needed would leak the NaN; planting that bug in the GEMM made the test fail).&lt;/p&gt;
+&lt;h2 data-hextra-search-id="amd64-on-real-hardware-2026-10-04"&gt;amd64 on real hardware (2026-10-04)&lt;span class="hx:absolute hx:-mt-20" id="amd64-on-real-hardware-2026-10-04"&gt;&lt;/span&gt;&lt;a href="#amd64-on-real-hardware-2026-10-04" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;Every figure above was taken on Apple silicon. This round measured amd64 for
+the first time, on an AMD EPYC 7773X (Zen 3, GCC Compile Farm cfarm421), with
+go-ndarray and NumPy both pinned to the same 16 cores of one NUMA node
+(&lt;code&gt;taskset -c 16-31&lt;/code&gt;; Go&amp;rsquo;s GOMAXPROCS follows the affinity mask). NumPy 2.5.3
+with its bundled OpenBLAS 0.3.34 (DYNAMIC_ARCH, Haswell kernels on Zen 3),
+once with &lt;code&gt;OPENBLAS_NUM_THREADS=1&lt;/code&gt; and once with 16. go rows are the minimum
+of three runs interleaved with the previous version, so drift on a shared host
+hits both alike.&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;op&lt;/th&gt;
+&lt;th style="text-align: right"&gt;before&lt;/th&gt;
+&lt;th style="text-align: right"&gt;after&lt;/th&gt;
+&lt;th style="text-align: center"&gt;gain&lt;/th&gt;
+&lt;th style="text-align: center"&gt;vs OpenBLAS 1 thread&lt;/th&gt;
+&lt;th style="text-align: center"&gt;vs OpenBLAS 16 threads&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;MatMul 1024²&lt;/td&gt;
+&lt;td style="text-align: right"&gt;21.87 ms&lt;/td&gt;
+&lt;td style="text-align: right"&gt;&lt;strong&gt;8.05 ms&lt;/strong&gt;&lt;/td&gt;
+&lt;td style="text-align: center"&gt;×2.72&lt;/td&gt;
+&lt;td style="text-align: center"&gt;5.93×&lt;/td&gt;
+&lt;td style="text-align: center"&gt;0.60×&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;MatMul 512²&lt;/td&gt;
+&lt;td style="text-align: right"&gt;3.69 ms&lt;/td&gt;
+&lt;td style="text-align: right"&gt;1.56 ms&lt;/td&gt;
+&lt;td style="text-align: center"&gt;×2.36&lt;/td&gt;
+&lt;td style="text-align: center"&gt;3.89×&lt;/td&gt;
+&lt;td style="text-align: center"&gt;0.66×&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;MatMul 256²&lt;/td&gt;
+&lt;td style="text-align: right"&gt;0.661 ms&lt;/td&gt;
+&lt;td style="text-align: right"&gt;0.558 ms&lt;/td&gt;
+&lt;td style="text-align: center"&gt;×1.19&lt;/td&gt;
+&lt;td style="text-align: center"&gt;1.36×&lt;/td&gt;
+&lt;td style="text-align: center"&gt;0.30×&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;MatMul 128²&lt;/td&gt;
+&lt;td style="text-align: right"&gt;0.210 ms&lt;/td&gt;
+&lt;td style="text-align: right"&gt;0.141 ms&lt;/td&gt;
+&lt;td style="text-align: center"&gt;×1.49&lt;/td&gt;
+&lt;td style="text-align: center"&gt;0.73×&lt;/td&gt;
+&lt;td style="text-align: center"&gt;0.36×&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;MatMul 1024×256·256×1024&lt;/td&gt;
+&lt;td style="text-align: right"&gt;5.72 ms&lt;/td&gt;
+&lt;td style="text-align: right"&gt;2.71 ms&lt;/td&gt;
+&lt;td style="text-align: center"&gt;×2.11&lt;/td&gt;
+&lt;td style="text-align: center"&gt;4.55×&lt;/td&gt;
+&lt;td style="text-align: center"&gt;0.54×&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Inner 512² (a·bᵀ)&lt;/td&gt;
+&lt;td style="text-align: right"&gt;5.87 ms&lt;/td&gt;
+&lt;td style="text-align: right"&gt;&lt;strong&gt;1.47 ms&lt;/strong&gt;&lt;/td&gt;
+&lt;td style="text-align: center"&gt;×4.00&lt;/td&gt;
+&lt;td style="text-align: center"&gt;4.19×&lt;/td&gt;
+&lt;td style="text-align: center"&gt;&lt;strong&gt;0.96×&lt;/strong&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;Four changes, each measured on its own before the next:&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;AVX2/FMA 6×8 micro-kernel&lt;/strong&gt; (the BLIS Haswell shape). In L1 it runs at
+43 GFLOP/s on one Cascade Lake core (16 flops per cycle at about 2.7 GHz,
+if the virtual machine&amp;rsquo;s unknown clock is near that); the SSE2 4×4 it
+replaces had no FMA and half the vector width.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Edge tiles through the micro-kernel.&lt;/strong&gt; With MR=6, every 256-row MC block
+ends in a 4-row edge panel, and the scalar edge loop took &lt;strong&gt;40%&lt;/strong&gt; of one
+profile covering serial 64² and 512² products. A partial tile now runs the
+kernel into a scratch tile.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Prefetch&lt;/strong&gt; of the C tile at kernel entry and of the A panel eight steps
+ahead: serial 768² went from 27.5 to 34.7 GFLOP/s (+26%). 90% of the time was
+already in the kernel, which ran at 28 GFLOP/s there against 43 with its
+panels in L1, so it was waiting on memory. A sweep of MC (48–252) and KC
+(128–512) moved nothing (±3%), so the blocking is unchanged.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;B packed by all workers.&lt;/strong&gt; MatMulP packs the shared B block once per
+(jc, pc) round, and one goroutine did it while the others waited: +30–70%
+in parallel. Below 64 Ki elements the launch costs more than the copy (M4:
+−8–15% at 96³–128²), so small blocks are still packed by one.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;&lt;code&gt;Inner&lt;/code&gt; gained the most because it used to materialise bᵀ before multiplying.
+The GEMM now reads any 2-D view through its strides while packing (the copy it
+makes anyway), so a transposed, sliced, reversed or broadcast operand costs no
+extra pass.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Still behind OpenBLAS with 16 threads&lt;/strong&gt; (0.54–0.66× on large products, 0.3×
+below 256²). Where the parallel loss is, measured on the Zen 3:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;It is not the hardware: 16 &lt;em&gt;independent&lt;/em&gt; serial 512² GEMMs, one per core,
+each ran at 41 GFLOP/s (656 in total), while the parallel 1024² GEMM ran its
+kernel at 15–17 GFLOP/s per core. Per-core efficiency already drops from 40
+to ~30 GFLOP/s at 2 cores.&lt;/li&gt;
+&lt;li&gt;&lt;del&gt;It is not scheduling overhead: 83% of the parallel profile is the
+micro-kernel itself, so the kernel runs slower when cores share work.&lt;/del&gt;
+&lt;strong&gt;Wrong, corrected the same day:&lt;/strong&gt; a profile of cycles samples only the cores
+that run, never the ones that wait. &lt;code&gt;perf stat&lt;/code&gt; shows 7.1 of 16 CPUs busy
+during a 1024² product: the loss was mostly waiting, and the fix is in
+&lt;a href="#parallel-gemm-start-once-wait-on-work-2026-10-04"&gt;Parallel GEMM: start once, wait on work&lt;/a&gt;.
+Why the kernel itself also runs slower in parallel is still &lt;strong&gt;not established&lt;/strong&gt;. The shared packed B panel is the suspect (on this part
+the last-level cache is split between core complexes, so the panel is partly
+remote), but the drop already shows at 2 cores of one complex, which that
+explanation does not cover.&lt;/li&gt;
+&lt;li&gt;Taller row bands (more reuse of each B micro-panel) do not help: interleaved
+over 5 runs they were worse at 1024² and equal at 2048².&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;A 2-D tiling of C with private packing&lt;/strong&gt; (no barrier, nothing shared) was
+built and measured, and is &lt;strong&gt;not shipped&lt;/strong&gt;: ×1.24 at 1024² on the Zen 3, but
+×0.62 at 512² and Inner, and ×0.70–0.93 at every size on M4, whose cluster
+L2 holds the shared panel well. A tile repacks (rows + cols)·k elements for
+rows·cols·k multiply-adds, and a strided pack costs far more per element than
+an FMA, so tiles under ~256×256 lose.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;The hardware counters were read the same day; see the next-but-one
+section. An AVX-512 kernel for the hosts that have it remains open.&lt;/p&gt;
+&lt;p&gt;Correctness was checked on real hardware for five of the six 64-bit targets:
+amd64 (Zen 3, FMA path), arm64 (cfarm185), ppc64le (cfarm120), riscv64 (cfarm94)
+and loong64 (cfarm401). The s390x host (LinuxONE) did not answer; s390x stays
+covered by the qemu lane in CI.&lt;/p&gt;
+&lt;h2 data-hextra-search-id="axis-reductions-2026-10-04"&gt;Axis reductions (2026-10-04)&lt;span class="hx:absolute hx:-mt-20" id="axis-reductions-2026-10-04"&gt;&lt;/span&gt;&lt;a href="#axis-reductions-2026-10-04" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;On the Zen 3 the axis reductions of a 1024×1024 matrix lost to NumPy 0.23–0.43×.
+Two causes, both measured:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;An axis-0 reduction ran on one core.&lt;/strong&gt; It has a single outer slab, and the
+driver only split outer slabs; the comment justifying that said a column split
+would need a strided gather. It does not: a band of columns is a contiguous run
+of every row. &lt;code&gt;RunAxisP&lt;/code&gt; now splits the columns into bands of at least 512
+when there are fewer slabs than workers, and each row run is added with the
+elementwise SIMD kernel (exact per element, so the sum is still in axis order).&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;A row reduction (axis 1, &lt;code&gt;inner&lt;/code&gt; = 1) was a sequential scalar loop&lt;/strong&gt;,
+latency-bound at one add per 4 cycles. Each row now goes through the SIMD
+sum/max/min. Max and min are exact; the sum is regrouped lane-parallel, as
+NumPy&amp;rsquo;s own pairwise sum is.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Zen 3, 16 cores pinned, minimum of three interleaved runs:&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;op (1024×1024)&lt;/th&gt;
+&lt;th style="text-align: right"&gt;before&lt;/th&gt;
+&lt;th style="text-align: right"&gt;after&lt;/th&gt;
+&lt;th style="text-align: right"&gt;NumPy 1 thread&lt;/th&gt;
+&lt;th style="text-align: center"&gt;after vs NumPy&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;SumAxis(0)&lt;/td&gt;
+&lt;td style="text-align: right"&gt;696 µs&lt;/td&gt;
+&lt;td style="text-align: right"&gt;&lt;strong&gt;186 µs&lt;/strong&gt;&lt;/td&gt;
+&lt;td style="text-align: right"&gt;180 µs&lt;/td&gt;
+&lt;td style="text-align: center"&gt;0.97×&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;SumAxis(1)&lt;/td&gt;
+&lt;td style="text-align: right"&gt;531 µs&lt;/td&gt;
+&lt;td style="text-align: right"&gt;&lt;strong&gt;92 µs&lt;/strong&gt;&lt;/td&gt;
+&lt;td style="text-align: right"&gt;224 µs&lt;/td&gt;
+&lt;td style="text-align: center"&gt;2.4×&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;MaxAxis(1)&lt;/td&gt;
+&lt;td style="text-align: right"&gt;601 µs&lt;/td&gt;
+&lt;td style="text-align: right"&gt;&lt;strong&gt;93 µs&lt;/strong&gt;&lt;/td&gt;
+&lt;td style="text-align: right"&gt;189 µs&lt;/td&gt;
+&lt;td style="text-align: center"&gt;2.0×&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;On M4: MaxAxis(1) ×6–8, SumAxis(0) ×1.9.&lt;/p&gt;
+&lt;h2 data-hextra-search-id="broadcasting-a-row-without-materialising-it-2026-10-04"&gt;Broadcasting a row without materialising it (2026-10-04)&lt;span class="hx:absolute hx:-mt-20" id="broadcasting-a-row-without-materialising-it-2026-10-04"&gt;&lt;/span&gt;&lt;a href="#broadcasting-a-row-without-materialising-it-2026-10-04" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;&lt;code&gt;M + row&lt;/code&gt; (1024×1024 plus 1×1024) lost to NumPy 0.26× on the Zen 3 even with a
+&lt;code&gt;Workspace&lt;/code&gt;: the broadcast path copied the row out to a full 8 MiB matrix
+before adding. When one operand has the full shape and the other, leading 1s
+dropped, is a suffix of it (a row, a 2-D mean subtracted from a 3-D stack), the
+second simply repeats in blocks of its own length, so &lt;code&gt;binOp&lt;/code&gt; now streams the
+live slices block by block through the SIMD kernel (&lt;code&gt;kernels.RepeatP&lt;/code&gt;), split
+across cores. Below 64 elements per block the old path is kept.&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;BroadcastAdd 1024²+row, Zen 3&lt;/th&gt;
+&lt;th style="text-align: right"&gt;heap&lt;/th&gt;
+&lt;th style="text-align: right"&gt;&lt;code&gt;Workspace&lt;/code&gt;&lt;/th&gt;
+&lt;th style="text-align: right"&gt;NumPy 1 thread&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;before&lt;/td&gt;
+&lt;td style="text-align: right"&gt;3.1 ms&lt;/td&gt;
+&lt;td style="text-align: right"&gt;1.76 ms&lt;/td&gt;
+&lt;td style="text-align: right"&gt;460 µs&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;after&lt;/td&gt;
+&lt;td style="text-align: right"&gt;&lt;strong&gt;0.84 ms&lt;/strong&gt;&lt;/td&gt;
+&lt;td style="text-align: right"&gt;&lt;strong&gt;114–196 µs&lt;/strong&gt;&lt;/td&gt;
+&lt;td style="text-align: right"&gt;460 µs&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;h2 data-hextra-search-id="exp-2026-10-04"&gt;Exp (2026-10-04)&lt;span class="hx:absolute hx:-mt-20" id="exp-2026-10-04"&gt;&lt;/span&gt;&lt;a href="#exp-2026-10-04" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;&lt;code&gt;Exp&lt;/code&gt; went through &lt;code&gt;Map(math.Exp)&lt;/code&gt;, and &lt;code&gt;math.Exp&lt;/code&gt; itself was the cost: 13.2 ns
+per element on one Zen 3 core, 3.9 ns on M4 (the func-pointer call added only
+15–20%). It is now a port of the double-precision exp of Arm&amp;rsquo;s
+optimized-routines (Szabolcs Nagy; glibc&amp;rsquo;s exp since 2.28; MIT licence): x =
+k·ln2/128 + r, 2^(k/128) from a 128-entry table as scale·(1+tail), exp(r)−1 from
+a degree-5 polynomial. The common case is written out in the loop, because the
+function is too large to inline and a call per element cost a third of the
+time.&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Accuracy:&lt;/strong&gt; worst 0.504 ULP over 80 000 inputs across the whole finite
+range, the region near 0, the overflow edge and the subnormal range,
+measured against a 300-bit reference (&lt;code&gt;math/big&lt;/code&gt;, ln 2 from its atanh
+series), against Arm&amp;rsquo;s documented 0.509; the committed test samples 20 000
+of them and finds 0.501. &lt;code&gt;math.Exp&lt;/code&gt; measured 0.879 ULP on the 80 000 inputs
+on arm64 (0.841 on the test&amp;rsquo;s 20 000). The table was not trusted as copied:
+&lt;code&gt;TestExpTable&lt;/code&gt; re-derives all 256 entries from 2^(k/128) at 300 bits.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;A Go bug it removes&lt;/strong&gt;, reported as
+&lt;a href="https://github.com/golang/go/issues/81995" target="_blank" rel="noopener"&gt;golang/go#81995&lt;/a&gt;: on amd64,
+&lt;code&gt;math.Exp&lt;/code&gt; returns &lt;strong&gt;+Inf for 709.436139303104 ≤ x &amp;lt; 709.782712893384&lt;/strong&gt;,
+although the result is finite there (NumPy, glibc and mpmath:
+&lt;code&gt;exp(709.5)&lt;/code&gt; = 1.3549863193146328e+308). Its assembly rounds k = x·log2(e) to
+1024 from x = 1023.5·ln 2, and the biased-exponent check treats that as
+overflow although the reduced factor is below 1. Reproduced with Go 1.26.8 and
+1.27.1 on AMD Zen 3, Intel Cascade Lake and Intel Haswell, with and without
+the FMA path; the assembly is unchanged on master. go-ndarray&amp;rsquo;s &lt;code&gt;Exp&lt;/code&gt;
+inherited it until v0.2.0; &lt;code&gt;TestExpTopOfRange&lt;/code&gt; pins the fix.&lt;/li&gt;
+&lt;li&gt;Just above ln(2^-1075), exp rounds up to the smallest subnormal, as glibc
+and NumPy do. Go&amp;rsquo;s arm64 &lt;code&gt;math.Exp&lt;/code&gt; returns 0 there (amd64 does not); that is
+one unit of the last subnormal place, not a contract violation.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Speed, kernel only, 16 Ki elements: M4 30 µs (&lt;code&gt;math.Exp&lt;/code&gt; 65 µs); one Zen 3 core
+62 µs (&lt;code&gt;math.Exp&lt;/code&gt; 215 µs, NumPy single-threaded 78 µs). Whole &lt;code&gt;Exp&lt;/code&gt; on Zen 3,
+16 cores: 1 Ki ×2.7, 16 Ki ×3, 256 Ki ×1.6, 4 Mi ×1.65; from 256 Ki on it is
+2–5× NumPy. A SIMD version (AVX2 gathers for the table) is the next step.&lt;/p&gt;
+&lt;h2 data-hextra-search-id="dot-and-matvec-2026-10-04"&gt;Dot and mat·vec (2026-10-04)&lt;span class="hx:absolute hx:-mt-20" id="dot-and-matvec-2026-10-04"&gt;&lt;/span&gt;&lt;a href="#dot-and-matvec-2026-10-04" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;&lt;code&gt;dotRange&lt;/code&gt;, under &lt;code&gt;Dot&lt;/code&gt; (1-D), &lt;code&gt;MatVec&lt;/code&gt; and &lt;code&gt;Dot1DP&lt;/code&gt;, was a four-chain scalar
+loop (gc does not vectorise it): on one Zen 3 core 2^20 elements took 464 µs,
+2× NumPy&amp;rsquo;s single thread. Two generated kernels replace it: &lt;code&gt;dotFMA&lt;/code&gt; on amd64
+(four YMM accumulators, b read straight from memory by VFMADD231PD; two loads
+per FMA make it load-bound, which four chains cover), gated on the FMA probe,
+and &lt;code&gt;dotNEON&lt;/code&gt; on arm64 (eight D2 accumulators for the four FP pipes of an Apple
+core). The other targets keep &lt;code&gt;dotRange&lt;/code&gt;. The lane-parallel sum is a regrouping,
+held to the n·ε·Σ|aᵢbᵢ| bound and exact on integer data.&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;Zen 3&lt;/th&gt;
+&lt;th style="text-align: right"&gt;before&lt;/th&gt;
+&lt;th style="text-align: right"&gt;after&lt;/th&gt;
+&lt;th style="text-align: right"&gt;NumPy 1 thread&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;Dot 2^20, 1 core&lt;/td&gt;
+&lt;td style="text-align: right"&gt;464 µs&lt;/td&gt;
+&lt;td style="text-align: right"&gt;&lt;strong&gt;229 µs&lt;/strong&gt;&lt;/td&gt;
+&lt;td style="text-align: right"&gt;231 µs&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;MatVec 1024², 1 core&lt;/td&gt;
+&lt;td style="text-align: right"&gt;482 µs&lt;/td&gt;
+&lt;td style="text-align: right"&gt;&lt;strong&gt;134 µs&lt;/strong&gt;&lt;/td&gt;
+&lt;td style="text-align: right"&gt;153 µs&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Dot 2^20, 16 cores&lt;/td&gt;
+&lt;td style="text-align: right"&gt;159 µs&lt;/td&gt;
+&lt;td style="text-align: right"&gt;99 µs&lt;/td&gt;
+&lt;td style="text-align: right"&gt;—&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;MatVec 1024², 16 cores&lt;/td&gt;
+&lt;td style="text-align: right"&gt;165 µs&lt;/td&gt;
+&lt;td style="text-align: right"&gt;89 µs&lt;/td&gt;
+&lt;td style="text-align: right"&gt;—&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;NumPy&amp;rsquo;s multi-threaded dot still wins on this part (24 µs). The go-ndarray
+version stops scaling at about 90 GB/s from 4 cores on. &lt;del&gt;A likely cause, not
+verified, is cache affinity: OpenMP keeps each thread on one core, so it
+rereads its own chunk from its own L3 slice on every repetition, while
+goroutines move between core complexes.&lt;/del&gt;&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Measured 2026-10-07 (POWER9 bare metal, cfarm29, one thread per core):&lt;/strong&gt;
+the cache-affinity guess does not hold. The pattern is the fork/join of
+&lt;code&gt;parallelFor&lt;/code&gt;, the same as the GEMM&amp;rsquo;s (see &lt;em&gt;Parallel GEMM: start once, wait on
+work&lt;/em&gt;). A 2^20 dot took 212 µs on 4 cores and 553 µs on 8, close to the 688 µs
+of one core. With 8 workers, only 2.4 CPUs were busy (&lt;code&gt;perf stat&lt;/code&gt;). Three
+replacements for &lt;code&gt;parallelFor&lt;/code&gt; were built and measured against it
+(8–10 interleaved rounds); &lt;strong&gt;none is shipped&lt;/strong&gt;:&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;scheduler&lt;/th&gt;
+&lt;th&gt;8 workers&lt;/th&gt;
+&lt;th&gt;4 workers&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;shared queue of 4w blocks, caller works&lt;/td&gt;
+&lt;td&gt;Dot 1.55×, MatVec 2.0×, SumAxis(1) 2.0×&lt;/td&gt;
+&lt;td&gt;Sum 4 Mi 0.51×, Dot 0.55×&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;owned runs (the static chunks) + stealing, caller works&lt;/td&gt;
+&lt;td&gt;Dot 2.18×, MatVec 2.0×&lt;/td&gt;
+&lt;td&gt;Sum 4 Mi 0.63×, Dot 0.68×&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;owned runs + stealing, caller blocks, last block wakes it&lt;/td&gt;
+&lt;td&gt;mostly 1.0–1.4×, Exp 1.87×&lt;/td&gt;
+&lt;td&gt;Sum and AddInto at 256 Ki 0.51–0.55×&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;The second row keeps exactly the static chunks of the original and still
+loses at 4 workers, so affinity is not the cause. &lt;code&gt;perf stat&lt;/code&gt; places the loss
+in scheduling instead: with the caller working, 2.1 of 4 CPUs were busy
+against 3.4 for the original. Its goroutines wait in the run queue of the
+caller&amp;rsquo;s processor until another one is woken to steal them. With the caller
+blocking, the 4-worker case recovers, but the 8-worker gains go with it. The
+code is on the &lt;code&gt;experiment/parallel-for-scheduling&lt;/code&gt; branch.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Solved in v0.6.0 with a persistent helper pool.&lt;/strong&gt; The cost being paid was
+waking threads, so the fix is to stop putting them to sleep between back-to-back
+operations, as OpenBLAS and OpenMP do. Up to &lt;code&gt;GOMAXPROCS-1&lt;/code&gt; helper goroutines
+are started once. After an operation they poll for the next one for 200 µs,
+then park. The work keeps owned runs with stealing (row two of the table
+above). Reductions now use four partials per worker: with one each, a helper
+that saw the job late had its only block taken by the caller, who then summed
+two in a row (Sum of 4 Mi on 4 cores: 2.8 of 4 CPUs busy). On POWER9 bare metal,
+each case in a &lt;strong&gt;fresh process&lt;/strong&gt;, 6 interleaved rounds, against v0.5.2
+(median):&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;&lt;/th&gt;
+&lt;th&gt;2 workers&lt;/th&gt;
+&lt;th&gt;4 workers&lt;/th&gt;
+&lt;th&gt;8 workers&lt;/th&gt;
+&lt;th&gt;8 workers, before → after&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;Dot 2^20&lt;/td&gt;
+&lt;td&gt;3.29×&lt;/td&gt;
+&lt;td&gt;2.41×&lt;/td&gt;
+&lt;td&gt;&lt;strong&gt;10.8×&lt;/strong&gt;&lt;/td&gt;
+&lt;td&gt;625 → 58 µs&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;MatVec 1024²&lt;/td&gt;
+&lt;td&gt;2.01×&lt;/td&gt;
+&lt;td&gt;1.65×&lt;/td&gt;
+&lt;td&gt;5.78×&lt;/td&gt;
+&lt;td&gt;323 → 56 µs&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;SumAxis(1)&lt;/td&gt;
+&lt;td&gt;2.06×&lt;/td&gt;
+&lt;td&gt;1.80×&lt;/td&gt;
+&lt;td&gt;7.09×&lt;/td&gt;
+&lt;td&gt;310 → 44 µs&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Sum 256 Ki&lt;/td&gt;
+&lt;td&gt;2.33×&lt;/td&gt;
+&lt;td&gt;3.23×&lt;/td&gt;
+&lt;td&gt;5.60×&lt;/td&gt;
+&lt;td&gt;61 → 11 µs&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Max 256 Ki&lt;/td&gt;
+&lt;td&gt;1.75×&lt;/td&gt;
+&lt;td&gt;1.34×&lt;/td&gt;
+&lt;td&gt;6.78×&lt;/td&gt;
+&lt;td&gt;757 → 112 µs&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;AddInto 256 Ki&lt;/td&gt;
+&lt;td&gt;2.22×&lt;/td&gt;
+&lt;td&gt;1.91×&lt;/td&gt;
+&lt;td&gt;5.57×&lt;/td&gt;
+&lt;td&gt;102 → 18 µs&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Exp 256 Ki&lt;/td&gt;
+&lt;td&gt;1.18×&lt;/td&gt;
+&lt;td&gt;1.49×&lt;/td&gt;
+&lt;td&gt;1.97×&lt;/td&gt;
+&lt;td&gt;1013 → 513 µs&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Sum 4 Mi&lt;/td&gt;
+&lt;td&gt;1.33×&lt;/td&gt;
+&lt;td&gt;1.17×&lt;/td&gt;
+&lt;td&gt;1.41×&lt;/td&gt;
+&lt;td&gt;431 → 305 µs&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Exp 4 Mi&lt;/td&gt;
+&lt;td&gt;1.00×&lt;/td&gt;
+&lt;td&gt;1.10× (p25 0.84×)&lt;/td&gt;
+&lt;td&gt;1.29×&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;BroadcastAdd&lt;/td&gt;
+&lt;td&gt;0.95×&lt;/td&gt;
+&lt;td&gt;1.01×&lt;/td&gt;
+&lt;td&gt;1.67×&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Chain (Mul, Add, Sqrt) 4 Mi&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;0.91×&lt;/td&gt;
+&lt;td&gt;1.04×&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;MatMul 256², 512² (own driver)&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;1.00×&lt;/td&gt;
+&lt;td&gt;0.96–0.99×&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;A first combined run, with every benchmark in one process, also showed serial
+operations speeding up (Sqrt of 1 Ki, 1.5–2.2×). Run alone, those are equal.
+That gain belonged to whatever state the earlier benchmarks had left, not to
+this change, so only fresh-process figures are reported here. The cost: after
+an operation, the helpers spend up to 200 µs of CPU polling. They are never
+stopped (see the README, &lt;em&gt;Goroutines&lt;/em&gt;).&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Zen 3 (cfarm421, back up on 2026-10-07)&lt;/strong&gt;, each case in a fresh process,
+6 interleaved rounds, v0.6.1 against v0.5.2 (median):&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;&lt;/th&gt;
+&lt;th&gt;2 workers&lt;/th&gt;
+&lt;th&gt;8 workers&lt;/th&gt;
+&lt;th&gt;16 workers&lt;/th&gt;
+&lt;th&gt;16: before → after&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;Dot 2^20&lt;/td&gt;
+&lt;td&gt;1.24×&lt;/td&gt;
+&lt;td&gt;2.06×&lt;/td&gt;
+&lt;td&gt;2.08×&lt;/td&gt;
+&lt;td&gt;120 → 57 µs&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;MatVec 1024²&lt;/td&gt;
+&lt;td&gt;1.41×&lt;/td&gt;
+&lt;td&gt;2.26×&lt;/td&gt;
+&lt;td&gt;1.92×&lt;/td&gt;
+&lt;td&gt;94 → 49 µs&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Sum 256 Ki&lt;/td&gt;
+&lt;td&gt;1.61×&lt;/td&gt;
+&lt;td&gt;2.12×&lt;/td&gt;
+&lt;td&gt;2.31×&lt;/td&gt;
+&lt;td&gt;37 → 16 µs&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Sum 4 Mi&lt;/td&gt;
+&lt;td&gt;1.10×&lt;/td&gt;
+&lt;td&gt;1.95×&lt;/td&gt;
+&lt;td&gt;2.07×&lt;/td&gt;
+&lt;td&gt;184 → 89 µs&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Max 256 Ki&lt;/td&gt;
+&lt;td&gt;1.47×&lt;/td&gt;
+&lt;td&gt;2.38×&lt;/td&gt;
+&lt;td&gt;2.36×&lt;/td&gt;
+&lt;td&gt;41 → 18 µs&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;SumAxis(1)&lt;/td&gt;
+&lt;td&gt;1.25×&lt;/td&gt;
+&lt;td&gt;2.20×&lt;/td&gt;
+&lt;td&gt;1.63×&lt;/td&gt;
+&lt;td&gt;93 → 57 µs&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;AddInto 256 Ki&lt;/td&gt;
+&lt;td&gt;1.39×&lt;/td&gt;
+&lt;td&gt;1.22×&lt;/td&gt;
+&lt;td&gt;1.29×&lt;/td&gt;
+&lt;td&gt;74 → 57 µs&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Exp 256 Ki&lt;/td&gt;
+&lt;td&gt;1.05×&lt;/td&gt;
+&lt;td&gt;&lt;strong&gt;0.85×&lt;/strong&gt;&lt;/td&gt;
+&lt;td&gt;1.13×&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Exp 4 Mi&lt;/td&gt;
+&lt;td&gt;1.28×&lt;/td&gt;
+&lt;td&gt;1.09×&lt;/td&gt;
+&lt;td&gt;&lt;strong&gt;0.94×&lt;/strong&gt;&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Chain 4 Mi&lt;/td&gt;
+&lt;td&gt;1.74×&lt;/td&gt;
+&lt;td&gt;1.04×&lt;/td&gt;
+&lt;td&gt;&lt;strong&gt;0.88×&lt;/strong&gt;&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;In the same run, NumPy 2.5.3 with 16 OpenBLAS threads took 39 µs for the 2^20
+dot and 25 µs for the 1024² mat·vec, so go-ndarray is at &lt;strong&gt;0.69×&lt;/strong&gt; and &lt;strong&gt;0.52×&lt;/strong&gt;
+of it (0.16× before the pool). The losses at the top of each table are long,
+memory-bound chains, where all workers stream at once; not investigated further.
+Apple M not measured (shared machine).&lt;/p&gt;
+&lt;h2 data-hextra-search-id="log-and-log10-2026-10-04"&gt;Log and Log10 (2026-10-04)&lt;span class="hx:absolute hx:-mt-20" id="log-and-log10-2026-10-04"&gt;&lt;/span&gt;&lt;a href="#log-and-log10-2026-10-04" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;&lt;code&gt;Log&lt;/code&gt; went through &lt;code&gt;Map(math.Log)&lt;/code&gt;: 11.6 ns per element on a Zen 3 core
+against NumPy&amp;rsquo;s 4.2. It is now a port of the double-precision log of Arm&amp;rsquo;s
+optimized-routines (the companion of &lt;code&gt;Exp&lt;/code&gt;, also glibc&amp;rsquo;s since 2.28; MIT
+licence): x = 2^k·z, z split into 128 subintervals, log(x) = k·ln2 + log(c) +
+log1p(z/c − 1) with 1/c and log(c) from a table and a degree-6 polynomial;
+inputs within 2⁻⁴ of 1 take a degree-12 polynomial. z/c − 1 is one
+&lt;code&gt;math.FMA&lt;/code&gt; (exact on every target), so the second table the non-FMA variant
+needs is not used. &lt;code&gt;Log10&lt;/code&gt; is log(x)·(1/ln10), the formula of &lt;code&gt;math.Log10&lt;/code&gt;, on
+this log.&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Accuracy:&lt;/strong&gt; worst 0.508 ULP over the test&amp;rsquo;s 10 000 inputs (whole range,
+near 1, subnormals), against a 300-bit reference (log m =
+2·atanh((m−1)/(m+1))); &lt;code&gt;math.Log&lt;/code&gt; measured 0.724 on the same inputs on
+arm64. &lt;code&gt;TestLogTable&lt;/code&gt; checks each of the 128
+entries against the properties &lt;code&gt;log_data.c&lt;/code&gt; documents (1/invc inside its
+subinterval, logc = log(c) within the rounding of invc, 0x1.8p9 + logc
+exact).&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;A second Go bug it removes&lt;/strong&gt;, known since 2022 as
+&lt;a href="https://github.com/golang/go/issues/56600" target="_blank" rel="noopener"&gt;golang/go#56600&lt;/a&gt; (fix pending in
+CL 448216): on amd64, &lt;code&gt;math.Log&lt;/code&gt; is wrong for every subnormal input.
+&lt;code&gt;math.Log(5e-324)&lt;/code&gt; returns −709.09 instead of −744.44, and &lt;code&gt;math.Log(1e-310)&lt;/code&gt;
+−709.09 instead of −713.80 (NumPy, glibc: −744.44, −713.80). Its assembly
+inlines &lt;code&gt;Frexp&lt;/code&gt; with bit masks that assume a normal input. Reproduced with Go
+1.26.8 and 1.27.1 on three x86 CPUs. &lt;code&gt;Log&lt;/code&gt; and &lt;code&gt;Log10&lt;/code&gt; inherited it; &lt;code&gt;TestLogSubnormal&lt;/code&gt; pins the fix.
+(&lt;code&gt;Log2&lt;/code&gt; already normalised through &lt;code&gt;math.Frexp&lt;/code&gt; and was right.)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Speed, 16 Ki elements, one core: M4 37 µs (&lt;code&gt;math.Log&lt;/code&gt; 72), Zen 3 73 µs
+(&lt;code&gt;math.Log&lt;/code&gt; 175, NumPy 69).&lt;/p&gt;
+&lt;h2 data-hextra-search-id="ppc64le-vsx-kernels-2026-10-04"&gt;ppc64le: VSX kernels (2026-10-04)&lt;span class="hx:absolute hx:-mt-20" id="ppc64le-vsx-kernels-2026-10-04"&gt;&lt;/span&gt;&lt;a href="#ppc64le-vsx-kernels-2026-10-04" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;Go&amp;rsquo;s ppc64 assembler has the VSX loads, stores and permutes but no vector
+double arithmetic, so ppc64le ran the scalar code. go-asmgen v0.13.0 encodes
+&lt;code&gt;xvadddp&lt;/code&gt;, &lt;code&gt;xvsubdp&lt;/code&gt;, &lt;code&gt;xvmuldp&lt;/code&gt;, &lt;code&gt;xvdivdp&lt;/code&gt;, &lt;code&gt;xvmaddadp&lt;/code&gt;, &lt;code&gt;xvmaxdp&lt;/code&gt;, &lt;code&gt;xvmindp&lt;/code&gt;
+and &lt;code&gt;xvsqrtdp&lt;/code&gt; as &lt;code&gt;WORD&lt;/code&gt;s, pinned against GNU as 2.44 and run bit-identical to
+Go&amp;rsquo;s arithmetic and &lt;code&gt;math.FMA&lt;/code&gt; on POWER8 and POWER9. With them, go-ndarray has
+VSX kernels for sum, dot, sqrt, add/sub/mul/div and the GEMM.&lt;/p&gt;
+&lt;p&gt;The GEMM micro-kernel (8×8, 32 accumulators) follows OpenBLAS&amp;rsquo;s POWER9 dgemm:
+no splats. Each A pair and its swap multiply each B column pair, so one
+accumulator holds a diagonal (C[r][c], C[r+1][c+1]) and another the
+anti-diagonal; the store rebuilds the rows with &lt;code&gt;xxpermdi&lt;/code&gt;. On one POWER9 core,
+measured in one binary: 13.3 GFLOP/s with &lt;code&gt;lxvdsx&lt;/code&gt; splats, 14.8 with &lt;code&gt;xxpermdi&lt;/code&gt;
+splats, 15.4 with those unrolled by two, &lt;strong&gt;16.9&lt;/strong&gt; with the diagonal scheme
+unrolled by two (shipped).&lt;/p&gt;
+&lt;p&gt;POWER9 (cfarm29, 8 cores × SMT4), against the scalar code (best of 3–4
+interleaved runs):&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;op&lt;/th&gt;
+&lt;th style="text-align: right"&gt;before&lt;/th&gt;
+&lt;th style="text-align: right"&gt;after&lt;/th&gt;
+&lt;th style="text-align: center"&gt;gain&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;micro-kernel, 1 core&lt;/td&gt;
+&lt;td style="text-align: right"&gt;8.3 GFLOP/s&lt;/td&gt;
+&lt;td style="text-align: right"&gt;16.2 GFLOP/s&lt;/td&gt;
+&lt;td style="text-align: center"&gt;×1.96&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;serial GEMM 512², 1 core&lt;/td&gt;
+&lt;td style="text-align: right"&gt;7.9 GFLOP/s&lt;/td&gt;
+&lt;td style="text-align: right"&gt;15.8 GFLOP/s&lt;/td&gt;
+&lt;td style="text-align: center"&gt;×2.0&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;MatMul 1024², 32 threads&lt;/td&gt;
+&lt;td style="text-align: right"&gt;39.2 ms&lt;/td&gt;
+&lt;td style="text-align: right"&gt;23.6 ms&lt;/td&gt;
+&lt;td style="text-align: center"&gt;×1.66&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;MatMul 128² / 512²&lt;/td&gt;
+&lt;td style="text-align: right"&gt;&lt;/td&gt;
+&lt;td style="text-align: right"&gt;&lt;/td&gt;
+&lt;td style="text-align: center"&gt;×1.8 / ×1.5&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;MatVec 1024²&lt;/td&gt;
+&lt;td style="text-align: right"&gt;823 µs&lt;/td&gt;
+&lt;td style="text-align: right"&gt;267 µs&lt;/td&gt;
+&lt;td style="text-align: center"&gt;×3.1&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Sum 1 Ki / 16 Ki / 256 Ki&lt;/td&gt;
+&lt;td style="text-align: right"&gt;&lt;/td&gt;
+&lt;td style="text-align: right"&gt;&lt;/td&gt;
+&lt;td style="text-align: center"&gt;×6.6 / ×7.3 / ×3.2&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;AddInto 1 Ki–256 Ki&lt;/td&gt;
+&lt;td style="text-align: right"&gt;&lt;/td&gt;
+&lt;td style="text-align: right"&gt;&lt;/td&gt;
+&lt;td style="text-align: center"&gt;×2.7–4.1&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Sqrt, 1 core&lt;/td&gt;
+&lt;td style="text-align: right"&gt;&lt;/td&gt;
+&lt;td style="text-align: right"&gt;&lt;/td&gt;
+&lt;td style="text-align: center"&gt;×1.05–1.18&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;At 4 Mi elements sum and add are memory-bound (×1.1). &lt;strong&gt;Against OpenBLAS&lt;/strong&gt;
+0.3.34 (its POWER9 kernel, loaded through &lt;code&gt;scipy-openblas64&lt;/code&gt; on the same host;
+the ppc64le NumPy wheel there has no BLAS): one thread 22.8 GFLOP/s at 512²,
+so the serial GEMM is at 0.69×; 32 threads 13.1 ms at 1024², so MatMul is at
+0.56×. OpenBLAS unrolls further and uses POWER9-only &lt;code&gt;lxv&lt;/code&gt; loads; Go&amp;rsquo;s ppc64le
+baseline is POWER8.&lt;/p&gt;
+&lt;h2 data-hextra-search-id="loong64-lasx-kernels-2026-10-04"&gt;loong64: LASX kernels (2026-10-04)&lt;span class="hx:absolute hx:-mt-20" id="loong64-lasx-kernels-2026-10-04"&gt;&lt;/span&gt;&lt;a href="#loong64-lasx-kernels-2026-10-04" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;Go&amp;rsquo;s loong64 assembler has LASX vector float64 add/sub/mul/div, square root,
+256-bit loads and the broadcast load (spelled as an arrangement,
+&lt;code&gt;XVMOVQ off(R), X.V4&lt;/code&gt;, which assembles to &lt;code&gt;xvldrepl.d&lt;/code&gt;), but no fused
+multiply-add; go-asmgen v0.14.0 encodes &lt;code&gt;xvfmadd.d&lt;/code&gt; as a &lt;code&gt;WORD&lt;/code&gt; (pinned
+against GNU as 2.43, bit-identical to &lt;code&gt;math.FMA&lt;/code&gt; on a Loongson 3C5000L;
+transitional until cmd/asm names it). go-ndarray uses them for sum, dot, sqrt,
+add/sub/mul/div and an 8×8 GEMM micro-kernel (16 four-lane accumulators, A
+broadcast by &lt;code&gt;xvldrepl.d&lt;/code&gt;). (v0.2.5 said Go had no broadcast load and emitted
+it as a WORD too; it has one, and v0.2.6 emits the mnemonic, the same machine
+code.) LASX is not on every LoongArch CPU, so the kernels run only when
+the kernel reports it in AT_HWCAP (&lt;code&gt;/proc/self/auxv&lt;/code&gt;), with the scalar code as
+the fallback; the parsing is a pure function tested on every target.&lt;/p&gt;
+&lt;p&gt;Loongson 3C5000L (cfarm401, 32 cores), against the scalar code, best of 3
+interleaved runs (the host&amp;rsquo;s load average of ~146 is processes stuck in
+uninterruptible sleep; its CPUs measured 100% idle):&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;op&lt;/th&gt;
+&lt;th style="text-align: right"&gt;before&lt;/th&gt;
+&lt;th style="text-align: right"&gt;after&lt;/th&gt;
+&lt;th style="text-align: center"&gt;gain&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;micro-kernel, 1 core&lt;/td&gt;
+&lt;td style="text-align: right"&gt;7.0 GFLOP/s&lt;/td&gt;
+&lt;td style="text-align: right"&gt;27.5 GFLOP/s&lt;/td&gt;
+&lt;td style="text-align: center"&gt;×3.95&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;serial GEMM 512², 1 core&lt;/td&gt;
+&lt;td style="text-align: right"&gt;5.3 GFLOP/s&lt;/td&gt;
+&lt;td style="text-align: right"&gt;20.0 GFLOP/s&lt;/td&gt;
+&lt;td style="text-align: center"&gt;×3.75&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;MatMul 64² / 512² / 1024², 32 threads&lt;/td&gt;
+&lt;td style="text-align: right"&gt;&lt;/td&gt;
+&lt;td style="text-align: right"&gt;&lt;/td&gt;
+&lt;td style="text-align: center"&gt;×1.9 / ×1.3 / ×1.1&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Sum 256 Ki / 4 Mi, 1 core&lt;/td&gt;
+&lt;td style="text-align: right"&gt;658 / 11 750 µs&lt;/td&gt;
+&lt;td style="text-align: right"&gt;65 / 4 615 µs&lt;/td&gt;
+&lt;td style="text-align: center"&gt;×10.2 / ×2.5&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Sum 1 Ki / 16 Ki (below the parallel threshold: one core)&lt;/td&gt;
+&lt;td style="text-align: right"&gt;&lt;/td&gt;
+&lt;td style="text-align: right"&gt;&lt;/td&gt;
+&lt;td style="text-align: center"&gt;×16 / ×13&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Sqrt 1 Ki–16 Ki&lt;/td&gt;
+&lt;td style="text-align: right"&gt;&lt;/td&gt;
+&lt;td style="text-align: right"&gt;&lt;/td&gt;
+&lt;td style="text-align: center"&gt;×3.8&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;MatVec 1024²&lt;/td&gt;
+&lt;td style="text-align: right"&gt;364 µs&lt;/td&gt;
+&lt;td style="text-align: right"&gt;224 µs&lt;/td&gt;
+&lt;td style="text-align: center"&gt;×1.6&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;At 4 Mi elements in parallel, sum and sqrt are memory-bound (parity); the
+parallel 4 Mi sum is bimodal on this host (1.6 ms or 7 ms in either version),
+so only the minima are compared. No NumPy or BLAS is installable there (the
+host has no route to package mirrors), so there is no external reference.&lt;/p&gt;
+&lt;h2 data-hextra-search-id="parallel-gemm-start-once-wait-on-work-2026-10-04"&gt;Parallel GEMM: start once, wait on work (2026-10-04)&lt;span class="hx:absolute hx:-mt-20" id="parallel-gemm-start-once-wait-on-work-2026-10-04"&gt;&lt;/span&gt;&lt;a href="#parallel-gemm-start-once-wait-on-work-2026-10-04" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;&lt;strong&gt;Diagnosis, from hardware counters&lt;/strong&gt; (&lt;code&gt;perf stat&lt;/code&gt;, Zen 3 guest cfarm421,
+steady state, 1024², 3 s per configuration):&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;workers&lt;/th&gt;
+&lt;th&gt;CPUs busy&lt;/th&gt;
+&lt;th&gt;IPC&lt;/th&gt;
+&lt;th&gt;instructions&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;1&lt;/td&gt;
+&lt;td&gt;1.00&lt;/td&gt;
+&lt;td&gt;3.35&lt;/td&gt;
+&lt;td&gt;37.5 G&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;2&lt;/td&gt;
+&lt;td&gt;1.91&lt;/td&gt;
+&lt;td&gt;2.00&lt;/td&gt;
+&lt;td&gt;37.6 G&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;8&lt;/td&gt;
+&lt;td&gt;5.58&lt;/td&gt;
+&lt;td&gt;2.16&lt;/td&gt;
+&lt;td&gt;172 G (192 products)&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;16&lt;/td&gt;
+&lt;td&gt;7.08&lt;/td&gt;
+&lt;td&gt;2.28&lt;/td&gt;
+&lt;td&gt;193 G (226 products)&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;The instruction count does not grow, so nobody busy-waits. L1 misses do not
+grow either. What changes is that at 16 workers the CPUs are busy only 44% of
+the time. The driver forked and joined goroutines twice per (jc, pc) block of
+the product, once to pack B and once for the row bands, 16 times in a 1024²
+product. A fork/join wakes parked threads one after another. A micro-benchmark
+on the same guest (16 goroutines, 700 µs of work each) measures its cost at
+&lt;strong&gt;26 µs with 2 workers, 165 µs with 8, 330 µs with 16&lt;/strong&gt;. 16 × 330 µs is ~40%
+of a 12.5 ms product.&lt;/p&gt;
+&lt;p&gt;Two hypotheses were tested and &lt;strong&gt;refuted&lt;/strong&gt; first:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;SMT siblings. The guest has 128 vCPUs, as many as the host has threads.
+Two serial GEMMs pinned on vCPU 16 and any other vCPU slow each other by
+0–10%, never by half.&lt;/li&gt;
+&lt;li&gt;A block of A larger than L2. With MC = 256, the A block is 512 KiB, all of
+Zen 3&amp;rsquo;s L2, against BLIS&amp;rsquo;s MC = 72. Sweeping MC over {72, 120, 144, 192, 256}
+changed nothing beyond the noise at 2 workers, and gave +17% at 16 workers
+for 1024² but −8% for 512².&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;strong&gt;The change.&lt;/strong&gt; The workers start once per product. They synchronise on
+&lt;strong&gt;work done&lt;/strong&gt;, never on workers arrived: a block&amp;rsquo;s bands start once all of its
+B panels are packed and all bands of the previous block are done, and the
+packing is shared in claims of four NR-wide panels. A first version used a
+barrier that waited for every worker, and it put the wake-up chain straight
+back on the critical path for small products: 96³ on 8 POWER9 cores ran at
+0.57×. B is double-buffered, so block i+1 is packed while block i is still
+being multiplied. Each C tile is still accumulated in pc order, so the result
+is bit-identical to the serial product. The pack buffers moved to two pools,
+one for A and one for B: a pair per worker had held 16 MiB of unused B buffers
+at 16 workers, which the collector empties and the next call zeroes again
+(&lt;code&gt;memclr&lt;/code&gt; page faults, 20% of the cycles in a KVM spinlock in one profile).&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Measured.&lt;/strong&gt; Every figure is the median of interleaved runs against the
+previous driver.&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;&lt;/th&gt;
+&lt;th&gt;2 workers&lt;/th&gt;
+&lt;th&gt;8 workers&lt;/th&gt;
+&lt;th&gt;16 workers&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;Zen 3 guest, 1024²&lt;/td&gt;
+&lt;td&gt;1.06×&lt;/td&gt;
+&lt;td&gt;1.33×&lt;/td&gt;
+&lt;td&gt;1.39×&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Zen 3 guest, 512²&lt;/td&gt;
+&lt;td&gt;1.20×&lt;/td&gt;
+&lt;td&gt;1.20×&lt;/td&gt;
+&lt;td&gt;1.33×&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Zen 3 guest, 256²&lt;/td&gt;
+&lt;td&gt;0.92×&lt;/td&gt;
+&lt;td&gt;1.19×&lt;/td&gt;
+&lt;td&gt;1.24×&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Zen 3 guest, 128²&lt;/td&gt;
+&lt;td&gt;&lt;strong&gt;0.89×&lt;/strong&gt;&lt;/td&gt;
+&lt;td&gt;1.50×&lt;/td&gt;
+&lt;td&gt;1.16×&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Zen 3 guest, (1024×256)·(256×1024)&lt;/td&gt;
+&lt;td&gt;&lt;strong&gt;0.82×&lt;/strong&gt;&lt;/td&gt;
+&lt;td&gt;1.07×&lt;/td&gt;
+&lt;td&gt;0.89× (p25 1.00×)&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;POWER9 bare metal, 512²&lt;/td&gt;
+&lt;td&gt;1.34×&lt;/td&gt;
+&lt;td&gt;1.37×&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;POWER9 bare metal, 256²&lt;/td&gt;
+&lt;td&gt;1.61×&lt;/td&gt;
+&lt;td&gt;1.78×&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;POWER9 bare metal, (1024×256)·(256×1024)&lt;/td&gt;
+&lt;td&gt;1.13×&lt;/td&gt;
+&lt;td&gt;1.18×&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;The Zen 3 runs were 12 rounds and the POWER9 runs 6, except 24 for 128² and
+256² at 8 workers. Those two are bimodal on that machine, in both drivers, and
+6 rounds had shown 256² at 0.72×. POWER9 used one thread per core (CPUs 0, 4,
+8, …).&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Still behind.&lt;/strong&gt; On the Zen 3 guest, two workers lose 8–18% on mid-size
+products, where a fork/join costs only 26 µs. Bare-metal POWER9 gains at two
+workers, so this is not a property of the scheme, and no second code path was
+added for it. Against OpenBLAS with 16 threads, measured three ways in one run:&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;n&lt;/th&gt;
+&lt;th&gt;OpenBLAS-16&lt;/th&gt;
+&lt;th&gt;previous driver&lt;/th&gt;
+&lt;th&gt;new driver&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;256&lt;/td&gt;
+&lt;td&gt;708 µs&lt;/td&gt;
+&lt;td&gt;1.06×&lt;/td&gt;
+&lt;td&gt;&lt;strong&gt;1.44×&lt;/strong&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;512&lt;/td&gt;
+&lt;td&gt;789 µs&lt;/td&gt;
+&lt;td&gt;0.29×&lt;/td&gt;
+&lt;td&gt;0.42×&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;1024&lt;/td&gt;
+&lt;td&gt;4.60 ms&lt;/td&gt;
+&lt;td&gt;0.43×&lt;/td&gt;
+&lt;td&gt;0.51×&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;(× = OpenBLAS time / ours, so higher is faster). On this guest, absolute times
+drift through the day: the previous driver measured 0.54–0.66× of OpenBLAS in
+the morning. Only ratios taken in the same run are comparable. Not measured on
+Apple M-series, whose machine was shared with other jobs at the time. The bands
+stay dynamic, so its slower efficiency cores are handled as before.&lt;/p&gt;
+&lt;h2 data-hextra-search-id="simd-coverage"&gt;SIMD coverage&lt;span class="hx:absolute hx:-mt-20" id="simd-coverage"&gt;&lt;/span&gt;&lt;a href="#simd-coverage" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;amd64 (SSE2)&lt;/strong&gt; ships hand-vectorized &lt;code&gt;sum&lt;/code&gt; (4-accumulator &lt;code&gt;ADDPD&lt;/code&gt;), &lt;code&gt;sqrt&lt;/code&gt;
+(packed &lt;code&gt;SQRTPD&lt;/code&gt;), &lt;code&gt;max&lt;/code&gt;/&lt;code&gt;min&lt;/code&gt; (&lt;code&gt;MAXPD&lt;/code&gt;/&lt;code&gt;MINPD&lt;/code&gt; + &lt;code&gt;CMPPD&lt;/code&gt; NaN scan), the
+&lt;strong&gt;elementwise &lt;code&gt;add&lt;/code&gt;/&lt;code&gt;sub&lt;/code&gt;/&lt;code&gt;mul&lt;/code&gt;/&lt;code&gt;div&lt;/code&gt;&lt;/strong&gt; (packed &lt;code&gt;ADD/SUB/MUL/DIVPD&lt;/code&gt;, 8
+doubles/iter + scalar tail), all at the GOAMD64=v1 baseline, and the &lt;strong&gt;GEMM
+micro-kernel&lt;/strong&gt;: &lt;code&gt;gemmMicro6x8FMA&lt;/code&gt; (6×8, 12 YMM accumulators, &lt;code&gt;VBROADCASTSD&lt;/code&gt; +
+&lt;code&gt;VFMADD231PD&lt;/code&gt;, C and A prefetched) when go-asmgen&amp;rsquo;s CPUID probe reports FMA
+with the OS saving YMM state, else a pair of SSE2 6×4 &lt;code&gt;MULPD&lt;/code&gt;+&lt;code&gt;ADDPD&lt;/code&gt; tiles
+over the same packing. Generated by go-asmgen and validated per-arch in CI;
+the FMA kernel on real Cascade Lake and Zen 3 hosts.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;arm64 (NEON)&lt;/strong&gt; ships hand-vectorized &lt;code&gt;sum&lt;/code&gt;, &lt;code&gt;dot&lt;/code&gt;, &lt;strong&gt;packed &lt;code&gt;sqrt&lt;/code&gt;&lt;/strong&gt;
+(&lt;code&gt;VFSQRT&lt;/code&gt;), the &lt;strong&gt;elementwise &lt;code&gt;add&lt;/code&gt;/&lt;code&gt;sub&lt;/code&gt;/&lt;code&gt;mul&lt;/code&gt;/&lt;code&gt;div&lt;/code&gt;&lt;/strong&gt; (&lt;code&gt;VFADD&lt;/code&gt;/&lt;code&gt;VFSUB&lt;/code&gt;/
+&lt;code&gt;VFMUL&lt;/code&gt;/&lt;code&gt;VFDIV&lt;/code&gt;), &lt;strong&gt;&lt;code&gt;max&lt;/code&gt;/&lt;code&gt;min&lt;/code&gt;&lt;/strong&gt; (&lt;code&gt;VFMAX&lt;/code&gt;/&lt;code&gt;VFMIN&lt;/code&gt;, four D2 accumulators from
+8 elements up) and the &lt;strong&gt;GEMM micro-kernel&lt;/strong&gt; (&lt;code&gt;gemmMicro4x8&lt;/code&gt;: a 4×8 tile, 16 D2
+accumulators, using the &lt;strong&gt;by-lane FMLA&lt;/strong&gt; &lt;code&gt;FMLA Vd.2D, Vn.2D, Vm.D[i]&lt;/code&gt;). Only
+the indexed-element FMLA is still a raw &lt;code&gt;WORD&lt;/code&gt; (16 of them): Go&amp;rsquo;s assembler
+does not name it yet (pending as CL 764224).&lt;/p&gt;
+&lt;p&gt;⚠ &lt;strong&gt;Corrected in v0.5.2.&lt;/strong&gt; Up to v0.5.1 this paragraph said Go&amp;rsquo;s arm64
+assembler had no vector &lt;code&gt;FSQRT&lt;/code&gt;, no plain vector FP add, and no vector form for
+&lt;code&gt;div&lt;/code&gt;, so &lt;code&gt;add&lt;/code&gt;/&lt;code&gt;sub&lt;/code&gt;/&lt;code&gt;mul&lt;/code&gt; went through an exact FMA against &lt;code&gt;1.0&lt;/code&gt;, &lt;code&gt;sqrt&lt;/code&gt; was
+a &lt;code&gt;WORD&lt;/code&gt;, and &lt;code&gt;div&lt;/code&gt; and &lt;code&gt;max&lt;/code&gt;/&lt;code&gt;min&lt;/code&gt; stayed scalar. Go 1.27 (the floor since
+v0.5.0) names all of them; the ISA always had them. Measured on one core,
+interleaved against v0.5.1 (8 rounds, median; &lt;code&gt;Sum&lt;/code&gt;, &lt;code&gt;SqrtInto&lt;/code&gt; and &lt;code&gt;AddInto&lt;/code&gt;,
+unchanged, measured at 1.00× as the control):&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;one core&lt;/th&gt;
+&lt;th&gt;&lt;code&gt;DivInto&lt;/code&gt;&lt;/th&gt;
+&lt;th&gt;&lt;code&gt;Max&lt;/code&gt;&lt;/th&gt;
+&lt;th&gt;&lt;code&gt;MulInto&lt;/code&gt;&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;Apple M (local)&lt;/td&gt;
+&lt;td&gt;1.34–2.19×&lt;/td&gt;
+&lt;td&gt;1.87–2.24×&lt;/td&gt;
+&lt;td&gt;1.21× at 1 Ki, 1.00× above&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;X-Gene (cfarm185)&lt;/td&gt;
+&lt;td&gt;1.00×&lt;/td&gt;
+&lt;td&gt;1.18–1.41×&lt;/td&gt;
+&lt;td&gt;1.08–1.35×&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;X-Gene&amp;rsquo;s vector divide is no faster than its scalar one. The sum, dot and
+GEMM C-accumulate still fold with an exact &lt;code&gt;VFMLA&lt;/code&gt; against &lt;code&gt;1.0&lt;/code&gt;, written
+before &lt;code&gt;VFADD&lt;/code&gt; existed in Go; the result is the same.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;ppc64le (VSX)&lt;/strong&gt;, since v0.2.3: sum, dot, sqrt, add/sub/mul/div and an 8×8
+GEMM micro-kernel; max/min stay scalar (the ISA&amp;rsquo;s &lt;code&gt;xvmaxdp&lt;/code&gt; NaN rule is not
+NumPy&amp;rsquo;s). See the ppc64le section above.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;loong64 (LASX)&lt;/strong&gt;, since v0.2.5, when the kernel reports LASX in AT_HWCAP
+(not every LoongArch CPU has it): sum, dot, sqrt, add/sub/mul/div and an 8×8
+GEMM micro-kernel; max/min stay scalar. See the loong64 section above.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;riscv64 (RVV)&lt;/strong&gt;, since v0.7.0, when the kernel reports V in AT_HWCAP (the
+vector extension is optional): sum, dot, sqrt and add/sub/mul/div, in
+vector-length-agnostic loops (&lt;code&gt;VSETVLI&lt;/code&gt; strip-mining, LMUL=8, no scalar
+tail), every instruction a Go mnemonic. max/min stay scalar: RVV&amp;rsquo;s
+&lt;code&gt;vfmax&lt;/code&gt;/&lt;code&gt;vfmin&lt;/code&gt; implement IEEE 754-2019 maximumNumber, which drops a NaN
+that NumPy propagates. Since v0.7.1 the GEMM micro-kernel is a 6×8 RVV tile
+(see below). On a SpacemiT X60 (cfarm95, VLEN = 256), one core pinned to an idle CPU, 6
+interleaved rounds against the scalar code (median):&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;&lt;/th&gt;
+&lt;th&gt;1 Ki&lt;/th&gt;
+&lt;th&gt;16 Ki&lt;/th&gt;
+&lt;th&gt;256 Ki&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;Sum&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;5.81×&lt;/td&gt;
+&lt;td&gt;2.51×&lt;/td&gt;
+&lt;td&gt;1.84×&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;AddInto&lt;/code&gt; / &lt;code&gt;MulInto&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;3.2–3.3×&lt;/td&gt;
+&lt;td&gt;1.11–1.13×&lt;/td&gt;
+&lt;td&gt;1.07–1.12×&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;DivInto&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;2.27×&lt;/td&gt;
+&lt;td&gt;2.30×&lt;/td&gt;
+&lt;td&gt;2.28×&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;SqrtInto&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;2.43×&lt;/td&gt;
+&lt;td&gt;2.44×&lt;/td&gt;
+&lt;td&gt;2.47×&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;&lt;code&gt;MatVec&lt;/code&gt; 1024² is 2.02× faster and &lt;code&gt;Dot&lt;/code&gt; 2^20 1.29×. On a riscv64 CPU without V
+(cfarm94, SiFive U74), the same build runs the scalar path and passes the same
+tests.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;GEMM micro-kernel (v0.7.1).&lt;/strong&gt; NR is fixed by the packing, while VLEN varies
+between RISC-V cores. The V extension guarantees VLEN ≥ 128, so a group of
+four registers (LMUL=4) holds at least eight float64, and &lt;code&gt;VSETIVLI $8&lt;/code&gt;
+gives vl = 8 on every core: a 6×8 tile, six accumulator groups, the B row
+loaded once per step and each A value fused in with &lt;code&gt;vfmacc.vf&lt;/code&gt;. Without V,
+the same 6×8 tile runs in Go. Measured with &lt;code&gt;hostload -pick 1&lt;/code&gt; to choose an
+idle CPU on a host otherwise 64% busy, and &lt;code&gt;benchstat&lt;/code&gt; over 8 interleaved runs
+each against v0.7.0&amp;rsquo;s scalar 4×4 (all p = 0.000):&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;one core, X60&lt;/th&gt;
+&lt;th&gt;64²&lt;/th&gt;
+&lt;th&gt;128²&lt;/th&gt;
+&lt;th&gt;256²&lt;/th&gt;
+&lt;th&gt;512²&lt;/th&gt;
+&lt;th&gt;1024²&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;MatMul&lt;/code&gt; time&lt;/td&gt;
+&lt;td&gt;−31%&lt;/td&gt;
+&lt;td&gt;−32%&lt;/td&gt;
+&lt;td&gt;−45%&lt;/td&gt;
+&lt;td&gt;−43%&lt;/td&gt;
+&lt;td&gt;−44% (1.79 s → 1.00 s)&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;&lt;code&gt;Inner&lt;/code&gt; is −44%, and the small rectangular products are −22% to −38%. At about
+2.1 GFLOP/s on one core this is still far from the hardware: VLEN = 256 with
+LMUL=4 uses half of each register group, which keeps one tile portable to
+every VLEN at that cost.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;s390x (vector facility)&lt;/strong&gt;, since v0.8.0, when AT_HWCAP reports it:
+sum, dot, sqrt and add/sub/mul/div, eight float64 per loop in four
+two-lane registers plus a scalar tail, every instruction a Go mnemonic.
+Since v0.9.0 the GEMM micro-kernel is a 4×8 tile: sixteen two-lane
+accumulators, the B row in one &lt;code&gt;VLM&lt;/code&gt;, each A value replicated with &lt;code&gt;VLREPG&lt;/code&gt;
+and fused in with &lt;code&gt;VFMADB&lt;/code&gt;. Since v0.9.1, max/min are vector too on a z14
+or later: &lt;code&gt;VFMAXDB&lt;/code&gt;/&lt;code&gt;VFMINDB&lt;/code&gt; in mode 1, Java&amp;rsquo;s Math.max/min, which gives NaN
+for a NaN operand and orders −0 below +0, NumPy&amp;rsquo;s rule. They come with the
+vector-enhancements facility 1 (AT_HWCAP VXRS_EXT), beyond the z13 that Go
+also supports, where the scalar reducers remain. On the z17, one core,
+&lt;code&gt;benchstat&lt;/code&gt; over 8 interleaved runs, all at p = 0.000: &lt;code&gt;Max&lt;/code&gt; takes 92% to 96%
+less time (1 Ki: 2.58 µs → 112 ns; 4 Mi: 10.7 ms → 0.81 ms), and &lt;code&gt;MaxAxis(1)&lt;/code&gt;
+94% less. &lt;code&gt;Sum&lt;/code&gt;, untouched, measured within ±0.6%: the control. A sabotaged copy in
+mode 0 (IEEE maxNum, which drops a NaN) failed &lt;code&gt;TestMaxMinSIMD&lt;/code&gt; on the z17.
+The operand order of
+&lt;code&gt;VFSDB&lt;/code&gt;/&lt;code&gt;VFDDB&lt;/code&gt;/&lt;code&gt;VFMADB&lt;/code&gt; was &lt;strong&gt;measured&lt;/strong&gt;, not read: each run once on known
+inputs (&lt;code&gt;VFSDB V1, V2, V3&lt;/code&gt; is V3 = V2 − V1). AT_HWCAP is read in the
+machine&amp;rsquo;s byte order, which on big-endian s390x is not the little-endian the
+parser first assumed.&lt;/p&gt;
+&lt;p&gt;v0.8.0 shipped these kernels validated under emulation only. Since then they
+run on &lt;strong&gt;real hardware&lt;/strong&gt;: an IBM z17 (Type 9175), through the LinuxONE
+Community Cloud, as a z/VM 7.3.0 guest with 8 vCPUs in a shared LPAR. There
+the whole suite passes, as do the fence tests (a kernel reading one element
+too far faults), &lt;code&gt;TestParallelStress&lt;/code&gt; (27,752 calls) and two sabotaged GEMM
+and elementwise kernels, which fail as they should. Measured with &lt;code&gt;hostload&lt;/code&gt;
+(0% busy, 0% steal) and &lt;code&gt;benchstat&lt;/code&gt;, 8 interleaved runs each, every
+difference at p = 0.000 unless marked:&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;IBM z17, time vs the scalar code&lt;/th&gt;
+&lt;th&gt;1 core&lt;/th&gt;
+&lt;th&gt;8 cores&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;Sum&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;−85% to −87%&lt;/td&gt;
+&lt;td&gt;−82% to −87%&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;AddInto&lt;/code&gt; / &lt;code&gt;MulInto&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;−44% to −61%&lt;/td&gt;
+&lt;td&gt;−36% to −60%&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;DivInto&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;−6% to −18%&lt;/td&gt;
+&lt;td&gt;−6% to −22%&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;SqrtInto&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;−2% to −11%&lt;/td&gt;
+&lt;td&gt;−5% to −9% at 1–16 Ki, ~ above&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;MatVec&lt;/code&gt; 1024²&lt;/td&gt;
+&lt;td&gt;−44%&lt;/td&gt;
+&lt;td&gt;−40%&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;Dot&lt;/code&gt; 2^20&lt;/td&gt;
+&lt;td&gt;−11%&lt;/td&gt;
+&lt;td&gt;~ (p = 0.08)&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;MatMul&lt;/code&gt; 1024² (v0.9.0 GEMM)&lt;/td&gt;
+&lt;td&gt;340 → 70 ms (−79%)&lt;/td&gt;
+&lt;td&gt;43 → 10 ms (−76%)&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;GEMM geomean, 11 shapes&lt;/td&gt;
+&lt;td&gt;−74%&lt;/td&gt;
+&lt;td&gt;−66%&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;&lt;code&gt;Exp&lt;/code&gt;, which none of this touches, measured within ±0.3% on one core: the
+control.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;The 32-bit targets keep
+the validated scalar oracles, using the same four-accumulator max/min, direct
+sqrt loop, and a &lt;strong&gt;scalar 4×4 GEMM micro-kernel&lt;/strong&gt; over the packed panels, and
+still get the &lt;strong&gt;packing + cache blocking + multicore&lt;/strong&gt; structure (they have
+not been measured against NumPy). What the Go assembler offers them, checked
+on Go 1.26.4 and 1.27.1 by assembling and disassembling (2026-10-04):
+&lt;strong&gt;ppc64le&lt;/strong&gt; has no vector-double arithmetic (no &lt;code&gt;XVADDDP&lt;/code&gt;/&lt;code&gt;XVMADDADP&lt;/code&gt;), which
+go-asmgen v0.13.0 now encodes as &lt;code&gt;WORD&lt;/code&gt;s, so ppc64le has kernels;
+&lt;strong&gt;loong64&lt;/strong&gt; has vector-double add/sub/mul/div (&lt;code&gt;VADDD&lt;/code&gt; assembles to
+&lt;code&gt;vfadd.d&lt;/code&gt;, &lt;code&gt;VMULD&lt;/code&gt; to &lt;code&gt;vfmul.d&lt;/code&gt;, &lt;code&gt;XVADDD&lt;/code&gt; to &lt;code&gt;xvfadd.d&lt;/code&gt;) and the broadcast
+load (&lt;code&gt;XVMOVQ off(R), X.V4&lt;/code&gt; = &lt;code&gt;xvldrepl.d&lt;/code&gt;), but no vector FMA, which
+go-asmgen v0.14.0 encodes (transitionally), so loong64 has kernels;
+&lt;strong&gt;s390x&lt;/strong&gt; has them, FMA included (&lt;code&gt;VFADB&lt;/code&gt;, &lt;code&gt;VFMADB&lt;/code&gt;); &lt;strong&gt;riscv64&lt;/strong&gt; has them
+(&lt;code&gt;VFADDVV&lt;/code&gt;, &lt;code&gt;VFMACCVV&lt;/code&gt;) and has had kernels since v0.7.0, s390x since v0.8.0.
+(s390x additionally exercises the big-endian path in CI.)&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;All six are exercised in CI (native amd64/arm64 + qemu for the rest); each
+per-arch job regenerates the committed &lt;code&gt;.s&lt;/code&gt;, fails if it is stale, vets
+(asmdecl), builds (cmd/asm encodes), and runs the bit/NaN-correctness suite. The
+multicore path and the packed/cache-blocked GEMM driver are
+architecture-independent; only the GEMM micro-kernel is per-arch (NEON 4×8 on
+arm64, AVX2/FMA 6×8 or SSE2 on amd64, scalar 4×4 on the other four), each held to
+the scalar ikj oracle in CI: exactly on integer-valued data, within tolerance on
+general data, since above KC the block partials regroup the sum and the FMA
+kernels round once per step where the scalar oracle may round twice.&lt;/p&gt;</description></item></channel></rss>

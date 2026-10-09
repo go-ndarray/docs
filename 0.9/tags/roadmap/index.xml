@@ -1,0 +1,182 @@
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>go-ndarray – Roadmap</title><link>https://go-ndarray.github.io/docs/0.9/tags/roadmap/</link><description>Recent content in Roadmap on go-ndarray</description><generator>Hugo -- gohugo.io</generator><language>en</language><atom:link href="https://go-ndarray.github.io/docs/0.9/tags/roadmap/index.xml" rel="self" type="application/rss+xml"/><item><title>Implementation plan — N-dimensional arrays in pure Go (`go-ndarray/ndarray`)</title><link>https://go-ndarray.github.io/docs/0.9/roadmap/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://go-ndarray.github.io/docs/0.9/roadmap/</guid><description>
+&lt;blockquote&gt;
+&lt;p&gt;Goal: a &lt;strong&gt;pure-Go (CGO=0)&lt;/strong&gt; NumPy-style N-dimensional array library, as a
+&lt;strong&gt;standalone, reusable&lt;/strong&gt; module with correct scalar kernels now and a clean
+path to SIMD acceleration across all six 64-bit Go targets.&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 data-hextra-search-id="1-why-this-module"&gt;1. Why this module?&lt;span class="hx:absolute hx:-mt-20" id="1-why-this-module"&gt;&lt;/span&gt;&lt;a href="#1-why-this-module" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;The Go scientific stack has a gap. &lt;a href="https://www.gonum.org/" target="_blank" rel="noopener"&gt;gonum&lt;/a&gt; is excellent
+but its hand-written assembly kernels are &lt;strong&gt;amd64-only&lt;/strong&gt; (other arches fall back
+to generic Go), and it is matrix/&lt;code&gt;mat&lt;/code&gt;-centric rather than a general N-d array.
+The wider opportunity is cross-language: &lt;strong&gt;Ruby has no cgo-free ndarray&lt;/strong&gt; —
+&lt;code&gt;Numo::NArray&lt;/code&gt;, &lt;code&gt;NMatrix&lt;/code&gt; and friends are all C extensions. A pure-Go core with
+SIMD kernels generated for every arch is therefore a durable moat, and a natural
+backend for &lt;a href="https://github.com/go-embedded-ruby/ruby" target="_blank" rel="noopener"&gt;go-embedded-ruby&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;So the design separates &lt;strong&gt;structure&lt;/strong&gt; (shape, strides, broadcasting, views) from
+&lt;strong&gt;numeric inner loops&lt;/strong&gt; (the kernels), and keeps the kernels behind a narrow
+contiguous-slice API so accelerated variants can drop in unchanged.&lt;/p&gt;
+&lt;h2 data-hextra-search-id="2-architecture"&gt;2. Architecture&lt;span class="hx:absolute hx:-mt-20" id="2-architecture"&gt;&lt;/span&gt;&lt;a href="#2-architecture" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
+&lt;div&gt;&lt;pre&gt;&lt;code&gt;ndarray/
+ndarray.go public API: Array (data/shape/strides/offset),
+constructors, introspection, reshape/transpose/copy,
+broadcasting binary ops, map/unary, whole-array and
+per-axis reductions
+slicing.go NumPy basic-indexing Slice(...Index) -&amp;gt; strided views
+creation.go Linspace, Eye/Identity (Reshape -1 lives in ndarray.go)
+ufunc.go unary math ufuncs &amp;#43; broadcasting comparison/min-max ops
+manipulation.go Flatten/Squeeze/ExpandDims/Concatenate/Stack/V&amp;#43;HStack
+linalg.go MatMul/Dot/Inner/Outer
+internal/kernels/ portable scalar inner loops over flat []float64
+(Add/Sub/Mul/Div, Map, comparisons, Maximum/Minimum,
+Sum/Prod/Max/Min, Abs, {Sum,Prod,Max,Min}Axis over
+[outer][axisLen][inner], MatMul GEMM, Dot1D)
+docs/plan-ndarray.md this roadmap&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0"&gt;
+&lt;button
+class="hextra-code-copy-btn hx:group/copybtn hx:cursor-pointer hx:transition-all hx:active:opacity-50 hx:bg-primary-700/5 hx:border hx:border-black/5 hx:text-gray-600 hx:hover:text-gray-900 hx:rounded-md hx:p-1.5 hx:dark:bg-primary-300/10 hx:dark:border-white/10 hx:dark:text-gray-400 hx:dark:hover:text-gray-50"
+title="Copy code"
+aria-label="Copy code"
+data-copied-label="Copied!"
+&gt;
+&lt;div class="hextra-copy-icon hx:group-[.copied]/copybtn:hidden hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;div class="hextra-success-icon hx:hidden hx:group-[.copied]/copybtn:block hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;/button&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;p&gt;&lt;code&gt;Array&lt;/code&gt; is row-major (C-order): a flat &lt;code&gt;data []float64&lt;/code&gt; described by &lt;code&gt;shape&lt;/code&gt;,
+per-axis &lt;code&gt;strides&lt;/code&gt; (in elements) and a base &lt;code&gt;offset&lt;/code&gt;. Reshape and Transpose are
+zero-copy views where possible; broadcasting materialises operands to the
+broadcast shape before invoking a kernel.&lt;/p&gt;
+&lt;h2 data-hextra-search-id="3-kernels-and-simd-the-accelerator-path"&gt;3. Kernels and SIMD (the accelerator path)&lt;span class="hx:absolute hx:-mt-20" id="3-kernels-and-simd-the-accelerator-path"&gt;&lt;/span&gt;&lt;a href="#3-kernels-and-simd-the-accelerator-path" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;Every numeric loop lives in &lt;code&gt;internal/kernels&lt;/code&gt; as a pure-Go scalar function over
+contiguous &lt;code&gt;[]float64&lt;/code&gt;. These are the &lt;strong&gt;reference&lt;/strong&gt; and the &lt;strong&gt;fallback&lt;/strong&gt;.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Phase 1&lt;/strong&gt; replaces them with kernels generated by
+&lt;a href="https://github.com/go-asmgen" target="_blank" rel="noopener"&gt;go-asmgen&lt;/a&gt; — Plan 9 assembly emitted for all six
+64-bit Go SIMD targets: &lt;strong&gt;amd64, arm64, riscv64, loong64, ppc64le (VSX),
+s390x (vector, big-endian)&lt;/strong&gt; — selected at runtime via build tags / CPU-feature
+detection, behind the &lt;em&gt;same&lt;/em&gt; kernel signatures and the &lt;em&gt;same&lt;/em&gt; tests. &lt;strong&gt;Today
+(v0.2.5) amd64, arm64, ppc64le and loong64 have SIMD kernels&lt;/strong&gt; (loong64&amp;rsquo;s LASX
+kernels run only when the CPU reports LASX); riscv64, s390x and the 32-bit
+targets run the pure-Go reference code. Go&amp;rsquo;s assembler has vector-double
+arithmetic on s390x and riscv64 (V optional), so those two are work not yet
+done, not a toolchain limit; it has none on ppc64le, whose VSX kernels use the
+float64 encoders go-asmgen v0.13.0 emits as &lt;code&gt;WORD&lt;/code&gt;s, and no vector FMA or
+broadcast load on loong64, which go-asmgen v0.14.0 encodes (transitionally). Because the
+public API and the test suite address the kernels through that narrow interface,
+no caller changes and correctness stays pinned by the existing 100%-coverage
+suite (plus the per-arch CI jobs already wired in &lt;code&gt;.github/workflows/ci.yml&lt;/code&gt;).&lt;/p&gt;
+&lt;h2 data-hextra-search-id="4-phasing"&gt;4. Phasing&lt;span class="hx:absolute hx:-mt-20" id="4-phasing"&gt;&lt;/span&gt;&lt;a href="#4-phasing" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Phase 0 — DONE.&lt;/strong&gt; &lt;code&gt;float64&lt;/code&gt; dtype. &lt;code&gt;Array&lt;/code&gt; with data/shape/strides/offset,
+row-major. Constructors (&lt;code&gt;New&lt;/code&gt;, &lt;code&gt;Zeros&lt;/code&gt;, &lt;code&gt;Ones&lt;/code&gt;, &lt;code&gt;Full&lt;/code&gt;, &lt;code&gt;Arange&lt;/code&gt;,
+&lt;code&gt;FromData&lt;/code&gt;). Introspection (&lt;code&gt;Shape&lt;/code&gt;, &lt;code&gt;Ndim&lt;/code&gt;, &lt;code&gt;Size&lt;/code&gt;, &lt;code&gt;At&lt;/code&gt;, &lt;code&gt;Set&lt;/code&gt;, &lt;code&gt;String&lt;/code&gt;).
+&lt;code&gt;Reshape&lt;/code&gt;, &lt;code&gt;Ravel&lt;/code&gt;, &lt;code&gt;Transpose&lt;/code&gt;, &lt;code&gt;Copy&lt;/code&gt;. Elementwise &lt;code&gt;Add&lt;/code&gt;/&lt;code&gt;Sub&lt;/code&gt;/&lt;code&gt;Mul&lt;/code&gt;/&lt;code&gt;Div&lt;/code&gt;
+with full NumPy broadcasting, plus &lt;code&gt;*Scalar&lt;/code&gt; variants. &lt;code&gt;Map&lt;/code&gt;, &lt;code&gt;Neg&lt;/code&gt;, &lt;code&gt;Abs&lt;/code&gt;.
+Whole-array reductions &lt;code&gt;Sum&lt;/code&gt;/&lt;code&gt;Prod&lt;/code&gt;/&lt;code&gt;Max&lt;/code&gt;/&lt;code&gt;Min&lt;/code&gt;/&lt;code&gt;Mean&lt;/code&gt;. Scalar pure-Go kernels
+in &lt;code&gt;internal/kernels&lt;/code&gt;. 100% statement coverage, CGO=0, six-arch CI.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Axis reductions — DONE.&lt;/strong&gt; Per-axis &lt;code&gt;SumAxis&lt;/code&gt;/&lt;code&gt;ProdAxis&lt;/code&gt;/&lt;code&gt;MaxAxis&lt;/code&gt;/&lt;code&gt;MinAxis&lt;/code&gt;/
+&lt;code&gt;MeanAxis(axis, keepdims)&lt;/code&gt; with NumPy semantics (negative axis from the end,
+&lt;code&gt;keepdims&lt;/code&gt; retains the reduced axis as length 1). The reduced data is viewed
+as &lt;code&gt;[outer][axisLen][inner]&lt;/code&gt; and reduced by &lt;code&gt;{Sum,Prod,Max,Min}Axis&lt;/code&gt; kernels
+whose innermost loop is unit-stride contiguous (SIMD-ready). Differentially
+checked against numpy 2.4.6; committed tests carry hardcoded expectations.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Slicing / views — DONE.&lt;/strong&gt; &lt;code&gt;Slice(...Index)&lt;/code&gt; with NumPy basic-indexing
+semantics: integer indices (&lt;code&gt;A&lt;/code&gt;) drop their axis; range indices
+(&lt;code&gt;All&lt;/code&gt;/&lt;code&gt;R&lt;/code&gt;/&lt;code&gt;Rng&lt;/code&gt;/&lt;code&gt;From&lt;/code&gt;/&lt;code&gt;To&lt;/code&gt;/&lt;code&gt;Step&lt;/code&gt;) keep the axis as a strided view that
+shares the backing data (write-through both ways). Negative bounds count from
+the end, unset bounds default to the natural extreme for the step sign,
+bounds clamp into range, negative steps reverse. Matches numpy 2.2.4.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;More creation — DONE.&lt;/strong&gt; &lt;code&gt;Linspace(start,stop,num)&lt;/code&gt; (endpoint inclusive,
+final sample pinned to stop), &lt;code&gt;Eye(n,m,k)&lt;/code&gt; / &lt;code&gt;Identity(n)&lt;/code&gt; (k-th diagonal,
+non-positive m defaults to square), and &lt;code&gt;Reshape&lt;/code&gt; &lt;code&gt;-1&lt;/code&gt; dimension inference.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Ufuncs — DONE.&lt;/strong&gt; Unary math (&lt;code&gt;Sqrt&lt;/code&gt;/&lt;code&gt;Exp&lt;/code&gt;/&lt;code&gt;Log&lt;/code&gt;/&lt;code&gt;Log2&lt;/code&gt;/&lt;code&gt;Log10&lt;/code&gt;/&lt;code&gt;Sin&lt;/code&gt;/&lt;code&gt;Cos&lt;/code&gt;/
+&lt;code&gt;Tan&lt;/code&gt;/&lt;code&gt;Floor&lt;/code&gt;/&lt;code&gt;Ceil&lt;/code&gt;/&lt;code&gt;Round&lt;/code&gt;/&lt;code&gt;Square&lt;/code&gt;/&lt;code&gt;Power&lt;/code&gt;): &lt;code&gt;Sqrt&lt;/code&gt; has a SIMD kernel,
+&lt;code&gt;Exp&lt;/code&gt;/&lt;code&gt;Log&lt;/code&gt;/&lt;code&gt;Log10&lt;/code&gt; run ports of Arm&amp;rsquo;s optimized-routines (v0.2.0), and the
+rest go through the &lt;code&gt;Map&lt;/code&gt; seam over Go&amp;rsquo;s &lt;code&gt;math&lt;/code&gt;; and
+broadcasting comparisons returning 0/1 float masks (&lt;code&gt;Equal&lt;/code&gt;/&lt;code&gt;NotEqual&lt;/code&gt;/
+&lt;code&gt;Greater&lt;/code&gt;/&lt;code&gt;GreaterEqual&lt;/code&gt;/&lt;code&gt;Less&lt;/code&gt;/&lt;code&gt;LessEqual&lt;/code&gt;) plus pairwise &lt;code&gt;Maximum&lt;/code&gt;/&lt;code&gt;Minimum&lt;/code&gt;.
+(&lt;code&gt;Round&lt;/code&gt; is math.Round / half-away-from-zero, unlike numpy&amp;rsquo;s banker&amp;rsquo;s
+rounding — documented.) A bool dtype for true masks is deferred to Phase 2.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Manipulation — DONE.&lt;/strong&gt; &lt;code&gt;Flatten&lt;/code&gt; (always copy), &lt;code&gt;ExpandDims&lt;/code&gt;/&lt;code&gt;Squeeze&lt;/code&gt;
+(length-1 axis views), &lt;code&gt;Concatenate&lt;/code&gt; (existing axis), &lt;code&gt;Stack&lt;/code&gt; (new axis), and
+the &lt;code&gt;VStack&lt;/code&gt;/&lt;code&gt;HStack&lt;/code&gt; conveniences with 1-D promotion. Negative axes
+throughout. Matches numpy 2.2.4.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Linear algebra — DONE (scalar).&lt;/strong&gt; &lt;code&gt;MatMul&lt;/code&gt; (2-D GEMM, ikj order, unit-stride
+inner loop), &lt;code&gt;Dot&lt;/code&gt; (numpy.dot across 1-D/2-D: inner product, matmul,
+matrix-vector, vector-matrix), &lt;code&gt;Inner&lt;/code&gt; (sum over last axis) and &lt;code&gt;Outer&lt;/code&gt;. The
+GEMM/dot kernels live in &lt;code&gt;internal/kernels&lt;/code&gt; for the Phase 1 SIMD path. Matches
+numpy 2.2.4. Blocked/transpose-aware and decomposition variants remain in
+Phase 4.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Performance — DONE (beats NumPy on its core ops; matmul at tuned-BLAS
+parity).&lt;/strong&gt; Several levers behind the kernel seam, measured honestly vs NumPy
+2.2.4 (see &lt;a href="https://go-ndarray.github.io/docs/0.9/performance/"&gt;docs/performance.md&lt;/a&gt;):
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Multicore.&lt;/strong&gt; &lt;code&gt;Add/Sub/Mul/Div/Map&lt;/code&gt;, &lt;code&gt;Sum/Max/Min&lt;/code&gt;, the axis reductions,
+&lt;code&gt;Concatenate&lt;/code&gt;/&lt;code&gt;Stack&lt;/code&gt;, and the GEMM fan out across &lt;code&gt;GOMAXPROCS&lt;/code&gt; above a size
+threshold (small arrays stay serial). Plus an allocation fix: the
+elementwise/reduce fast path no longer copies broadcast operands for the
+same-shape contiguous case. Result on large arrays: Add/Mul ~2×, Sum ~2.4×,
+and the packed GEMM reaches &lt;strong&gt;parity with single-threaded vecLib at 1024²&lt;/strong&gt;
+(~373 GFLOP/s on an Apple M4 Max) while beating the pure-Go gonum &lt;strong&gt;4–10×&lt;/strong&gt;
+at every size. (A many-core join panic in the parallel GEMM was fixed in
+the 2026-06-23 pass.)&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;SIMD via go-asmgen — DONE for amd64 (SSE2) + arm64 (NEON).&lt;/strong&gt; Hand-vectorized
+&lt;code&gt;sum&lt;/code&gt; (4-accumulator), &lt;code&gt;sqrt&lt;/code&gt; (packed &lt;code&gt;SQRTPD&lt;/code&gt; / NEON &lt;code&gt;FSQRT V.2D&lt;/code&gt;),
+&lt;code&gt;max&lt;/code&gt;/&lt;code&gt;min&lt;/code&gt; (&lt;code&gt;MAXPD&lt;/code&gt;/&lt;code&gt;MINPD&lt;/code&gt; + NaN scan / four-accumulator builtin), the
+elementwise &lt;code&gt;add&lt;/code&gt;/&lt;code&gt;sub&lt;/code&gt;/&lt;code&gt;mul&lt;/code&gt;/&lt;code&gt;div&lt;/code&gt;, and the &lt;strong&gt;GEMM micro-kernel&lt;/strong&gt; (NEON 4×8
+by-lane FMLA on arm64, AVX2/FMA 6×8 with an SSE2 fallback on amd64),
+generated by go-asmgen and
+validated per-arch in CI (bit-identical to the scalar oracle for the
+elementwise/sqrt/max ops; tight-tolerance for the sum reduction, whose
+lane-parallel grouping is a valid reordering — the same trade-off as NumPy&amp;rsquo;s
+pairwise sum). The other targets (riscv64, s390x; ppc64le until its
+VSX kernels in v0.2.3, loong64 until its LASX kernels in v0.2.5) keep the validated scalar oracles plus a scalar
+4×4 GEMM micro-kernel over the packed panels, and still win via packing + cache-blocking + multicore. Split-CI: the pure-Go core + multicore
+are held to 100% statement coverage; the generated &lt;code&gt;.s&lt;/code&gt; is validated by the
+per-arch native/qemu execution jobs.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;SIMD &lt;code&gt;Sqrt&lt;/code&gt;/&lt;code&gt;Max&lt;/code&gt; and the packed, cache-blocked GEMM — DONE (no longer
+TODO).&lt;/strong&gt; &lt;code&gt;Sqrt&lt;/code&gt;/&lt;code&gt;Max&lt;/code&gt;/&lt;code&gt;Min&lt;/code&gt; now WIN vs single-threaded NumPy, and the
+panel-packed, cache-blocked GEMM with its SIMD-FMA micro-kernel reaches
+&lt;strong&gt;parity with tuned BLAS&lt;/strong&gt; (single-threaded vecLib at 1024² on M4 Max,
+≈0.99× vs multi-threaded OpenBLAS at n=1024 on an arm64 VM) and beats
+gonum 4–10× everywhere. Remaining headroom is small-n per-call overhead.
+(The AVX2/FMA 6×8 amd64 micro-kernel, chosen at run time by a CPUID probe,
+shipped in v0.2.0.)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Memory reuse — DONE (v0.2.0).&lt;/strong&gt; &lt;code&gt;Workspace&lt;/code&gt;: &lt;code&gt;NewWorkspace()&lt;/code&gt;, &lt;code&gt;ws.Use(x)&lt;/code&gt;
+binds an input, every result computed from a bound array is allocated from the
+workspace arena, &lt;code&gt;ws.Reset()&lt;/code&gt; recycles everything allocated since the last
+Reset (arrays allocated from it are invalid afterwards), and &lt;code&gt;a.Detach()&lt;/code&gt;
+returns a heap copy that survives it. In loops it removes the Go GC + zeroing
+cost of temporaries, which NumPy frees by reference count and Go cannot. On a
+Zen 3 &lt;code&gt;x + y&lt;/code&gt; on 1 024 elements goes from 2.6 µs to 0.38 µs (2.1× NumPy) and
+&lt;code&gt;sqrt(x*y + x)&lt;/code&gt; on 256 Ki from 1.18 ms to 0.39 ms (7.5× NumPy); see
+&lt;a href="https://go-ndarray.github.io/docs/0.9/performance/"&gt;Performance&lt;/a&gt;.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;More reductions — DONE.&lt;/strong&gt; &lt;code&gt;ArgMax&lt;/code&gt;/&lt;code&gt;ArgMin&lt;/code&gt; (flat and per-axis with
+keepdims), &lt;code&gt;CumSum&lt;/code&gt;/&lt;code&gt;CumProd&lt;/code&gt; (per-axis scans + flat), &lt;code&gt;Clip(lo,hi)&lt;/code&gt;, and the
+three-operand broadcasting &lt;code&gt;Where(cond,t,f)&lt;/code&gt;. Match numpy 2.2.4.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Boolean / fancy indexing — DONE (on 0/1 float masks).&lt;/strong&gt; &lt;code&gt;MaskSelect&lt;/code&gt;
+(&lt;code&gt;a[mask]&lt;/code&gt;), &lt;code&gt;Nonzero&lt;/code&gt; (&lt;code&gt;np.flatnonzero&lt;/code&gt;), and &lt;code&gt;Take&lt;/code&gt; (integer fancy index
+into the flattened array, negative indices from the end). These give NumPy
+boolean indexing today using the 0/1 masks the comparison ufuncs return; a
+first-class bool dtype (so masks are real booleans) remains Phase 2.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Phase 2 — dtypes.&lt;/strong&gt; Generalise beyond &lt;code&gt;float64&lt;/code&gt; (float32, int64/int32,
+complex128, bool) with a dtype abstraction; typed kernels.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Phase 3 — broadcasting ufuncs.&lt;/strong&gt; A general ufunc framework over views
+(the axis-reduction primitives above are the first step); more elementwise
+and reduction ufuncs.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Phase 4 — linear algebra.&lt;/strong&gt; &lt;code&gt;MatMul&lt;/code&gt;/&lt;code&gt;Dot&lt;/code&gt;, transpose-aware GEMM,
+decompositions; SIMD/blocked kernels.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Phase 5 — Ruby binding.&lt;/strong&gt; Expose the array type to Ruby through
+&lt;a href="https://github.com/go-embedded-ruby/ruby" target="_blank" rel="noopener"&gt;go-embedded-ruby&lt;/a&gt; as a cgo-free
+alternative to &lt;code&gt;Numo::NArray&lt;/code&gt;.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 data-hextra-search-id="5-decisions"&gt;5. Decisions&lt;span class="hx:absolute hx:-mt-20" id="5-decisions"&gt;&lt;/span&gt;&lt;a href="#5-decisions" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;Row-major, strided views.&lt;/strong&gt; Mirrors NumPy/C-order; enables zero-copy
+reshape/transpose. &lt;em&gt;Settled.&lt;/em&gt;&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Kernels behind a contiguous-slice API.&lt;/strong&gt; Structure and numerics are
+decoupled so go-asmgen SIMD can replace scalar loops without API churn.
+&lt;em&gt;Settled.&lt;/em&gt;&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Errors, not panics, for shape/broadcast problems&lt;/strong&gt;; panics reserved for
+programmer index errors (matching Go slice semantics). &lt;em&gt;Settled.&lt;/em&gt;&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;&lt;code&gt;float64&lt;/code&gt; first&lt;/strong&gt;, dtype abstraction deferred to Phase 2 but kept in mind
+so the kernel interface generalises cleanly.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;BSD-3-Clause.&lt;/p&gt;</description></item></channel></rss>
