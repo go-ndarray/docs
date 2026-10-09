@@ -544,7 +544,7 @@
 
 <h1 id="security">Security<a class="headerlink" href="#security" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p>Mirrored from <a href="https://github.com/go-ndarray/ndarray/blob/main/SECURITY.md"><code>SECURITY.md</code></a> at v0.8.0.</p>
+<p>Mirrored from <a href="https://github.com/go-ndarray/ndarray/blob/main/SECURITY.md"><code>SECURITY.md</code></a> at v0.9.0.</p>
 </blockquote>
 <h2 id="reporting">Reporting<a class="headerlink" href="#reporting" title="Permanent link">&para;</a></h2>
 <p>Report a vulnerability privately through GitHub's <strong>Report a vulnerability</strong>
@@ -601,6 +601,28 @@ bounds checks do not cover, so they are held to the following:</p>
 <p>The minimum Go version (<code>go</code> in <code>go.mod</code>) is kept on a release that fixes the
 standard library's known vulnerabilities; <code>govulncheck ./...</code> reports none.</p>
 <h2 id="audit-log">Audit log<a class="headerlink" href="#audit-log" title="Permanent link">&para;</a></h2>
+<p><strong>2026-10-09 (v0.9.0).</strong></p>
+<ul>
+<li><strong>The Go floor is 1.27.2.</strong> At 1.27.1, <code>govulncheck</code> listed standard-library
+  vulnerabilities fixed in 1.27.2 (GO-2026-6604, -6612, -6613, -6617, among
+  others), none of them reachable from this library. At 1.27.2 it reports none,
+  for the library or for its generator module.</li>
+<li><strong>The loong64 miscompile is not fixed in 1.27.2.</strong> An earlier entry said
+  golang/go#81000 was fixed in 1.27.2; it was not. The backport
+  (golang/go#81147) is on the 1.27.3 milestone. On real hardware (cfarm401,
+  Loongson 3C5000L), the upstream reproducer (<code>go-gfx/gfx</code> <code>./color</code>,
+  <code>TestSkimageLabToRGBOutOfGamut</code>) <strong>FAILS</strong> when built with go1.27.1 and with
+  go1.27.2 alike. The evidence that this library does not hit the pattern
+  stands as before: the suite and <code>FuzzOps</code> on that machine. Raise the floor
+  to 1.27.3 when it ships.</li>
+<li><strong>The s390x kernels now run on real hardware</strong>: an IBM z17, through the
+  LinuxONE Community Cloud (<code>/proc/sysinfo</code>: Type 9175, a z/VM 7.3.0 guest
+  with 8 vCPUs in a shared LPAR). The whole suite and the fence tests pass,
+  and <code>sumVX</code> reading one element past the end faults (4 KiB pages). The new
+  4×8 GEMM micro-kernel is held to the same checks: it is guarded by its
+  wrapper and fenced, and a sabotaged copy that drops tile row 3 fails
+  (<code>MatMul m=50 k=70 n=90 [270]: 0 != -249</code>).</li>
+</ul>
 <p><strong>2026-10-08 (v0.8.0).</strong> New s390x vector-facility kernels, held to the same
 guards (wrappers check each kernel's reach; the PROT_NONE fence tests now
 include s390x). ⚠ They were validated <strong>under emulation only</strong> (Docker's
@@ -655,7 +677,9 @@ two defects. Both are fixed, each with a test that fails without the fix.</p>
 <li>go1.27.0 and go1.27.1 miscompile one loong64 pattern
   (<a href="https://github.com/golang/go/issues/81000">golang/go#81000</a>: a byte-sized
   inlined result spilled with an 8-byte store, clobbering the stack slot next
-  to it), fixed in 1.27.2. On a real Loongson 3C5000L with LASX (cfarm401),
+  to it), ~~fixed in 1.27.2~~ — <strong>wrong, corrected 2026-10-09</strong>: the backport
+  (golang/go#81147) moved to the 1.27.3 milestone, and go1.27.2 still fails
+  the upstream reproducer on cfarm401 (see the v0.9.0 entry). On a real Loongson 3C5000L with LASX (cfarm401),
   built with go1.27.1, the whole suite passes, including the fence tests, and
   <code>FuzzOps</code> ran 52.7 million executions natively without a divergence from its
   oracle. That is evidence that this library does not hit the pattern, not

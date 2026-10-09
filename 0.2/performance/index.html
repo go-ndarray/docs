@@ -1013,7 +1013,7 @@
 2.2.4</strong> on identical hardware. "On n'a pas le droit de se tromper": every number
 here is measured, every win is real, and where NumPy still leads it says so.</p>
 <blockquote>
-<p><strong>Where it stands at v0.8.0.</strong> This page grew round by round: the sections
+<p><strong>Where it stands at v0.9.0.</strong> This page grew round by round: the sections
 up to <em>Where go-ndarray still loses</em> were measured on an arm64 Tart VM
 (4 vCPU, NumPy 2.2.4, OpenBLAS 0.3.29); the dated sections after it on an
 AMD Zen 3, 16 cores, against <strong>NumPy 2.5.3 + OpenBLAS 0.3.34</strong>, except the
@@ -1047,8 +1047,8 @@ GFLOP/s at 512², against the scalar code; no NumPy or BLAS reference was
 available on that host (see <em>loong64: LASX kernels</em>).
 SIMD kernels exist on <strong>amd64, arm64, ppc64le, loong64, riscv64 and s390x</strong> (LASX,
 RVV and the s390x vector facility used only when the CPU reports them); the
-32-bit targets run the pure-Go reference code; the s390x kernels are validated
-under emulation only (see <em>SIMD coverage</em> at the end).</p>
+32-bit targets run the pure-Go reference code; the s390x kernels are measured
+on a real IBM z17 (see <em>SIMD coverage</em> at the end).</p>
 </blockquote>
 <h2 id="how-a-pure-go-library-can-beat-numpy">How a pure-Go library can beat NumPy<a class="headerlink" href="#how-a-pure-go-library-can-beat-numpy" title="Permanent link">&para;</a></h2>
 <p>NumPy's elementwise and reduction ufuncs (<code>+</code>, <code>*</code>, <code>sqrt</code>, <code>sum</code>, <code>max</code>, …) are
@@ -2688,15 +2688,75 @@ stay dynamic, so its slower efficiency cores are handled as before.</p>
 - <strong>s390x (vector facility)</strong>, since v0.8.0, when AT_HWCAP reports it:
   sum, dot, sqrt and add/sub/mul/div, eight float64 per loop in four
   two-lane registers plus a scalar tail, every instruction a Go mnemonic.
-  max/min and the GEMM micro-kernel stay scalar (the vector max with NumPy's
-  NaN rule needs the z14, beyond the z13 Go supports). The operand order of
+  Since v0.9.0 the GEMM micro-kernel is a 4×8 tile: sixteen two-lane
+  accumulators, the B row in one <code>VLM</code>, each A value replicated with <code>VLREPG</code>
+  and fused in with <code>VFMADB</code>. max/min stay scalar: the vector max with NumPy's
+  NaN rule needs the z14, beyond the z13 Go supports. The operand order of
   <code>VFSDB</code>/<code>VFDDB</code>/<code>VFMADB</code> was <strong>measured</strong>, not read: each run once on known
-  inputs (<code>VFSDB V1, V2, V3</code> is V3 = V2 − V1). ⚠ <strong>Validated under emulation
-  only</strong> (Docker's qemu-s390x locally, qemu-s390x in CI): the whole suite, the
-  fence tests, and two sabotaged kernels that both failed. <strong>Not measured</strong>:
-  the LinuxONE host did not answer. AT_HWCAP is read in the machine's byte
-  order, which on big-endian s390x is not the little-endian the parser first
-  assumed.
+  inputs (<code>VFSDB V1, V2, V3</code> is V3 = V2 − V1). AT_HWCAP is read in the
+  machine's byte order, which on big-endian s390x is not the little-endian the
+  parser first assumed.</p>
+<p>v0.8.0 shipped these kernels validated under emulation only. Since then they
+  run on <strong>real hardware</strong>: an IBM z17 (Type 9175), through the LinuxONE
+  Community Cloud, as a z/VM 7.3.0 guest with 8 vCPUs in a shared LPAR. There
+  the whole suite passes, as do the fence tests (a kernel reading one element
+  too far faults), <code>TestParallelStress</code> (27,752 calls) and two sabotaged GEMM
+  and elementwise kernels, which fail as they should. Measured with <code>hostload</code>
+  (0% busy, 0% steal) and <code>benchstat</code>, 8 interleaved runs each, every
+  difference at p = 0.000 unless marked:</p>
+<table>
+<thead>
+<tr>
+<th>IBM z17, time vs the scalar code</th>
+<th>1 core</th>
+<th>8 cores</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Sum</code></td>
+<td>−85% to −87%</td>
+<td>−82% to −87%</td>
+</tr>
+<tr>
+<td><code>AddInto</code> / <code>MulInto</code></td>
+<td>−44% to −61%</td>
+<td>−36% to −60%</td>
+</tr>
+<tr>
+<td><code>DivInto</code></td>
+<td>−6% to −18%</td>
+<td>−6% to −22%</td>
+</tr>
+<tr>
+<td><code>SqrtInto</code></td>
+<td>−2% to −11%</td>
+<td>−5% to −9% at 1–16 Ki, ~ above</td>
+</tr>
+<tr>
+<td><code>MatVec</code> 1024²</td>
+<td>−44%</td>
+<td>−40%</td>
+</tr>
+<tr>
+<td><code>Dot</code> 2^20</td>
+<td>−11%</td>
+<td>~ (p = 0.08)</td>
+</tr>
+<tr>
+<td><code>MatMul</code> 1024² (v0.9.0 GEMM)</td>
+<td>340 → 70 ms (−79%)</td>
+<td>43 → 10 ms (−76%)</td>
+</tr>
+<tr>
+<td>GEMM geomean, 11 shapes</td>
+<td>−74%</td>
+<td>−66%</td>
+</tr>
+</tbody>
+</table>
+<p><code>Exp</code>, which none of this touches, measured within ±0.3% on one core: the
+  control.
 - The 32-bit targets keep
   the validated scalar oracles, using the same four-accumulator max/min, direct
   sqrt loop, and a <strong>scalar 4×4 GEMM micro-kernel</strong> over the packed panels, and
