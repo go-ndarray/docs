@@ -1,4 +1,11 @@
-# go-ndarray documentation
+---
+title: "go-ndarray documentation"
+linkTitle: "Home"
+type: docs
+cascade:
+  type: docs
+description: "A pure-Go (no cgo) NumPy-style n-dimensional array for float64: views, broadcasting, ufuncs, reductions, linear algebra; multicore + SIMD."
+---
 
 **A pure-Go (no cgo) NumPy-style n-dimensional array** for `float64` — the
 `numpy` equivalent for Go. Creation routines, strided **views that share data**,

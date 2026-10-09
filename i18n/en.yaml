@@ -1,0 +1,5 @@
+# Site strings beside Hextra's own (themes/hextra/i18n/en.yaml).
+copyright: "© 2026 the go-ndarray authors · BSD-3-Clause"
+version: "Version"
+outdated: "You are reading the documentation of an outdated version, whose text may no longer be accurate."
+outdatedLink: "Go to the latest version."

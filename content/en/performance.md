@@ -1,4 +1,12 @@
-# Performance — go-ndarray vs NumPy
+---
+# From "## How a pure-Go library can beat NumPy" down, this page is
+# go-ndarray/ndarray docs/perf.md, copied verbatim (README: "Mirrored pages").
+title: "Performance — go-ndarray vs NumPy"
+linkTitle: "Performance"
+weight: 20
+description: "Measured head-to-head of go-ndarray against NumPy and OpenBLAS, and where NumPy still leads."
+tags: [performance, simd, numpy]
+---
 
 Honest, reproducible head-to-head of `go-ndarray/ndarray` against **NumPy
 2.2.4** on identical hardware. "On n'a pas le droit de se tromper": every number

@@ -1,4 +1,12 @@
-# Security
+---
+# Below the "Mirrored from" line, this page is go-ndarray/ndarray SECURITY.md,
+# with its repository-relative links rewritten to GitHub (README: "Mirrored pages").
+title: "Security"
+linkTitle: "Security"
+weight: 30
+description: "How to report a vulnerability, what the library guarantees, and the audit log."
+tags: [security]
+---
 
 > Mirrored from [`SECURITY.md`](https://github.com/go-ndarray/ndarray/blob/main/SECURITY.md) at v0.9.1.
 

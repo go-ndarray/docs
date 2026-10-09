@@ -1,4 +1,10 @@
-# Implementation plan — N-dimensional arrays in pure Go (`go-ndarray/ndarray`)
+---
+title: "Implementation plan — N-dimensional arrays in pure Go (`go-ndarray/ndarray`)"
+linkTitle: "Roadmap"
+weight: 10
+description: "The plan for go-ndarray and what ships today."
+tags: [roadmap]
+---
 
 > Goal: a **pure-Go (CGO=0)** NumPy-style N-dimensional array library, as a
 > **standalone, reusable** module with correct scalar kernels now and a clean

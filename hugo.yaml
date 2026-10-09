@@ -1,0 +1,166 @@
+# go-ndarray documentation (Hugo + Hextra).
+#
+# Each documentation version is a separate build under
+# https://go-ndarray.github.io/docs/<version>/, where <version> is the minor
+# version of ndarray the pages describe (0.9, 0.10, ...): the label readers
+# have used since the site was built with MkDocs and mike. The CI sets it
+# through --baseURL, from params.ndarray.version below. This default is the
+# same build.
+baseURL: "https://go-ndarray.github.io/docs/0.9/"
+title: "go-ndarray"
+# themes/hextra is the tannevaled/hextra fork, pinned at a release tag:
+# upstream Hextra plus opt-in features (partial menu items, combos,
+# related-sites menu, page subtitle and history, darkreaderLock).
+theme: hextra
+
+# English is the default language and stays at the root of each version
+# (/docs/<version>/performance/), so every URL published by MkDocs keeps
+# working; other languages would live under their code
+# (/docs/<version>/fr/performance/). The versions built with MkDocs (0.1 and
+# 0.2) are English only: the version selector falls back to their English page
+# (layouts/_partials/custom/version-select.html).
+defaultContentLanguage: en
+defaultContentLanguageInSubdir: false
+
+# Each language has its own content directory, with the same file names, so
+# that a page and its translation are paired. A language is declared here only
+# once its content exists: a declared language without content would be an
+# empty entry in the language switch.
+languages:
+  en:
+    label: "English"
+    contentDir: content/en
+    weight: 1
+
+enableRobotsTXT: true
+# Git history dates every page: "Last updated on" at the bottom of each page.
+enableGitInfo: true
+
+markup:
+  goldmark:
+    renderer:
+      unsafe: true
+    parser:
+      attribute:
+        title: true
+  highlight:
+    noClasses: false
+
+module:
+  hugoVersion:
+    extended: false
+    min: 0.146.0
+  # The marks and favicons come from the go-ndarray brand repository
+  # (submodule branding/), published under /images/brand/. Only the org mark's
+  # colour formats are mounted.
+  mounts:
+    - source: static
+      target: static
+    - source: assets
+      target: assets
+    - source: branding/svg/color
+      target: static/images/brand/svg
+      files: ["go-ndarray.svg"]
+    - source: branding/png/color
+      target: static/images/brand/png
+      files: ["*/go-ndarray.png"]
+    - source: branding/ico
+      target: static/images/brand/ico
+      files: ["go-ndarray.ico"]
+
+menu:
+  main:
+    # Navbar, left to right: version, theme, search, sources.
+    - name: Version
+      weight: 3
+      params:
+        type: partial
+        partial: custom/version-select.html
+    - name: Theme
+      weight: 4
+      params:
+        type: theme-toggle
+        combo: true
+    - name: Search
+      weight: 5
+      params:
+        type: search
+    - name: GitHub
+      url: https://github.com/go-ndarray/ndarray
+      weight: 6
+      params:
+        icon: github
+
+params:
+  description: "A pure-Go (CGO=0) NumPy-style n-dimensional array library for float64: views, broadcasting, ufuncs, reductions, linalg; multicore + SIMD."
+
+  # The ndarray release these pages describe. Its minor version is the
+  # documentation's version label (v0.9.1 -> 0.9): the CI reads it here.
+  ndarray:
+    version: "v0.9.1"
+
+  navbar:
+    displayTitle: true
+    displayLogo: true
+    logo:
+      # The green mark reads on both themes; the name is the site title.
+      path: images/brand/svg/go-ndarray.svg
+      dark: images/brand/svg/go-ndarray.svg
+      width: 32
+      height: 32
+      # Related sites, opened from the chevron beside the title (the logo itself
+      # leads to the documentation's home).
+      menu:
+        - name: go-ndarray
+          url: https://go-ndarray.github.io/
+          logo: images/brand/svg/go-ndarray.svg
+        - name: Playground
+          url: https://go-ndarray.github.io/playground/
+          logo: images/brand/svg/go-ndarray.svg
+
+  theme:
+    default: system
+    # The theme toggle is in the navbar (menu above), not at the foot of the sidebar.
+    displayToggle: false
+    # Dark Reader would darken the light theme itself; with the lock, the dark
+    # theme is our own.
+    darkreaderLock: true
+
+  footer:
+    enable: true
+    displayCopyright: true
+    displayPoweredBy: false
+
+  displayUpdatedDate: true
+  dateFormat: "January 2, 2006"
+
+  editURL:
+    enable: true
+    base: "https://github.com/go-ndarray/docs/edit/main/content"
+
+  toc:
+    displayTags: true
+
+  page:
+    width: normal
+    # The front matter description as a subtitle under the title.
+    displayDescription: true
+    # "Created on ... by ... · Modified on ... by ..." at the foot of each page:
+    # creation from data/pagehistory.json, which the build writes with
+    # themes/hextra/scripts/page-history.sh (it needs the full git history);
+    # modification from git (enableGitInfo).
+    history: true
+    contextMenu:
+      enable: false
+
+  highlight:
+    copy:
+      enable: true
+      display: hover
+
+  search:
+    enable: true
+    type: flexsearch
+    flexsearch:
+      index: content
+      tokenize: forward

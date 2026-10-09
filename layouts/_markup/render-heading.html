@@ -1,0 +1,24 @@
+{{- /* Hextra's heading (themes/hextra/layouts/_markup/render-heading.html),
+  plus the anchor MkDocs gave the same heading when it differs from Hugo's.
+
+  MkDocs (Python-Markdown's toc) drops non-ASCII and punctuation, then folds
+  every run of spaces and hyphens into one hyphen: "Performance — go-ndarray
+  vs NumPy" is #performance-go-ndarray-vs-numpy there, and
+  #performance--go-ndarray-vs-numpy for Hugo. Links published while the site
+  was built with MkDocs, and the mirrored pages copied verbatim from
+  go-ndarray/ndarray (whose in-page links use the MkDocs form), keep working
+  through the second, empty anchor, without editing the mirrored text. */ -}}
+{{- $legacy := .PlainText | transform.HTMLUnescape | lower -}}
+{{- $legacy = replaceRE `[^a-z0-9_\s-]` "" $legacy | strings.TrimSpace -}}
+{{- $legacy = replaceRE `[-\s]+` "-" $legacy -}}
+<h{{ .Level }} data-hextra-search-id="{{ .Anchor | safeURL }}" {{- with .Attributes.class }} class="{{ . }}" {{- end }}>
+  {{- .Text | safeHTML -}}
+  {{- if gt .Level 1 -}}
+    <span class="hx:absolute hx:-mt-20" id="{{ .Anchor | safeURL }}"></span>
+    {{- if and $legacy (ne $legacy .Anchor) -}}
+      <span class="hx:absolute hx:-mt-20" id="{{ $legacy | safeURL }}"></span>
+    {{- end -}}
+    <a href="#{{ .Anchor | safeURL }}" class="subheading-anchor" aria-label="{{ (T "permalinkLabel") | default "Permalink for this section" }}"></a>
+  {{- end -}}
+</h{{ .Level }}>
+{{- /* Drop trailing newlines */ -}}
