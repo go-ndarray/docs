@@ -19,7 +19,7 @@ describes**:
 
 | Source | Published under |
 | --- | --- |
-| branch `main`, with `params.ndarray.version: v0.9.1` in `hugo.yaml` | `https://go-ndarray.github.io/docs/<MAJOR.MINOR>/`, here `/docs/0.9/` |
+| branch `main`, with `params.ndarray.version: v0.11.0` in `hugo.yaml` | `https://go-ndarray.github.io/docs/<MAJOR.MINOR>/`, here `/docs/0.11/` |
 | the newest version | also `https://go-ndarray.github.io/docs/latest/` |
 
 `https://go-ndarray.github.io/docs/` redirects to `latest/`. Each push to
@@ -41,22 +41,35 @@ same `versions.json` (mike's format).
 
 ## Mirrored pages
 
-Two pages are copies of files in `go-ndarray/ndarray`, kept verbatim so that
+Six pages are copies of files in `go-ndarray/ndarray`, kept verbatim so that
 re-syncing them is a copy, not an edit:
 
 | Page | Mirrors | What is ours |
 | --- | --- | --- |
+| `content/en/dtypes.md` | [`docs/design-dtypes.md`](https://github.com/go-ndarray/ndarray/blob/main/docs/design-dtypes.md), below its `#` title | the front matter |
+| `content/en/linalg.md` | [`docs/linalg.md`](https://github.com/go-ndarray/ndarray/blob/main/docs/linalg.md), below its `#` title | the front matter |
+| `content/en/random.md` | [`docs/random.md`](https://github.com/go-ndarray/ndarray/blob/main/docs/random.md), below its `#` title | the front matter |
+| `content/en/roadmap.md` | [`docs/plan-ndarray.md`](https://github.com/go-ndarray/ndarray/blob/main/docs/plan-ndarray.md), below its `#` title | the front matter |
 | `content/en/performance.md` | [`docs/perf.md`](https://github.com/go-ndarray/ndarray/blob/main/docs/perf.md), from the heading `## How a pure-Go library can beat NumPy` to the end | the front matter, and the introduction and *Where it stands* summary above that heading |
 | `content/en/security.md` | [`SECURITY.md`](https://github.com/go-ndarray/ndarray/blob/main/SECURITY.md), from `## Reporting` to the end | the front matter and the `> Mirrored from … at vX.Y.Z` line; repository-relative references are rewritten as GitHub links (`this repository` → `[the repository](https://github.com/go-ndarray/ndarray/security)`, `` `fuzz_test.go` `` → ``[`fuzz_test.go`](https://github.com/go-ndarray/ndarray/blob/main/fuzz_test.go)``, …) |
 
-To re-sync from a checkout of ndarray at tag `vX.Y.Z` (`$ND`):
+The first five are re-synced by one command, from a checkout of ndarray at tag
+`vX.Y.Z` (`$ND`); it refuses a checkout that is not at that tag:
 
 ```sh
-# performance: keep our part above the heading, replace the rest
-{ sed '/^## How a pure-Go library can beat NumPy/,$d' content/en/performance.md
-  sed -n '/^## How a pure-Go library can beat NumPy/,$p' "$ND/docs/perf.md"; } > perf.tmp
-mv perf.tmp content/en/performance.md
+scripts/sync-mirrors.sh "$ND" vX.Y.Z
+```
 
+It writes each page's `> Mirrored from … at vX.Y.Z` line, and rewrites the
+source's repository-relative links: a file this site mirrors becomes its page
+(`perf.md` → `performance.md`), a package directory (`../linalg`) becomes its
+pkg.go.dev page at the tag, any other file a GitHub link at the tag. A relative
+link it has no rule for makes it fail, naming the file and line.
+
+Security is re-synced by hand, because its references are prose (`fuzz_test.go`
+in backquotes), not links:
+
+```sh
 # security: keep our part above "## Reporting", replace the rest, then
 # rewrite the repository-relative references as GitHub links again
 { sed '/^## Reporting/,$d' content/en/security.md

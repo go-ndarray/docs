@@ -4,13 +4,15 @@ linkTitle: "Home"
 type: docs
 cascade:
   type: docs
-description: "A pure-Go (no cgo) NumPy-style n-dimensional array for float64: views, broadcasting, ufuncs, reductions, linear algebra; multicore + SIMD."
+description: "A pure-Go (no cgo) NumPy-style n-dimensional array in 13 dtypes: views, broadcasting, ufuncs, reductions, numpy.linalg, numpy.fft, numpy.random; multicore + SIMD."
 ---
 
-**A pure-Go (no cgo) NumPy-style n-dimensional array** for `float64` — the
-`numpy` equivalent for Go. Creation routines, strided **views that share data**,
-broadcasting elementwise ops and ufuncs, reductions, manipulation and linear
-algebra, all with cgo disabled.
+**A pure-Go (no cgo) NumPy-style n-dimensional array** in **thirteen dtypes**
+— the `numpy` equivalent for Go. Creation routines, strided **views that share
+data**, broadcasting elementwise ops and ufuncs, reductions, manipulation,
+`numpy.linalg`, `numpy.fft` and `numpy.random` (with NumPy's numbers for the
+same seed), all with cgo disabled. `float64` is the default dtype and the one
+with SIMD kernels.
 
 Ruby has no cgo-free ndarray (`Numo::NArray`, `NMatrix` are C extensions) and
 `gonum`'s optimized assembly is amd64-only. go-ndarray pairs a portable pure-Go
@@ -34,14 +36,18 @@ WebAssembly, with nothing to install — build a pipeline step by step (creation
 
 | Area | Functions / methods |
 | --- | --- |
+| Dtypes ([page](dtypes.md)) | bool, int8…int64, uint8…uint64, float32/float64, complex64/complex128 with NumPy 2 promotion: `AsType`, `ZerosOf`, `FromSlice`, `Data[T]`/`Item[T]`, weak Go scalars with `Scalar` |
 | Creation | `New`, `Zeros`, `Ones`, `Full`, `Arange`, `Linspace`, `Eye`, `Identity`, `FromData` |
 | Views & shape | `Slice` (`All`/`R`/`Rng`/`From`/`To`/`Step`), `Reshape`, `Ravel`, `Transpose`, `Copy` |
-| Elementwise | `Add`/`Sub`/`Mul`/`Div` (+`*Scalar`, +`*Into`), `Map`, `Neg`, `Abs` |
+| Elementwise | `Add`/`Sub`/`Mul`/`Div` (+`*Scalar`, +`*Into`), `Map`, `Neg`, `Abs`, comparisons (`Greater`/`Equal`/… → Bool masks), `Maximum`/`Minimum`, `Logical*`, `Real`/`Imag`/`Conj`/`Angle` |
 | Ufuncs | `Sqrt`, `Exp`, `Log`/`Log2`/`Log10`, `Sin`/`Cos`/`Tan`, `Floor`/`Ceil`/`Round`, `Square`, `Power` |
 | Reductions | `Sum`, `Mean`, `Max`/`Min`, `Prod`, `ArgMax`/`ArgMin`, `CumSum`/`CumProd`, `Clip`, `Where` (+ per-axis) |
 | Indexing | `Slice` (basic indexing), `MaskSelect` (`a[mask]`), `Nonzero` (`flatnonzero`), `Take` (fancy indexing) |
 | Manipulation | `Flatten`, `ExpandDims`, `Squeeze`, `Concatenate`, `Stack`, `VStack`, `HStack` |
-| Linear algebra | `MatMul`, `Dot`, `Inner`, `Outer` |
+| Linear algebra | `MatMul`, `Dot`, `Inner`, `Outer`; package `linalg` ([page](linalg.md)): `Solve`, `Inv`, `Det`, `Slogdet`, `Cholesky`, `QR`, `SVD`, `Eigh`, `Eig`, `Lstsq`, `Pinv`, `MatrixRank`, `Norm`, `Cond`, `MatrixPower`, `MultiDot` |
+| Fourier transforms | package `fft`: `numpy.fft` on arrays (`FFT`/`RFFT`/`FFT2`/`FFTN`/… with `n`/`s`, `axes`, `norm`), over [go-fft](https://github.com/go-fft/fft) |
+| Random numbers | package `random` ([page](random.md)): PCG64, PCG64DXSM, MT19937, Philox, SFC64; `Generator` (`DefaultRNG`, 40 samplers) and the legacy `RandomState` (`Seed`, `Rand`) |
+| Notebooks & storage | `Repr` (prints like NumPy), `Display` (text and HTML), `MarshalBinary`/`UnmarshalBinary` (the same bytes on every architecture) |
 | Memory reuse | `NewWorkspace`, `Use`, `Reset`, `Detach` |
 
 ## Goroutines (v0.6.0)
@@ -87,13 +93,15 @@ On an AMD Zen 3 (16 cores), `x + y` on 1 024 elements goes from 2.6 µs to
 ## Performance & architectures
 
 Large elementwise ops, reductions and products run **multicore** (across
-`GOMAXPROCS`). On **amd64, arm64, ppc64le and loong64** the hot loops are
-go-asmgen SIMD kernels: sum, add/sub/mul/div, sqrt and the dot product (SSE2 or
-AVX2/FMA on amd64, NEON on arm64, VSX on ppc64le, LASX on loong64 when the CPU
-has it), max/min too on amd64, and a **panel-packed, cache-blocked GEMM** with
-an SIMD-FMA micro-kernel (NEON 4×8; AVX2/FMA 6×8 chosen at run time by a CPUID
-probe, SSE2 fallback; VSX 8×8; LASX 8×8). riscv64, s390x and the 32-bit
-targets run the same pure-Go code those kernels are tested against. `Exp` and `Log` are ports of Arm's
+`GOMAXPROCS`). On **amd64, arm64, ppc64le, loong64, riscv64 and s390x** the hot
+loops are go-asmgen SIMD kernels for `float64`: sum, add/sub/mul/div, sqrt and
+the dot product (SSE2 or AVX2/FMA on amd64, NEON on arm64, VSX on ppc64le, LASX
+on loong64, RVV on riscv64 and the vector facility on s390x, the last three
+when the CPU has them), max/min too on amd64, arm64 and s390x (z14 and later),
+and a **panel-packed, cache-blocked GEMM** with an SIMD-FMA micro-kernel (NEON
+4×8; AVX2/FMA 6×8 chosen at run time by a CPUID probe, SSE2 fallback; VSX 8×8;
+LASX 8×8; RVV 6×8; s390x 4×8). The 32-bit targets run the same pure-Go code
+those kernels are tested against. `Exp` and `Log` are ports of Arm's
 optimized-routines (worst 0.504 and 0.508 ULP measured, against up to 0.88 and 0.72 for Go's `math.Exp`/`math.Log` on arm64), and they are
 correct where amd64's `math.Exp` returns +Inf
 ([golang/go#81995](https://github.com/golang/go/issues/81995)) and `math.Log`
@@ -132,6 +140,9 @@ ppc64le, riscv64 and loong64 hardware.
 
 ## Where to go next
 
+- [Dtypes](dtypes.md) — the thirteen element types and NumPy 2 promotion.
+- [Linear algebra](linalg.md) — `numpy.linalg`: algorithms, accuracy, speed.
+- [Random numbers](random.md) — `numpy.random`, the same numbers for the same seed.
 - [Roadmap](roadmap.md) — the plan and what ships today.
 - [Performance](performance.md) — honest benchmarks versus NumPy / OpenBLAS.
 
