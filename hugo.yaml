@@ -6,7 +6,7 @@
 # have used since the site was built with MkDocs and mike. The CI sets it
 # through --baseURL, from params.ndarray.version below. This default is the
 # same build.
-baseURL: "https://go-ndarray.github.io/docs/0.9/"
+baseURL: "https://go-ndarray.github.io/docs/0.11/"
 title: "go-ndarray"
 # themes/hextra is the tannevaled/hextra fork, pinned at a release tag:
 # upstream Hextra plus opt-in features (partial menu items, combos,
@@ -92,12 +92,12 @@ menu:
         icon: github
 
 params:
-  description: "A pure-Go (CGO=0) NumPy-style n-dimensional array library for float64: views, broadcasting, ufuncs, reductions, linalg; multicore + SIMD."
+  description: "A pure-Go (CGO=0) NumPy-style n-dimensional array library in 13 dtypes: views, broadcasting, ufuncs, reductions, numpy.linalg, numpy.fft, numpy.random; multicore + SIMD."
 
   # The ndarray release these pages describe. Its minor version is the
   # documentation's version label (v0.9.1 -> 0.9): the CI reads it here.
   ndarray:
-    version: "v0.9.1"
+    version: "v0.11.0"
 
   navbar:
     displayTitle: true
