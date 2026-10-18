@@ -8,7 +8,7 @@ description: "Why the dtype is a run-time property of one Array type, how arrays
 tags: [dtypes, numpy]
 ---
 
-> Mirrored from [`docs/design-dtypes.md`](https://github.com/go-ndarray/ndarray/blob/v0.15.0/docs/design-dtypes.md) at v0.15.0.
+> Mirrored from [`docs/design-dtypes.md`](https://github.com/go-ndarray/ndarray/blob/v0.16.0/docs/design-dtypes.md) at v0.16.0.
 
 > Status: implemented (Phase 2). Supersedes decision 4 of
 > [plan-ndarray.md](roadmap.md) ("`float64` first").
