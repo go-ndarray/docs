@@ -101,4 +101,15 @@ for f in roadmap.md dtypes.md linalg.md random.md performance.md; do
 	done
 done | grep -q x && bad=1
 [ "$bad" -eq 0 ] || die "relative links left that the rules above do not rewrite"
+
+# The package links point at pkg.go.dev for this tag, and pkg.go.dev answers
+# 404 for a version it has not indexed yet: right after tagging, the docs
+# PR's link check failed on exactly these, twice (v0.12.0, v0.13.0). Ask it
+# to fetch the tag (its "Request" button; the POST may time out while it
+# works) and say whether the pages answer yet.
+curl -s -o /dev/null -X POST --max-time 60 "https://pkg.go.dev/fetch/github.com/go-ndarray/ndarray@$tag" || true
+for p in linalg random fft; do
+	code=$(curl -s -o /dev/null -w '%{http_code}' -L --max-time 30 "$pkg/$p") || code=000
+	[ "$code" = 200 ] || echo "sync-mirrors.sh: $pkg/$p answers $code; pkg.go.dev may still be indexing $tag -- re-check before opening the PR" >&2
+done
 echo "synced from $tag; now set params.ndarray.version in hugo.yaml to $tag"
