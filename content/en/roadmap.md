@@ -8,7 +8,7 @@ description: "The plan for go-ndarray and what ships today."
 tags: [roadmap]
 ---
 
-> Mirrored from [`docs/plan-ndarray.md`](https://github.com/go-ndarray/ndarray/blob/v0.17.0/docs/plan-ndarray.md) at v0.17.0.
+> Mirrored from [`docs/plan-ndarray.md`](https://github.com/go-ndarray/ndarray/blob/v0.18.0/docs/plan-ndarray.md) at v0.18.0.
 
 > Goal: a **pure-Go (CGO=0)** NumPy-style N-dimensional array library, as a
 > **standalone, reusable** module with correct scalar kernels now and a clean
@@ -112,7 +112,7 @@ suite (plus the per-arch CI jobs already wired in `.github/workflows/ci.yml`).
 - **Performance — DONE (beats NumPy on its core ops; matmul at tuned-BLAS
   parity).** Several levers behind the kernel seam, measured honestly vs NumPy
   2.2.4 (see [docs/perf.md](performance.md) and the repo's
-  [BENCHMARKS.md](https://github.com/go-ndarray/ndarray/blob/v0.17.0/BENCHMARKS.md)):
+  [BENCHMARKS.md](https://github.com/go-ndarray/ndarray/blob/v0.18.0/BENCHMARKS.md)):
   - **Multicore.** `Add/Sub/Mul/Div/Map`, `Sum/Max/Min`, the axis reductions,
     `Concatenate`/`Stack`, and the GEMM fan out across `GOMAXPROCS` above a size
     threshold (small arrays stay serial). Plus an allocation fix: the
@@ -164,8 +164,10 @@ suite (plus the per-arch CI jobs already wired in `.github/workflows/ci.yml`).
 - **Phase 2 — dtypes — DONE.** Thirteen dtypes (bool, signed and unsigned
   integers, float32/64, complex64/128) as a runtime property of `Array`,
   with NumPy 2.x promotion; see [design-dtypes.md](dtypes.md). The
-  `fft` bridge shipped in v0.10.0 (package `fft`, over go-fft). Still open:
-  SIMD kernels for `float32` (float32 runs the pure-Go code today).
+  `fft` bridge shipped in v0.10.0 (package `fft`, over go-fft). float32 has
+  SIMD kernels on all six 64-bit targets for `Sum` (v0.14.0–v0.17.0) and for
+  `Add`/`Sub`/`Mul`/`Div` (v0.18.0). Still pure Go for float32: `Sqrt`,
+  `Max`/`Min`, `Dot`/`MatMul` and the transcendental ufuncs.
 - **Phase 3 — broadcasting ufuncs — MOSTLY DONE.** Broadcasting arithmetic,
   comparisons returning Bool masks, `Maximum`/`Minimum`, `Logical*`, `Power`,
   `Where` and the per-axis reductions, in every dtype. Not done: a public
