@@ -1,0 +1,218 @@
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>go-ndarray – Dtypes</title><link>https://go-ndarray.github.io/docs/0.18/tags/dtypes/</link><description>Recent content in Dtypes on go-ndarray</description><generator>Hugo -- gohugo.io</generator><language>en</language><atom:link href="https://go-ndarray.github.io/docs/0.18/tags/dtypes/index.xml" rel="self" type="application/rss+xml"/><item><title>Dtypes — thirteen element types, NumPy 2 promotion</title><link>https://go-ndarray.github.io/docs/0.18/dtypes/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://go-ndarray.github.io/docs/0.18/dtypes/</guid><description>
+&lt;blockquote&gt;
+&lt;p&gt;Mirrored from &lt;a href="https://github.com/go-ndarray/ndarray/blob/v0.18.0/docs/design-dtypes.md" target="_blank" rel="noopener"&gt;&lt;code&gt;docs/design-dtypes.md&lt;/code&gt;&lt;/a&gt; at v0.18.0.&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;blockquote&gt;
+&lt;p&gt;Status: implemented (Phase 2). Supersedes decision 4 of
+&lt;a href="https://go-ndarray.github.io/docs/0.18/roadmap/"&gt;plan-ndarray.md&lt;/a&gt; (&amp;quot;&lt;code&gt;float64&lt;/code&gt; first&amp;quot;).&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 data-hextra-search-id="why-now"&gt;Why now&lt;span class="hx:absolute hx:-mt-20" id="why-now"&gt;&lt;/span&gt;&lt;a href="#why-now" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;&lt;code&gt;Array&lt;/code&gt; holds &lt;code&gt;float64&lt;/code&gt; only. Three things the library is meant to do cannot be
+done on that alone:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Spectra.&lt;/strong&gt; &lt;code&gt;go-fft&lt;/code&gt; returns &lt;code&gt;[]complex128&lt;/code&gt;. Without a complex dtype an FFT
+result cannot be an array, so the two libraries do not compose.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Masks.&lt;/strong&gt; Comparisons return &lt;code&gt;0/1&lt;/code&gt; floats. They work for &lt;code&gt;MaskSelect&lt;/code&gt; and
+&lt;code&gt;Where&lt;/code&gt;, but a mask cannot be told apart from data, and it costs 8 bytes per
+element instead of 1.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Memory-bound work.&lt;/strong&gt; &lt;code&gt;float32&lt;/code&gt; halves the bytes moved, which is the whole
+cost of the elementwise ops; images arrive as &lt;code&gt;uint8&lt;/code&gt;; counts and indices are
+integers.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;The type at the centre of the library is the one thing that gets more
+expensive to change every release, and the module is pre-1.0. That is why it
+goes first.&lt;/p&gt;
+&lt;h2 data-hextra-search-id="decision-the-dtype-is-a-runtime-property-of-the-one-array-type"&gt;Decision: the dtype is a runtime property of the one &lt;code&gt;Array&lt;/code&gt; type&lt;span class="hx:absolute hx:-mt-20" id="decision-the-dtype-is-a-runtime-property-of-the-one-array-type"&gt;&lt;/span&gt;&lt;a href="#decision-the-dtype-is-a-runtime-property-of-the-one-array-type" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
+&lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-go" data-lang="go"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="kd"&gt;type&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nx"&gt;DType&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kt"&gt;uint8&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="c1"&gt;// Bool, Int8…Int64, Uint8…Uint64, Float32, Float64, Complex64, Complex128&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="nx"&gt;a&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nx"&gt;_&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;:=&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nx"&gt;ndarray&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nf"&gt;Zeros&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;3&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mi"&gt;4&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="c1"&gt;// Float64, as before&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="nx"&gt;b&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;:=&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nx"&gt;a&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nf"&gt;AsType&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nx"&gt;ndarray&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;Complex128&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="nx"&gt;c&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nx"&gt;_&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;:=&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nx"&gt;a&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nf"&gt;Add&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nx"&gt;b&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="c1"&gt;// Complex128, by NumPy promotion&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="nx"&gt;m&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nx"&gt;_&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;:=&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nx"&gt;a&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nf"&gt;Greater&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nx"&gt;ndarray&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nf"&gt;Scalar&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;))&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="c1"&gt;// Bool&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0"&gt;
+&lt;button
+class="hextra-code-copy-btn hx:group/copybtn hx:cursor-pointer hx:transition-all hx:active:opacity-50 hx:bg-primary-700/5 hx:border hx:border-black/5 hx:text-gray-600 hx:hover:text-gray-900 hx:rounded-md hx:p-1.5 hx:dark:bg-primary-300/10 hx:dark:border-white/10 hx:dark:text-gray-400 hx:dark:hover:text-gray-50"
+title="Copy code"
+aria-label="Copy code"
+data-copied-label="Copied!"
+&gt;
+&lt;div class="hextra-copy-icon hx:group-[.copied]/copybtn:hidden hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;div class="hextra-success-icon hx:hidden hx:group-[.copied]/copybtn:block hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;/button&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;p&gt;The alternative was a generic &lt;code&gt;Dense[T]&lt;/code&gt;. It was rejected for four reasons:&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;Promotion cannot be written as a generic method.&lt;/strong&gt; &lt;code&gt;int32 / int32&lt;/code&gt; is
+&lt;code&gt;float64&lt;/code&gt; and &lt;code&gt;int8 + float32&lt;/code&gt; is &lt;code&gt;float32&lt;/code&gt;: the result type depends on both
+operands. A method on &lt;code&gt;Dense[T]&lt;/code&gt; cannot return &lt;code&gt;Dense[U]&lt;/code&gt; for a &lt;code&gt;U&lt;/code&gt; chosen
+from its argument, and methods cannot have their own type parameters. The
+arithmetic would have to move to package functions, one per pair of types
+in the general case, and NumPy&amp;rsquo;s semantics would be lost or re-encoded.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;The consumers are dynamic.&lt;/strong&gt; The notebook evaluates cells in an
+interpreter, and the Ruby binding (&lt;code&gt;go-embedded-ruby&lt;/code&gt;) is a dynamic language.
+Both hold &amp;ldquo;an array&amp;rdquo; and ask it what it is; neither can carry a type
+parameter.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Nothing that exists breaks.&lt;/strong&gt; &lt;code&gt;*Array&lt;/code&gt;, its methods and the &lt;code&gt;float64&lt;/code&gt; hot
+path keep their names, signatures and speed. The Ruby binding uses method
+expressions such as &lt;code&gt;(*nd.Array).Sqrt&lt;/code&gt;; those would stop compiling on an
+alias of an instantiated generic type.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Static typing is still available where it pays&lt;/strong&gt;: generic accessors
+&lt;code&gt;Data[T]&lt;/code&gt;, &lt;code&gt;FromSlice[T]&lt;/code&gt; and &lt;code&gt;Item[T]&lt;/code&gt; check the dtype once at the boundary
+and hand back a &lt;code&gt;[]T&lt;/code&gt;.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2 data-hextra-search-id="storage"&gt;Storage&lt;span class="hx:absolute hx:-mt-20" id="storage"&gt;&lt;/span&gt;&lt;a href="#storage" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
+&lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-go" data-lang="go"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="kd"&gt;type&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nx"&gt;Array&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kd"&gt;struct&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;{&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nx"&gt;data&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;[]&lt;/span&gt;&lt;span class="kt"&gt;float64&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="c1"&gt;// Float64 storage — the existing hot path, unchanged&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nx"&gt;ext&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kt"&gt;any&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="c1"&gt;// []T for every other dtype, nil for Float64&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nx"&gt;dtype&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nx"&gt;DType&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nx"&gt;shape&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;[]&lt;/span&gt;&lt;span class="kt"&gt;int&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nx"&gt;strides&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;[]&lt;/span&gt;&lt;span class="kt"&gt;int&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nx"&gt;offset&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kt"&gt;int&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="p"&gt;}&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0"&gt;
+&lt;button
+class="hextra-code-copy-btn hx:group/copybtn hx:cursor-pointer hx:transition-all hx:active:opacity-50 hx:bg-primary-700/5 hx:border hx:border-black/5 hx:text-gray-600 hx:hover:text-gray-900 hx:rounded-md hx:p-1.5 hx:dark:bg-primary-300/10 hx:dark:border-white/10 hx:dark:text-gray-400 hx:dark:hover:text-gray-50"
+title="Copy code"
+aria-label="Copy code"
+data-copied-label="Copied!"
+&gt;
+&lt;div class="hextra-copy-icon hx:group-[.copied]/copybtn:hidden hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;div class="hextra-success-icon hx:hidden hx:group-[.copied]/copybtn:block hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;/button&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;p&gt;Keeping &lt;code&gt;data []float64&lt;/code&gt; as a concrete field means every existing &lt;code&gt;float64&lt;/code&gt;
+kernel, SIMD path and benchmark is untouched. The other dtypes are reached
+through one type assertion per operation, not per element. Shape, strides and
+views do not depend on the dtype, so slicing, reshape, transpose, broadcast and
+the manipulation functions are written once over a generic helper.&lt;/p&gt;
+&lt;p&gt;Inner loops for the other dtypes are generic Go (&lt;code&gt;func add[T number](dst, x, y []T)&lt;/code&gt;). The gc compiler stencils one copy per GC shape, and every numeric type
+has its own shape, so these are fully specialised loops. SIMD kernels come
+dtype by dtype after correctness, &lt;code&gt;float32&lt;/code&gt; first.&lt;/p&gt;
+&lt;h2 data-hextra-search-id="semantics-numpy-2x-checked-against-numpy"&gt;Semantics: NumPy 2.x, checked against NumPy&lt;span class="hx:absolute hx:-mt-20" id="semantics-numpy-2x-checked-against-numpy"&gt;&lt;/span&gt;&lt;a href="#semantics-numpy-2x-checked-against-numpy" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Array–array promotion&lt;/strong&gt; follows &lt;code&gt;numpy.result_type&lt;/code&gt;. The full 13×13 table
+is generated from NumPy 2.5.3 and committed as a test fixture
+(&lt;code&gt;testdata/promotion.json&lt;/code&gt;, embedded so the emulated CI arches can read it);
+the implementation is tested against every cell.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Go scalars are weak&lt;/strong&gt;, like Python scalars under NEP 50: &lt;code&gt;AddScalar(1.5)&lt;/code&gt; on
+a &lt;code&gt;float32&lt;/code&gt; array stays &lt;code&gt;float32&lt;/code&gt;, on an &lt;code&gt;int8&lt;/code&gt; array becomes &lt;code&gt;float64&lt;/code&gt;.
+&lt;code&gt;ScalarOf(v, dtype)&lt;/code&gt; makes a strong one.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;True division&lt;/strong&gt; of integers or bools gives &lt;code&gt;float64&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Reductions:&lt;/strong&gt; &lt;code&gt;Sum&lt;/code&gt;/&lt;code&gt;Prod&lt;/code&gt;/&lt;code&gt;CumSum&lt;/code&gt; of bool and signed ints accumulate in
+&lt;code&gt;int64&lt;/code&gt;, of unsigned ints in &lt;code&gt;uint64&lt;/code&gt;; &lt;code&gt;Mean&lt;/code&gt; of integers is &lt;code&gt;float64&lt;/code&gt;;
+&lt;code&gt;Max&lt;/code&gt;/&lt;code&gt;Min&lt;/code&gt; keep the dtype; arg-reductions are &lt;code&gt;int64&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Float ufuncs on integers&lt;/strong&gt; (&lt;code&gt;Sqrt&lt;/code&gt;, &lt;code&gt;Exp&lt;/code&gt;, &lt;code&gt;Sin&lt;/code&gt; …) give &lt;code&gt;float64&lt;/code&gt; for
+32- and 64-bit ints, &lt;code&gt;float32&lt;/code&gt; for 16-bit ints.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Comparisons return &lt;code&gt;Bool&lt;/code&gt;.&lt;/strong&gt; &lt;code&gt;MaskSelect&lt;/code&gt; and &lt;code&gt;Where&lt;/code&gt; accept a &lt;code&gt;Bool&lt;/code&gt; mask
+and, as NumPy does, any other dtype by truthiness, so existing &lt;code&gt;0/1&lt;/code&gt; masks
+keep working.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Integer overflow wraps&lt;/strong&gt;, as it does in both Go and NumPy.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 data-hextra-search-id="deliberate-differences"&gt;Deliberate differences&lt;span class="hx:absolute hx:-mt-20" id="deliberate-differences"&gt;&lt;/span&gt;&lt;a href="#deliberate-differences" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;NumPy&lt;/th&gt;
+&lt;th&gt;here&lt;/th&gt;
+&lt;th&gt;why&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;float16&lt;/code&gt; exists; &lt;code&gt;sqrt(int8)&lt;/code&gt; is &lt;code&gt;float16&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;no &lt;code&gt;float16&lt;/code&gt;; &lt;code&gt;sqrt(int8)&lt;/code&gt;, &lt;code&gt;sqrt(uint8)&lt;/code&gt; and &lt;code&gt;sqrt(bool)&lt;/code&gt; give &lt;code&gt;float32&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;Go has no half-precision arithmetic; &lt;code&gt;float32&lt;/code&gt; is the smallest type that holds the result exactly&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;round&lt;/code&gt; is half-to-even&lt;/td&gt;
+&lt;td&gt;half-away-from-zero (unchanged)&lt;/td&gt;
+&lt;td&gt;documented since v0.1.0&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;datetime64&lt;/code&gt;, &lt;code&gt;str_&lt;/code&gt;, &lt;code&gt;object&lt;/code&gt;, structured dtypes&lt;/td&gt;
+&lt;td&gt;absent&lt;/td&gt;
+&lt;td&gt;out of scope for a numeric library&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;h2 data-hextra-search-id="element-access"&gt;Element access&lt;span class="hx:absolute hx:-mt-20" id="element-access"&gt;&lt;/span&gt;&lt;a href="#element-access" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;At(idx...) float64&lt;/code&gt; keeps working for every real dtype, converting the
+element. On a complex array it panics with a message that names &lt;code&gt;AtComplex&lt;/code&gt;.
+NumPy instead discards the imaginary part with a &lt;code&gt;ComplexWarning&lt;/code&gt;; Go has no
+warnings, and a silent loss is the defect that warning exists to flag.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;AtComplex(idx...) complex128&lt;/code&gt;, and &lt;code&gt;Item[T](a, idx...) T&lt;/code&gt; for exact typed
+access.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Set(v float64, idx...)&lt;/code&gt; converts into the array&amp;rsquo;s dtype.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 data-hextra-search-id="breaking-changes"&gt;Breaking changes&lt;span class="hx:absolute hx:-mt-20" id="breaking-changes"&gt;&lt;/span&gt;&lt;a href="#breaking-changes" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;before&lt;/th&gt;
+&lt;th&gt;after&lt;/th&gt;
+&lt;th&gt;migration&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;comparisons return a &lt;code&gt;Float64&lt;/code&gt; 0/1 array&lt;/td&gt;
+&lt;td&gt;they return &lt;code&gt;Bool&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;.AsType(Float64)&lt;/code&gt; to get the old values; &lt;code&gt;MaskSelect&lt;/code&gt; and &lt;code&gt;Where&lt;/code&gt; need no change&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;Nonzero&lt;/code&gt; returns &lt;code&gt;Float64&lt;/code&gt; indices&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;Int64&lt;/code&gt;, as &lt;code&gt;np.flatnonzero&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;.AsType(Float64)&lt;/code&gt;, or &lt;code&gt;Data[int64]&lt;/code&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;ArgMaxAxis&lt;/code&gt;/&lt;code&gt;ArgMinAxis&lt;/code&gt; return &lt;code&gt;Float64&lt;/code&gt; indices&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;Int64&lt;/code&gt;, as NumPy&lt;/td&gt;
+&lt;td&gt;same&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;MaskSelect&lt;/code&gt; takes a 0/1 float mask&lt;/td&gt;
+&lt;td&gt;it takes any dtype (truthiness)&lt;/td&gt;
+&lt;td&gt;none&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;The only consumer in the fleet, &lt;code&gt;go-embedded-ruby/ruby&lt;/code&gt; (&lt;code&gt;internal/vm/ndarray.go&lt;/code&gt;),
+does not use comparisons; it is pinned to a June pseudo-version and will be
+moved forward in its own pull request.&lt;/p&gt;
+&lt;h2 data-hextra-search-id="what-the-implementation-added"&gt;What the implementation added&lt;span class="hx:absolute hx:-mt-20" id="what-the-implementation-added"&gt;&lt;/span&gt;&lt;a href="#what-the-implementation-added" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;Scalar(v)&lt;/code&gt; makes the weak operand from any Go number; the &lt;code&gt;*Scalar&lt;/code&gt;
+methods&amp;rsquo; &lt;code&gt;float64&lt;/code&gt; arguments are weak floats.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SumAll&lt;/code&gt;/&lt;code&gt;ProdAll&lt;/code&gt; return a 0-d array in the accumulation dtype, exact for
+every dtype; &lt;code&gt;Sum&lt;/code&gt;/&lt;code&gt;Prod&lt;/code&gt;/&lt;code&gt;Mean&lt;/code&gt;/&lt;code&gt;Max&lt;/code&gt;/&lt;code&gt;Min&lt;/code&gt; keep returning &lt;code&gt;float64&lt;/code&gt; and
+panic on complex arrays (naming the method to use instead).&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LogicalNot&lt;/code&gt;/&lt;code&gt;LogicalAnd&lt;/code&gt;/&lt;code&gt;LogicalOr&lt;/code&gt;/&lt;code&gt;LogicalXor&lt;/code&gt;, &lt;code&gt;Any&lt;/code&gt;, &lt;code&gt;All&lt;/code&gt;, and
+&lt;code&gt;Real&lt;/code&gt;/&lt;code&gt;Imag&lt;/code&gt;/&lt;code&gt;Conj&lt;/code&gt;/&lt;code&gt;Angle&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;Float-to-integer casts saturate on every platform. NumPy leaves them
+undefined: on arm64 it saturates to 64 bits and then wraps (&lt;code&gt;+Inf&lt;/code&gt; to &lt;code&gt;int8&lt;/code&gt;
+is &lt;code&gt;-1&lt;/code&gt;), on x86 &lt;code&gt;NaN&lt;/code&gt; gives the minimum.&lt;/li&gt;
+&lt;li&gt;A &lt;code&gt;Workspace&lt;/code&gt; serves &lt;code&gt;Float64&lt;/code&gt; results only; the other dtypes allocate from
+the heap for now.&lt;/li&gt;
+&lt;li&gt;Only &lt;code&gt;Float64&lt;/code&gt; has SIMD kernels and multicore fan-out; the other dtypes run
+tight generic loops (one per element type, generated by &lt;code&gt;gen_dtypes.go&lt;/code&gt;).
+&lt;code&gt;MatMul&lt;/code&gt; on them is a plain triple loop.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 data-hextra-search-id="verification"&gt;Verification&lt;span class="hx:absolute hx:-mt-20" id="verification"&gt;&lt;/span&gt;&lt;a href="#verification" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;testdata/promotion.json&lt;/code&gt;: every one of the 169 &lt;code&gt;result_type&lt;/code&gt; cells, the
+weak-scalar results, and the result dtype of the unary ufuncs and the
+reductions, from NumPy 2.5.3. All match, with &lt;code&gt;float16&lt;/code&gt; read as &lt;code&gt;float32&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;testdata/values.json&lt;/code&gt;: 47 operations on every dtype with edge values
+(integer limits, NaN, ±Inf, −0) — 3,147 values. Correctly rounded
+operations and every integer or bool result must match to the bit; the
+others within 8 machine epsilons of NumPy&amp;rsquo;s result dtype. A deliberately
+broken integer &lt;code&gt;max&lt;/code&gt; fails 48 of them.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 data-hextra-search-id="delivery"&gt;Delivery&lt;span class="hx:absolute hx:-mt-20" id="delivery"&gt;&lt;/span&gt;&lt;a href="#delivery" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;Core&lt;/strong&gt; — &lt;code&gt;DType&lt;/code&gt;, storage, &lt;code&gt;AsType&lt;/code&gt;, creation with a dtype
+(&lt;code&gt;ZerosOf&lt;/code&gt;/&lt;code&gt;OnesOf&lt;/code&gt;/&lt;code&gt;FullOf&lt;/code&gt;/&lt;code&gt;FromSlice[T]&lt;/code&gt;), element access, and every
+shape-only operation (reshape, transpose, slice, copy, flatten, expand,
+squeeze, concatenate, stack, string form) for every dtype.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Arithmetic&lt;/strong&gt; — promotion, the four operators and the scalar forms,
+comparisons returning &lt;code&gt;Bool&lt;/code&gt;, &lt;code&gt;Where&lt;/code&gt;/&lt;code&gt;MaskSelect&lt;/code&gt;, reductions with their
+accumulator types, unary ufuncs.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Complex&lt;/strong&gt; — &lt;code&gt;Real&lt;/code&gt;/&lt;code&gt;Imag&lt;/code&gt;/&lt;code&gt;Conj&lt;/code&gt;/&lt;code&gt;Angle&lt;/code&gt;, &lt;code&gt;Abs&lt;/code&gt; of complex to float, and an
+&lt;code&gt;fft&lt;/code&gt; subpackage bridging &lt;code&gt;go-fft&lt;/code&gt; on arrays (&lt;code&gt;fft.FFTN(a, axes...)&lt;/code&gt;).&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Speed&lt;/strong&gt; — &lt;code&gt;float32&lt;/code&gt; SIMD kernels, then &lt;code&gt;MatMul&lt;/code&gt; for &lt;code&gt;float32&lt;/code&gt; and complex.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;Each step keeps the 100% coverage gate and the per-arch CI, and is checked
+against NumPy before it ships.&lt;/p&gt;</description></item></channel></rss>
