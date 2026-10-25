@@ -1,0 +1,477 @@
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>go-ndarray – Random</title><link>https://go-ndarray.github.io/docs/0.19/tags/random/</link><description>Recent content in Random on go-ndarray</description><generator>Hugo -- gohugo.io</generator><language>en</language><atom:link href="https://go-ndarray.github.io/docs/0.19/tags/random/index.xml" rel="self" type="application/rss+xml"/><item><title>random — numpy.random, the same numbers</title><link>https://go-ndarray.github.io/docs/0.19/random/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://go-ndarray.github.io/docs/0.19/random/</guid><description>
+&lt;blockquote&gt;
+&lt;p&gt;Mirrored from &lt;a href="https://github.com/go-ndarray/ndarray/blob/v0.19.0/docs/random.md" target="_blank" rel="noopener"&gt;&lt;code&gt;docs/random.md&lt;/code&gt;&lt;/a&gt; at v0.19.0.&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;Package &lt;a href="https://pkg.go.dev/github.com/go-ndarray/ndarray@v0.19.0/random" target="_blank" rel="noopener"&gt;&lt;code&gt;random&lt;/code&gt;&lt;/a&gt; is &lt;code&gt;numpy.random&lt;/code&gt; over go-ndarray arrays. Its goal
+is migration: a notebook moved from NumPy to Go keeps its numbers for the same
+seed.&lt;/p&gt;
+&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
+&lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-go" data-lang="go"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="nx"&gt;rng&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;:=&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nx"&gt;random&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nf"&gt;DefaultRNG&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;42&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="c1"&gt;// np.random.default_rng(42)&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="nx"&gt;x&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nx"&gt;_&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;:=&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nx"&gt;rng&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nf"&gt;StandardNormal&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;3&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mi"&gt;4&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="c1"&gt;// rng.standard_normal((3, 4))&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="nx"&gt;k&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nx"&gt;_&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;:=&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nx"&gt;rng&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nf"&gt;Integers&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mi"&gt;10&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mi"&gt;5&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="c1"&gt;// rng.integers(0, 10, 5)&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="nx"&gt;random&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nf"&gt;Seed&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="c1"&gt;// np.random.seed(0)&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="nx"&gt;u&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nx"&gt;_&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;:=&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nx"&gt;random&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nf"&gt;Rand&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;3&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="c1"&gt;// np.random.rand(3)&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0"&gt;
+&lt;button
+class="hextra-code-copy-btn hx:group/copybtn hx:cursor-pointer hx:transition-all hx:active:opacity-50 hx:bg-primary-700/5 hx:border hx:border-black/5 hx:text-gray-600 hx:hover:text-gray-900 hx:rounded-md hx:p-1.5 hx:dark:bg-primary-300/10 hx:dark:border-white/10 hx:dark:text-gray-400 hx:dark:hover:text-gray-50"
+title="Copy code"
+aria-label="Copy code"
+data-copied-label="Copied!"
+&gt;
+&lt;div class="hextra-copy-icon hx:group-[.copied]/copybtn:hidden hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;div class="hextra-success-icon hx:hidden hx:group-[.copied]/copybtn:block hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;/button&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;p&gt;&lt;code&gt;Example&lt;/code&gt;, &lt;code&gt;ExampleSeed&lt;/code&gt; and &lt;code&gt;ExampleGenerator_ChoiceN&lt;/code&gt; in
+&lt;a href="https://github.com/go-ndarray/ndarray/blob/v0.19.0/random/example_test.go" target="_blank" rel="noopener"&gt;&lt;code&gt;example_test.go&lt;/code&gt;&lt;/a&gt; print NumPy&amp;rsquo;s own numbers.&lt;/p&gt;
+&lt;h2 data-hextra-search-id="what-is-implemented"&gt;What is implemented&lt;span class="hx:absolute hx:-mt-20" id="what-is-implemented"&gt;&lt;/span&gt;&lt;a href="#what-is-implemented" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;NumPy&lt;/th&gt;
+&lt;th&gt;here&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;SeedSequence(entropy, spawn_key=, pool_size=)&lt;/code&gt;, &lt;code&gt;.pool&lt;/code&gt;, &lt;code&gt;.generate_state(n, uint32/uint64)&lt;/code&gt;, &lt;code&gt;.spawn(n)&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;NewSeedSequence(v...)&lt;/code&gt;, &lt;code&gt;NewSeedSequenceBig&lt;/code&gt;, &lt;code&gt;NewSeedSequenceWith&lt;/code&gt;, &lt;code&gt;Pool&lt;/code&gt;, &lt;code&gt;GenerateState&lt;/code&gt;, &lt;code&gt;GenerateState64&lt;/code&gt;, &lt;code&gt;Spawn&lt;/code&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;PCG64&lt;/code&gt;, &lt;code&gt;PCG64DXSM&lt;/code&gt;, &lt;code&gt;MT19937&lt;/code&gt;, &lt;code&gt;Philox&lt;/code&gt; (also &lt;code&gt;counter=&lt;/code&gt;, &lt;code&gt;key=&lt;/code&gt;), &lt;code&gt;SFC64&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;NewPCG64&lt;/code&gt; … &lt;code&gt;NewSFC64&lt;/code&gt;, &lt;code&gt;New…FromSeedSequence&lt;/code&gt;, &lt;code&gt;NewPhiloxKey&lt;/code&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;.jumped(n)&lt;/code&gt;, &lt;code&gt;.advance(delta)&lt;/code&gt;, &lt;code&gt;.random_raw(n)&lt;/code&gt;, &lt;code&gt;.spawn(n)&lt;/code&gt;, &lt;code&gt;.state&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;Jumped&lt;/code&gt;, &lt;code&gt;Advance(*big.Int)&lt;/code&gt;, &lt;code&gt;RandomRaw&lt;/code&gt;, &lt;code&gt;Spawn&lt;/code&gt;, &lt;code&gt;State&lt;/code&gt;/&lt;code&gt;SetState&lt;/code&gt; (typed structs)&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;default_rng(seed)&lt;/code&gt;, &lt;code&gt;Generator(bitgen)&lt;/code&gt;, &lt;code&gt;.spawn(n)&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;DefaultRNG(seed...)&lt;/code&gt;, &lt;code&gt;NewGenerator&lt;/code&gt;, &lt;code&gt;Spawn&lt;/code&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;random(size, dtype)&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;Random(size...)&lt;/code&gt;, &lt;code&gt;RandomOf(dt, size...)&lt;/code&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;integers(low, high, size, dtype, endpoint)&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;Integers(low, high, size...)&lt;/code&gt;, &lt;code&gt;IntegersOf(dt, low, high, endpoint, size...)&lt;/code&gt;, &lt;code&gt;IntegersUint64&lt;/code&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;standard_normal&lt;/code&gt;, &lt;code&gt;normal&lt;/code&gt;, &lt;code&gt;standard_exponential(method=)&lt;/code&gt;, &lt;code&gt;exponential&lt;/code&gt;, &lt;code&gt;uniform&lt;/code&gt;, &lt;code&gt;standard_gamma(dtype=)&lt;/code&gt;, &lt;code&gt;gamma&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;StandardNormal[Of]&lt;/code&gt;, &lt;code&gt;Normal&lt;/code&gt;, &lt;code&gt;StandardExponential[Of]&lt;/code&gt;, &lt;code&gt;Exponential&lt;/code&gt;, &lt;code&gt;Uniform&lt;/code&gt;, &lt;code&gt;StandardGamma[Of]&lt;/code&gt;, &lt;code&gt;Gamma&lt;/code&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;beta&lt;/code&gt;, &lt;code&gt;chisquare&lt;/code&gt;, &lt;code&gt;f&lt;/code&gt;, &lt;code&gt;noncentral_chisquare&lt;/code&gt;, &lt;code&gt;noncentral_f&lt;/code&gt;, &lt;code&gt;standard_t&lt;/code&gt;, &lt;code&gt;standard_cauchy&lt;/code&gt;, &lt;code&gt;lognormal&lt;/code&gt;, &lt;code&gt;laplace&lt;/code&gt;, &lt;code&gt;logistic&lt;/code&gt;, &lt;code&gt;gumbel&lt;/code&gt;, &lt;code&gt;weibull&lt;/code&gt;, &lt;code&gt;pareto&lt;/code&gt;, &lt;code&gt;power&lt;/code&gt;, &lt;code&gt;rayleigh&lt;/code&gt;, &lt;code&gt;wald&lt;/code&gt;, &lt;code&gt;triangular&lt;/code&gt;, &lt;code&gt;vonmises&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;same names in Go case&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;binomial&lt;/code&gt;, &lt;code&gt;negative_binomial&lt;/code&gt;, &lt;code&gt;poisson&lt;/code&gt;, &lt;code&gt;geometric&lt;/code&gt;, &lt;code&gt;zipf&lt;/code&gt;, &lt;code&gt;logseries&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;same names, int64 results&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;choice(a, size, replace, p, axis, shuffle)&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;ChoiceN(n, opts, size...)&lt;/code&gt;, &lt;code&gt;Choice(a, opts, size...)&lt;/code&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;shuffle(x, axis)&lt;/code&gt;, &lt;code&gt;permutation(n)&lt;/code&gt;, &lt;code&gt;permutation(x, axis)&lt;/code&gt;, &lt;code&gt;permuted(x, axis=)&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;Shuffle&lt;/code&gt;, &lt;code&gt;Permutation&lt;/code&gt;, &lt;code&gt;PermutationOf&lt;/code&gt;, &lt;code&gt;Permuted&lt;/code&gt;, &lt;code&gt;PermutedAxis&lt;/code&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;bytes(n)&lt;/code&gt;, &lt;code&gt;dirichlet(alpha, size)&lt;/code&gt;, &lt;code&gt;multinomial(n, pvals, size)&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;Bytes&lt;/code&gt;, &lt;code&gt;Dirichlet&lt;/code&gt;, &lt;code&gt;Multinomial&lt;/code&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;RandomState(seed)&lt;/code&gt;, &lt;code&gt;.seed&lt;/code&gt;, &lt;code&gt;.get_state&lt;/code&gt;/&lt;code&gt;.set_state&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;NewRandomState(uint32)&lt;/code&gt;, &lt;code&gt;NewRandomStateArray&lt;/code&gt;, &lt;code&gt;NewRandomStateFrom(bitgen)&lt;/code&gt;, &lt;code&gt;Seed&lt;/code&gt;, &lt;code&gt;SeedArray&lt;/code&gt;, &lt;code&gt;GetState&lt;/code&gt;/&lt;code&gt;SetState&lt;/code&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;rand&lt;/code&gt;, &lt;code&gt;randn&lt;/code&gt;, &lt;code&gt;randint&lt;/code&gt;, &lt;code&gt;random_sample&lt;/code&gt;, &lt;code&gt;normal&lt;/code&gt;, &lt;code&gt;uniform&lt;/code&gt;, &lt;code&gt;choice&lt;/code&gt;, &lt;code&gt;shuffle&lt;/code&gt;, &lt;code&gt;permutation&lt;/code&gt;, &lt;code&gt;binomial&lt;/code&gt;, &lt;code&gt;poisson&lt;/code&gt;, &lt;code&gt;standard_normal&lt;/code&gt;, &lt;code&gt;standard_exponential&lt;/code&gt;, &lt;code&gt;exponential&lt;/code&gt;, &lt;code&gt;standard_gamma&lt;/code&gt;, &lt;code&gt;gamma&lt;/code&gt;, &lt;code&gt;chisquare&lt;/code&gt;, &lt;code&gt;lognormal&lt;/code&gt;, &lt;code&gt;multinomial&lt;/code&gt;, &lt;code&gt;bytes&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;RandomState&lt;/code&gt; methods of the same names&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;np.random.seed&lt;/code&gt;, &lt;code&gt;rand&lt;/code&gt;, &lt;code&gt;randn&lt;/code&gt;, &lt;code&gt;randint&lt;/code&gt;, &lt;code&gt;random_sample&lt;/code&gt;, &lt;code&gt;normal&lt;/code&gt;, &lt;code&gt;uniform&lt;/code&gt;, &lt;code&gt;choice&lt;/code&gt;, &lt;code&gt;shuffle&lt;/code&gt;, &lt;code&gt;permutation&lt;/code&gt;, &lt;code&gt;binomial&lt;/code&gt;, &lt;code&gt;poisson&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;package functions over a shared &lt;code&gt;RandomState&lt;/code&gt; behind a mutex&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;The size comes last; no size gives a 0-d array holding what NumPy returns as a
+scalar (&lt;code&gt;size=None&lt;/code&gt;), which draws exactly the same values. &lt;code&gt;ChoiceOptions&lt;/code&gt;'
+zero value is NumPy&amp;rsquo;s defaults (&lt;code&gt;NoReplace&lt;/code&gt;, &lt;code&gt;NoShuffle&lt;/code&gt; are the negations).&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Not implemented:&lt;/strong&gt; array-valued (broadcast) distribution parameters and
+integer bounds, &lt;code&gt;out=&lt;/code&gt;, &lt;code&gt;hypergeometric&lt;/code&gt;, &lt;code&gt;multivariate_normal&lt;/code&gt;,
+&lt;code&gt;multivariate_hypergeometric&lt;/code&gt;, the &lt;code&gt;RandomState&lt;/code&gt; samplers not listed above
+(&lt;code&gt;beta&lt;/code&gt;, &lt;code&gt;f&lt;/code&gt;, &lt;code&gt;pareto&lt;/code&gt; …: NumPy 1.16&amp;rsquo;s versions differ from &lt;code&gt;Generator&lt;/code&gt;&amp;rsquo;s and
+were not ported), &lt;code&gt;tomaxint&lt;/code&gt;, &lt;code&gt;random_integers&lt;/code&gt;, pickling, and &lt;code&gt;float16&lt;/code&gt;.&lt;/p&gt;
+&lt;h2 data-hextra-search-id="verification"&gt;Verification&lt;span class="hx:absolute hx:-mt-20" id="verification"&gt;&lt;/span&gt;&lt;a href="#verification" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;&lt;code&gt;random/testdata/cases.py&lt;/code&gt; runs NumPy 2.5.3 and records:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;SeedSequence&lt;/strong&gt;: the pool, 9 uint32 and 5 uint64 state words, and the pools
+and spawn keys of 4 children, for 10 entropies (0, 42, 2⁶⁴−1, &lt;code&gt;[1,2,3]&lt;/code&gt;,
+2¹²⁸+12345, a 10-word list, &lt;code&gt;[]&lt;/code&gt;, pool size 8, spawn keys with a 2⁴⁰ entry,
+a key after a 6-word entropy);&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;bit generators&lt;/strong&gt;: for each of the five and six seeds (0, 1, 42, 2⁶⁴−1,
+&lt;code&gt;[1,2,3]&lt;/code&gt;, 2¹²⁸+12345), the seeded state, 100 raw outputs (700 for MT19937,
+which crosses a regeneration), &lt;code&gt;jumped(1)&lt;/code&gt;, &lt;code&gt;jumped(3)&lt;/code&gt;, &lt;code&gt;advance(2¹⁰⁰+7)&lt;/code&gt;,
+&lt;code&gt;advance(-3)&lt;/code&gt;, two spawned children; Philox from an explicit counter and key
+and across a counter carry; legacy MT19937 seeding from 6 integer and array
+seeds, and its jump;&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;2,222 scripts, 2,492 calls, 81,806 values&lt;/strong&gt;: every Generator function on
+PCG64 with every seed, every dtype and bound case of &lt;code&gt;integers&lt;/code&gt; (9 dtypes,
+open and closed, full ranges, ranges of 2³²−1, 2³², 3·2³⁰, 3·2⁶², empty
+ranges); a subset on the four other bit generators; an interleaved script
+per generator and seed (the buffered upper half of a 64-bit draw outlives a
+call); &lt;code&gt;RandomState&lt;/code&gt; on 6 seeds (including a 700-word array);&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;50 long runs as SHA-256 digests&lt;/strong&gt; (4.49 million values): &lt;code&gt;random&lt;/code&gt;,
+&lt;code&gt;standard_normal&lt;/code&gt; and &lt;code&gt;standard_exponential&lt;/code&gt; (both dtypes, 200,000 each,
+which reaches the ziggurat tails and wedges), &lt;code&gt;integers&lt;/code&gt; (Lemire with
+rejections, 8- and 16-bit buffering, bool), &lt;code&gt;binomial&lt;/code&gt; (inversion and
+BTPE), &lt;code&gt;poisson&lt;/code&gt; (both methods), &lt;code&gt;choice&lt;/code&gt; with and without replacement, and
+&lt;code&gt;RandomState&lt;/code&gt;&amp;rsquo;s &lt;code&gt;rand&lt;/code&gt;, &lt;code&gt;randint&lt;/code&gt;, &lt;code&gt;binomial&lt;/code&gt;, &lt;code&gt;poisson&lt;/code&gt;, &lt;code&gt;uniform&lt;/code&gt;.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;The fixture is embedded, so CI&amp;rsquo;s emulated targets check it too. It passes,
+unchanged, on darwin/arm64, darwin/amd64 (Rosetta), and linux 386, arm,
+riscv64, ppc64le and &lt;strong&gt;s390x&lt;/strong&gt; (big-endian: &lt;code&gt;Bytes&lt;/code&gt; gives NumPy&amp;rsquo;s
+little-endian bytes) under qemu.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Integers, raw output, and every sampler that is plain arithmetic match NumPy
+to the bit&lt;/strong&gt; — including the ziggurat normal and exponential (tails included,
+over 200,000 draws), binomial, Poisson, geometric, choice, shuffle and the
+legacy &lt;code&gt;randint&lt;/code&gt;/&lt;code&gt;rand&lt;/code&gt;/&lt;code&gt;binomial&lt;/code&gt;/&lt;code&gt;poisson&lt;/code&gt;.&lt;/p&gt;
+&lt;h3 data-hextra-search-id="negative-controls"&gt;Negative controls&lt;span class="hx:absolute hx:-mt-20" id="negative-controls"&gt;&lt;/span&gt;&lt;a href="#negative-controls" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;Each mutation below was made on purpose and the suite run:&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;mutation&lt;/th&gt;
+&lt;th&gt;result&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;PCG64 multiplier, low word + 2&lt;/td&gt;
+&lt;td&gt;1,155 failures&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;SeedSequence &lt;code&gt;MIX_MULT_L&lt;/code&gt; + 2&lt;/td&gt;
+&lt;td&gt;1,998 failures&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;SeedSequence &lt;code&gt;MULT_A&lt;/code&gt; + 2&lt;/td&gt;
+&lt;td&gt;2,005 failures&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;one ziggurat &lt;code&gt;ki_double&lt;/code&gt; entry losing its last hex digit (an actual bug of the first table converter, which stripped a trailing &lt;code&gt;F&lt;/code&gt; as if it were a C suffix)&lt;/td&gt;
+&lt;td&gt;15 failures, all in the long runs&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;RandomState.randint&lt;/code&gt; with Lemire instead of masked rejection&lt;/td&gt;
+&lt;td&gt;44 failures&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;MT19937 seeded with &lt;code&gt;pos = 624&lt;/code&gt; instead of NumPy&amp;rsquo;s &lt;code&gt;623&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;266 failures&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;legacy BTPE adding the last two Stirling terms with the corrected signs&lt;/td&gt;
+&lt;td&gt;the &lt;code&gt;RandomState&lt;/code&gt; binomial digests fail&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;legacy BTPE constant 13680 → 13860&lt;/td&gt;
+&lt;td&gt;&lt;strong&gt;not detected&lt;/strong&gt;: the term changes by ~2·10⁻⁹ and flips no decision in 10⁶ draws at any of four (n, p) tried&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;h2 data-hextra-search-id="where-the-numbers-can-differ-the-c-library"&gt;Where the numbers can differ: the C library&lt;span class="hx:absolute hx:-mt-20" id="where-the-numbers-can-differ-the-c-library"&gt;&lt;/span&gt;&lt;a href="#where-the-numbers-can-differ-the-c-library" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;Some samplers call &lt;code&gt;log&lt;/code&gt;, &lt;code&gt;exp&lt;/code&gt;, &lt;code&gt;log1p&lt;/code&gt;, &lt;code&gt;expm1&lt;/code&gt;, &lt;code&gt;pow&lt;/code&gt;, &lt;code&gt;cos&lt;/code&gt; or &lt;code&gt;acos&lt;/code&gt;.
+NumPy takes them from the C library; Go&amp;rsquo;s &lt;code&gt;math&lt;/code&gt; package does not round them
+the same way. Measured against the libm of the x86-64 NumPy used for the
+fixture (Apple&amp;rsquo;s), Go&amp;rsquo;s &lt;code&gt;math&lt;/code&gt; differs in 6.5% (&lt;code&gt;log&lt;/code&gt;) to 71% (&lt;code&gt;pow&lt;/code&gt;) of
+random arguments. Used as-is, that made 3% of &lt;code&gt;np.random.randn&lt;/code&gt; values and
+10% of &lt;code&gt;lognormal&lt;/code&gt; values one ULP off.&lt;/p&gt;
+&lt;p&gt;So &lt;code&gt;random&lt;/code&gt; rounds &lt;code&gt;log&lt;/code&gt;, &lt;code&gt;log1p&lt;/code&gt;, &lt;code&gt;exp&lt;/code&gt;, &lt;code&gt;expm1&lt;/code&gt; and &lt;code&gt;pow&lt;/code&gt; &lt;strong&gt;correctly&lt;/strong&gt;
+(&lt;a href="https://github.com/go-ndarray/ndarray/blob/v0.19.0/random/libm.go" target="_blank" rel="noopener"&gt;&lt;code&gt;libm.go&lt;/code&gt;&lt;/a&gt;): a fast evaluation to about 2⁻⁶⁸ with Ziv&amp;rsquo;s
+rounding test, and a double-double fallback (about 2⁻¹⁰⁰) for the one argument
+in ~2¹⁵ that needs it. Checked against mpmath at 300 bits on 63,000 arguments
+(0 misrounded; the committed &lt;code&gt;libm.json&lt;/code&gt; keeps 8,400), and the fast paths
+against the fallback on 400,000 more. The code converts every product
+explicitly, so Go cannot fuse it into an FMA, and the result is the same on
+every architecture.&lt;/p&gt;
+&lt;p&gt;The C libraries round these functions correctly almost always — Apple&amp;rsquo;s x86-64
+libm misrounds 0.06% (&lt;code&gt;log&lt;/code&gt;) to 0.3% (&lt;code&gt;exp&lt;/code&gt;) of arguments; &lt;code&gt;pow(x, 0.5)&lt;/code&gt; is
+misrounded for 0.19% (it is not &lt;code&gt;sqrt&lt;/code&gt;). What remains, on 10⁶ draws against
+x86-64 NumPy, seed 0:&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;sampler&lt;/th&gt;
+&lt;th style="text-align: right"&gt;values that differ (of 10⁶)&lt;/th&gt;
+&lt;th style="text-align: right"&gt;max ULP&lt;/th&gt;
+&lt;th style="text-align: right"&gt;with Go&amp;rsquo;s &lt;code&gt;math&lt;/code&gt; instead&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;RandomState.randn&lt;/code&gt;&lt;/td&gt;
+&lt;td style="text-align: right"&gt;294&lt;/td&gt;
+&lt;td style="text-align: right"&gt;3&lt;/td&gt;
+&lt;td style="text-align: right"&gt;29,631&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;RandomState.normal(1, 3)&lt;/code&gt;&lt;/td&gt;
+&lt;td style="text-align: right"&gt;217&lt;/td&gt;
+&lt;td style="text-align: right"&gt;32¹&lt;/td&gt;
+&lt;td style="text-align: right"&gt;22,429&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;RandomState.standard_gamma(3)&lt;/code&gt;&lt;/td&gt;
+&lt;td style="text-align: right"&gt;72&lt;/td&gt;
+&lt;td style="text-align: right"&gt;6&lt;/td&gt;
+&lt;td style="text-align: right"&gt;5,762&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;RandomState.standard_exponential&lt;/code&gt;&lt;/td&gt;
+&lt;td style="text-align: right"&gt;664&lt;/td&gt;
+&lt;td style="text-align: right"&gt;1&lt;/td&gt;
+&lt;td style="text-align: right"&gt;68,249&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;standard_gamma(0.5)&lt;/code&gt; (pow)&lt;/td&gt;
+&lt;td style="text-align: right"&gt;1,870&lt;/td&gt;
+&lt;td style="text-align: right"&gt;3&lt;/td&gt;
+&lt;td style="text-align: right"&gt;16,212&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;beta(0.5, 0.5)&lt;/code&gt; (pow)&lt;/td&gt;
+&lt;td style="text-align: right"&gt;1,693&lt;/td&gt;
+&lt;td style="text-align: right"&gt;4&lt;/td&gt;
+&lt;td style="text-align: right"&gt;1,693&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;lognormal(0.5, 0.25)&lt;/code&gt;&lt;/td&gt;
+&lt;td style="text-align: right"&gt;2,263&lt;/td&gt;
+&lt;td style="text-align: right"&gt;1&lt;/td&gt;
+&lt;td style="text-align: right"&gt;99,340&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;laplace&lt;/code&gt; / &lt;code&gt;logistic&lt;/code&gt;&lt;/td&gt;
+&lt;td style="text-align: right"&gt;690 / 601&lt;/td&gt;
+&lt;td style="text-align: right"&gt;1&lt;/td&gt;
+&lt;td style="text-align: right"&gt;68,357 / 68,518&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;gumbel&lt;/code&gt;&lt;/td&gt;
+&lt;td style="text-align: right"&gt;1,297&lt;/td&gt;
+&lt;td style="text-align: right"&gt;2049¹&lt;/td&gt;
+&lt;td style="text-align: right"&gt;131,066&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;standard_exponential(method=&amp;quot;inv&amp;quot;)&lt;/code&gt;&lt;/td&gt;
+&lt;td style="text-align: right"&gt;692&lt;/td&gt;
+&lt;td style="text-align: right"&gt;1&lt;/td&gt;
+&lt;td style="text-align: right"&gt;68,383&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;pareto(3)&lt;/code&gt; (expm1)&lt;/td&gt;
+&lt;td style="text-align: right"&gt;4,645&lt;/td&gt;
+&lt;td style="text-align: right"&gt;1&lt;/td&gt;
+&lt;td style="text-align: right"&gt;65,593&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;weibull(2)&lt;/code&gt; (pow)&lt;/td&gt;
+&lt;td style="text-align: right"&gt;1,777&lt;/td&gt;
+&lt;td style="text-align: right"&gt;1&lt;/td&gt;
+&lt;td style="text-align: right"&gt;1,779&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;vonmises(0.5, 2)&lt;/code&gt; (cos, acos)&lt;/td&gt;
+&lt;td style="text-align: right"&gt;126,540&lt;/td&gt;
+&lt;td style="text-align: right"&gt;2¹⁸ ¹&lt;/td&gt;
+&lt;td style="text-align: right"&gt;126,540&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;standard_normal&lt;/code&gt;, &lt;code&gt;standard_gamma(3)&lt;/code&gt;, &lt;code&gt;beta(2, 3)&lt;/code&gt;, &lt;code&gt;chisquare&lt;/code&gt;, &lt;code&gt;standard_t&lt;/code&gt;, &lt;code&gt;binomial&lt;/code&gt;, &lt;code&gt;poisson(3)&lt;/code&gt;, &lt;code&gt;poisson(50)&lt;/code&gt;, &lt;code&gt;geometric(0.05)&lt;/code&gt;&lt;/td&gt;
+&lt;td style="text-align: right"&gt;&lt;strong&gt;0&lt;/strong&gt;&lt;/td&gt;
+&lt;td style="text-align: right"&gt;—&lt;/td&gt;
+&lt;td style="text-align: right"&gt;0 – 2&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;¹ Large ULP counts are absolute errors of about one ULP of the inner value,
+measured relative to a result near zero (&lt;code&gt;1 + 3z&lt;/code&gt; for &lt;code&gt;z ≈ −1/3&lt;/code&gt;;
+&lt;code&gt;log(-log(U))&lt;/code&gt; for &lt;code&gt;U&lt;/code&gt; near 1/e; an angle wrapped to near 0).&lt;/p&gt;
+&lt;p&gt;Each of the residual differences checked by hand (with mpmath) is a value
+NumPy&amp;rsquo;s libm rounded incorrectly. &lt;code&gt;vonmises&lt;/code&gt; keeps Go&amp;rsquo;s &lt;code&gt;cos&lt;/code&gt; and &lt;code&gt;acos&lt;/code&gt;:
+Apple&amp;rsquo;s &lt;code&gt;cos&lt;/code&gt; itself misrounds 17% of arguments in [0, π], so rounding
+correctly would not bring it closer. No difference has ever changed an
+accept/reject decision — every integer-valued sampler matches exactly — and
+the test bounds each float sampler&amp;rsquo;s ULP distance individually
+(&lt;code&gt;libmULP&lt;/code&gt; in &lt;code&gt;numpy_test.go&lt;/code&gt;).&lt;/p&gt;
+&lt;h2 data-hextra-search-id="numpy-does-not-agree-with-itself"&gt;NumPy does not agree with itself&lt;span class="hx:absolute hx:-mt-20" id="numpy-does-not-agree-with-itself"&gt;&lt;/span&gt;&lt;a href="#numpy-does-not-agree-with-itself" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;The same fixture generated by NumPy 2.5.3&amp;rsquo;s &lt;strong&gt;aarch64&lt;/strong&gt; macOS build differs from
+its x86-64 build: the C compiler fuses &lt;code&gt;a*b + c&lt;/code&gt; into one FMA there (clang&amp;rsquo;s
+default &lt;code&gt;-ffp-contract=on&lt;/code&gt;), and Apple&amp;rsquo;s aarch64 libm rounds differently.&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;&lt;/th&gt;
+&lt;th&gt;values that differ, aarch64 vs x86-64 NumPy&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;Generator.uniform&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;20.8% of 200,000 (&lt;code&gt;low + range*U&lt;/code&gt; is fused)&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;RandomState.randn&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;865 of 6,072 (14%)&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;RandomState.normal&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;1,063 of 4,048 (26%)&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;RandomState.standard_gamma&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;481 of 4,108&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;Generator.standard_gamma&lt;/code&gt;, &lt;code&gt;chisquare&lt;/code&gt;, &lt;code&gt;f&lt;/code&gt;, &lt;code&gt;noncentral_*&lt;/code&gt;, &lt;code&gt;beta&lt;/code&gt;, &lt;code&gt;gamma&lt;/code&gt;, &lt;code&gt;lognormal&lt;/code&gt;, &lt;code&gt;standard_t&lt;/code&gt;, &lt;code&gt;vonmises&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;a few %&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;digests of &lt;code&gt;Generator.normal&lt;/code&gt;, &lt;code&gt;uniform&lt;/code&gt;, &lt;code&gt;standard_gamma&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;differ&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;This package follows the C source operation by operation without fusing,
+which is what NumPy&amp;rsquo;s x86-64 builds (Linux, Windows, Intel Macs) compute, and
+it gives the same numbers on every architecture. A notebook run on an Apple
+silicon Mac or an aarch64 Linux box will see NumPy&amp;rsquo;s last bits move in those
+samplers; that is NumPy, not a migration error.&lt;/p&gt;
+&lt;h2 data-hextra-search-id="deliberate-differences"&gt;Deliberate differences&lt;span class="hx:absolute hx:-mt-20" id="deliberate-differences"&gt;&lt;/span&gt;&lt;a href="#deliberate-differences" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;NumPy&lt;/th&gt;
+&lt;th&gt;here&lt;/th&gt;
+&lt;th&gt;why&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;randint&lt;/code&gt;&amp;rsquo;s default dtype is C &lt;code&gt;long&lt;/code&gt;: int64 on Linux/macOS, &lt;strong&gt;int32 on Windows&lt;/strong&gt;&lt;/td&gt;
+&lt;td&gt;always int64&lt;/td&gt;
+&lt;td&gt;the same numbers on every platform; &lt;code&gt;RandintOf(ndarray.Int32, …)&lt;/code&gt; for Windows'&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;size=None&lt;/code&gt; returns a Python scalar&lt;/td&gt;
+&lt;td&gt;a 0-d array&lt;/td&gt;
+&lt;td&gt;one return type; same draws&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;shuffle&lt;/code&gt; works on views&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;Shuffle&lt;/code&gt; needs an array that owns its storage (&lt;code&gt;ErrNotContiguous&lt;/code&gt; for a view)&lt;/td&gt;
+&lt;td&gt;ndarray hands out a view&amp;rsquo;s elements as a copy&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;permuted(x)&lt;/code&gt; of a Fortran-ordered &lt;code&gt;x&lt;/code&gt; shuffles in memory order&lt;/td&gt;
+&lt;td&gt;always C order&lt;/td&gt;
+&lt;td&gt;ndarray arrays are row-major&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;NumPy&amp;rsquo;s &lt;code&gt;(int)&lt;/code&gt; of ±∞ in rejection branches is undefined C&lt;/td&gt;
+&lt;td&gt;the same branch is rejected (the &lt;code&gt;v == 0&lt;/code&gt; tests)&lt;/td&gt;
+&lt;td&gt;—&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;zipf&lt;/code&gt;&amp;rsquo;s &lt;code&gt;X &amp;gt; LONG_MAX&lt;/code&gt; rejection&lt;/td&gt;
+&lt;td&gt;kept as a condition, unreachable short of &lt;code&gt;pow&lt;/code&gt; rounding past 2⁶³&lt;/td&gt;
+&lt;td&gt;—&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;exp&lt;/code&gt; of an argument whose result is subnormal&lt;/td&gt;
+&lt;td&gt;rounded twice (to 53 bits, then to the subnormal)&lt;/td&gt;
+&lt;td&gt;only below 2⁻¹⁰²²&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;h2 data-hextra-search-id="performance"&gt;Performance&lt;span class="hx:absolute hx:-mt-20" id="performance"&gt;&lt;/span&gt;&lt;a href="#performance" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;Apple M4 Max, 16 cores, shared and loaded (load average 10.7–14.4 during the
+runs). Seven interleaved rounds: the Go benchmark (&lt;code&gt;go test -bench&lt;/code&gt;, 20
+iterations) then NumPy 2.5.3 aarch64 (median of 20 calls); medians of the
+rounds, in milliseconds for 10⁶ values:&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;&lt;/th&gt;
+&lt;th style="text-align: right"&gt;Go&lt;/th&gt;
+&lt;th style="text-align: right"&gt;NumPy&lt;/th&gt;
+&lt;th style="text-align: right"&gt;Go / NumPy&lt;/th&gt;
+&lt;th&gt;Go range&lt;/th&gt;
+&lt;th&gt;NumPy range&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;random(10**6)&lt;/code&gt;&lt;/td&gt;
+&lt;td style="text-align: right"&gt;3.51&lt;/td&gt;
+&lt;td style="text-align: right"&gt;3.13&lt;/td&gt;
+&lt;td style="text-align: right"&gt;1.12&lt;/td&gt;
+&lt;td&gt;3.47–3.83&lt;/td&gt;
+&lt;td&gt;3.09–3.41&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;random(10**6, dtype=float32)&lt;/code&gt;&lt;/td&gt;
+&lt;td style="text-align: right"&gt;1.89&lt;/td&gt;
+&lt;td style="text-align: right"&gt;1.64&lt;/td&gt;
+&lt;td style="text-align: right"&gt;1.16&lt;/td&gt;
+&lt;td&gt;1.88–2.24&lt;/td&gt;
+&lt;td&gt;1.62–1.65&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;integers(0, 1000, 10**6)&lt;/code&gt;&lt;/td&gt;
+&lt;td style="text-align: right"&gt;2.31&lt;/td&gt;
+&lt;td style="text-align: right"&gt;1.70&lt;/td&gt;
+&lt;td style="text-align: right"&gt;1.36&lt;/td&gt;
+&lt;td&gt;2.29–2.32&lt;/td&gt;
+&lt;td&gt;1.68–1.71&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;standard_normal(10**6)&lt;/code&gt;&lt;/td&gt;
+&lt;td style="text-align: right"&gt;4.12&lt;/td&gt;
+&lt;td style="text-align: right"&gt;3.68&lt;/td&gt;
+&lt;td style="text-align: right"&gt;1.12&lt;/td&gt;
+&lt;td&gt;4.07–4.16&lt;/td&gt;
+&lt;td&gt;3.67–3.72&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;RandomState(0).randn(10**6)&lt;/code&gt;&lt;/td&gt;
+&lt;td style="text-align: right"&gt;20.36&lt;/td&gt;
+&lt;td style="text-align: right"&gt;9.65&lt;/td&gt;
+&lt;td style="text-align: right"&gt;2.11&lt;/td&gt;
+&lt;td&gt;19.99–20.56&lt;/td&gt;
+&lt;td&gt;9.61–9.68&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;Go is &lt;strong&gt;slower everywhere&lt;/strong&gt;: 12–36% for the Generator, 2.1× for the legacy
+&lt;code&gt;randn&lt;/code&gt;. The Generator gap is the 128-bit LCG step (3.3 ns per output, a
+dependent multiply chain) plus zeroing the result (&lt;code&gt;ZerosOf&lt;/code&gt;; NumPy&amp;rsquo;s
+&lt;code&gt;np.empty&lt;/code&gt; does not); the default PCG64 already gets direct, inlinable calls
+for these four functions. &lt;code&gt;randn&lt;/code&gt; pays for a correctly rounded &lt;code&gt;log&lt;/code&gt; on every
+pair (6 ns against 3.4 ns for &lt;code&gt;math.Log&lt;/code&gt;) and for MT19937 behind an
+interface. The samplers that call &lt;code&gt;pow&lt;/code&gt;/&lt;code&gt;exp&lt;/code&gt; per draw cost about what
+&lt;code&gt;math.Pow&lt;/code&gt;/&lt;code&gt;math.Exp&lt;/code&gt; would (19.5 vs 18.4 ns; 6.3 vs 3.9 ns).&lt;/p&gt;
+&lt;h2 data-hextra-search-id="regenerating"&gt;Regenerating&lt;span class="hx:absolute hx:-mt-20" id="regenerating"&gt;&lt;/span&gt;&lt;a href="#regenerating" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
+&lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-sh" data-lang="sh"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;uv run --python cpython-3.12-macos-x86_64 --with &lt;span class="nv"&gt;numpy&lt;/span&gt;&lt;span class="o"&gt;==&lt;/span&gt;2.5.3 python random/testdata/cases.py &amp;gt; random/testdata/cases.json
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;uv run --with mpmath python random/testdata/libm.py &amp;gt; random/testdata/libm.json
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;uv run --with mpmath python random/testdata/libm_tables.py &amp;gt; random/zz_libm_tables.go
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;python3 random/testdata/zig2go.py &amp;lt;numpy&amp;gt;/numpy/random/src/distributions/ziggurat_constants.h random/zz_ziggurat.go&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0"&gt;
+&lt;button
+class="hextra-code-copy-btn hx:group/copybtn hx:cursor-pointer hx:transition-all hx:active:opacity-50 hx:bg-primary-700/5 hx:border hx:border-black/5 hx:text-gray-600 hx:hover:text-gray-900 hx:rounded-md hx:p-1.5 hx:dark:bg-primary-300/10 hx:dark:border-white/10 hx:dark:text-gray-400 hx:dark:hover:text-gray-50"
+title="Copy code"
+aria-label="Copy code"
+data-copied-label="Copied!"
+&gt;
+&lt;div class="hextra-copy-icon hx:group-[.copied]/copybtn:hidden hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;div class="hextra-success-icon hx:hidden hx:group-[.copied]/copybtn:block hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;/button&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;p&gt;&lt;code&gt;random/testdata/quant.py&lt;/code&gt; and &lt;code&gt;TestQuantifyLibm&lt;/code&gt; (run with
+&lt;code&gt;RANDOM_QUANT_DIR&lt;/code&gt;) reproduce the 10⁶-draw table.&lt;/p&gt;</description></item></channel></rss>
