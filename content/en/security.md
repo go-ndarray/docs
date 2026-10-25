@@ -8,7 +8,7 @@ description: "How to report a vulnerability, what the library guarantees, and th
 tags: [security]
 ---
 
-> Mirrored from [`SECURITY.md`](https://github.com/go-ndarray/ndarray/blob/main/SECURITY.md) at v0.18.0.
+> Mirrored from [`SECURITY.md`](https://github.com/go-ndarray/ndarray/blob/main/SECURITY.md) at v0.19.0.
 
 ## Reporting
 
@@ -75,6 +75,12 @@ The minimum Go version (`go` in `go.mod`) is kept on a release that fixes the
 standard library's known vulnerabilities; `govulncheck ./...` reports none.
 
 ## Audit log
+
+**2026-10-20 (v0.19.0).** `kernels.Sqrt32` follows `Bin32`'s guards: it
+reslices `src` to `len(dst)` before the call (a short `src` panics in Go,
+tested), never passes an empty slice to a kernel, and keeps the LASX, V and
+VXE gates. The PROT_NONE fence now also covers it, and passes on Zen 3,
+Apple M, POWER9, IBM Z, SpacemiT X60 and Loongson 3C5000L.
 
 **2026-10-18 (v0.18.0).** The float32 elementwise kernels (`kernels.Bin32`,
 on all six 64-bit targets) take raw pointers and a count. `Bin32` reslices `a`
