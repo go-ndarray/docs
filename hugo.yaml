@@ -6,7 +6,7 @@
 # have used since the site was built with MkDocs and mike. The CI sets it
 # through --baseURL, from params.ndarray.version below. This default is the
 # same build.
-baseURL: "https://go-ndarray.github.io/docs/0.22/"
+baseURL: "https://go-ndarray.github.io/docs/0.23/"
 title: "go-ndarray"
 # themes/hextra is the tannevaled/hextra fork, pinned at a release tag:
 # upstream Hextra plus opt-in features (partial menu items, combos,
@@ -97,7 +97,7 @@ params:
   # The ndarray release these pages describe. Its minor version is the
   # documentation's version label (v0.9.1 -> 0.9): the CI reads it here.
   ndarray:
-    version: "v0.22.0"
+    version: "v0.23.0"
 
   navbar:
     displayTitle: true

@@ -8,7 +8,7 @@ description: "How to report a vulnerability, what the library guarantees, and th
 tags: [security]
 ---
 
-> Mirrored from [`SECURITY.md`](https://github.com/go-ndarray/ndarray/blob/main/SECURITY.md) at v0.22.0.
+> Mirrored from [`SECURITY.md`](https://github.com/go-ndarray/ndarray/blob/main/SECURITY.md) at v0.23.0.
 
 ## Reporting
 
@@ -75,6 +75,12 @@ The minimum Go version (`go` in `go.mod`) is kept on a release that fixes the
 standard library's known vulnerabilities; `govulncheck ./...` reports none.
 
 ## Audit log
+
+**2026-10-26 (v0.23.0).** The s390x float32 extremum kernels (`max32VXE`,
+`min32VXE`) read `len(a)` elements of a slice of at least 16, behind the
+`useVXE` gate. On a real IBM Z the PROT_NONE fence and the sequential-oracle
+test pass, and a sabotaged kernel fails the latter. The CI s390x lane runs
+VX and VXE (`NDARRAY_REQUIRE_VXE`) since #68.
 
 **2026-10-26 (v0.22.0).**
 
