@@ -1,6 +1,6 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>go-ndarray – Roadmap</title><link>https://go-ndarray.github.io/docs/0.19/tags/roadmap/</link><description>Recent content in Roadmap on go-ndarray</description><generator>Hugo -- gohugo.io</generator><language>en</language><atom:link href="https://go-ndarray.github.io/docs/0.19/tags/roadmap/index.xml" rel="self" type="application/rss+xml"/><item><title>Implementation plan — N-dimensional arrays in pure Go (go-ndarray/ndarray)</title><link>https://go-ndarray.github.io/docs/0.19/roadmap/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://go-ndarray.github.io/docs/0.19/roadmap/</guid><description>
 &lt;blockquote&gt;
-&lt;p&gt;Mirrored from &lt;a href="https://github.com/go-ndarray/ndarray/blob/v0.19.0/docs/plan-ndarray.md" target="_blank" rel="noopener"&gt;&lt;code&gt;docs/plan-ndarray.md&lt;/code&gt;&lt;/a&gt; at v0.19.0.&lt;/p&gt;
+&lt;p&gt;Mirrored from &lt;a href="https://github.com/go-ndarray/ndarray/blob/v0.19.1/docs/plan-ndarray.md" target="_blank" rel="noopener"&gt;&lt;code&gt;docs/plan-ndarray.md&lt;/code&gt;&lt;/a&gt; at v0.19.1.&lt;/p&gt;
 &lt;/blockquote&gt;
 &lt;blockquote&gt;
 &lt;p&gt;Goal: a &lt;strong&gt;pure-Go (CGO=0)&lt;/strong&gt; NumPy-style N-dimensional array library, as a
@@ -102,7 +102,7 @@ Phase 4.&lt;/li&gt;
 &lt;li&gt;&lt;strong&gt;Performance — DONE (beats NumPy on its core ops; matmul at tuned-BLAS
 parity).&lt;/strong&gt; Several levers behind the kernel seam, measured honestly vs NumPy
 2.2.4 (see &lt;a href="https://go-ndarray.github.io/docs/0.19/performance/"&gt;docs/perf.md&lt;/a&gt; and the repo&amp;rsquo;s
-&lt;a href="https://github.com/go-ndarray/ndarray/blob/v0.19.0/BENCHMARKS.md" target="_blank" rel="noopener"&gt;BENCHMARKS.md&lt;/a&gt;):
+&lt;a href="https://github.com/go-ndarray/ndarray/blob/v0.19.1/BENCHMARKS.md" target="_blank" rel="noopener"&gt;BENCHMARKS.md&lt;/a&gt;):
 &lt;ul&gt;
 &lt;li&gt;&lt;strong&gt;Multicore.&lt;/strong&gt; &lt;code&gt;Add/Sub/Mul/Div/Map&lt;/code&gt;, &lt;code&gt;Sum/Max/Min&lt;/code&gt;, the axis reductions,
 &lt;code&gt;Concatenate&lt;/code&gt;/&lt;code&gt;Stack&lt;/code&gt;, and the GEMM fan out across &lt;code&gt;GOMAXPROCS&lt;/code&gt; above a size

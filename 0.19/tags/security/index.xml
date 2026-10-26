@@ -1,6 +1,6 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>go-ndarray – Security</title><link>https://go-ndarray.github.io/docs/0.19/tags/security/</link><description>Recent content in Security on go-ndarray</description><generator>Hugo -- gohugo.io</generator><language>en</language><atom:link href="https://go-ndarray.github.io/docs/0.19/tags/security/index.xml" rel="self" type="application/rss+xml"/><item><title>Security</title><link>https://go-ndarray.github.io/docs/0.19/security/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://go-ndarray.github.io/docs/0.19/security/</guid><description>
 &lt;blockquote&gt;
-&lt;p&gt;Mirrored from &lt;a href="https://github.com/go-ndarray/ndarray/blob/main/SECURITY.md" target="_blank" rel="noopener"&gt;&lt;code&gt;SECURITY.md&lt;/code&gt;&lt;/a&gt; at v0.19.0.&lt;/p&gt;
+&lt;p&gt;Mirrored from &lt;a href="https://github.com/go-ndarray/ndarray/blob/main/SECURITY.md" target="_blank" rel="noopener"&gt;&lt;code&gt;SECURITY.md&lt;/code&gt;&lt;/a&gt; at v0.19.1.&lt;/p&gt;
 &lt;/blockquote&gt;
 &lt;h2 data-hextra-search-id="reporting"&gt;Reporting&lt;span class="hx:absolute hx:-mt-20" id="reporting"&gt;&lt;/span&gt;&lt;a href="#reporting" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;Report a vulnerability privately through GitHub&amp;rsquo;s &lt;strong&gt;Report a vulnerability&lt;/strong&gt;
 button on &lt;a href="https://github.com/go-ndarray/ndarray/security" target="_blank" rel="noopener"&gt;the repository&lt;/a&gt; (Security → Advisories). Please do not open a public
@@ -73,7 +73,25 @@ requires that, that it never panics, and that re-encoding is a fixed point.&lt;/
 &lt;/ul&gt;
 &lt;p&gt;The minimum Go version (&lt;code&gt;go&lt;/code&gt; in &lt;code&gt;go.mod&lt;/code&gt;) is kept on a release that fixes the
 standard library&amp;rsquo;s known vulnerabilities; &lt;code&gt;govulncheck ./...&lt;/code&gt; reports none.&lt;/p&gt;
-&lt;h2 data-hextra-search-id="audit-log"&gt;Audit log&lt;span class="hx:absolute hx:-mt-20" id="audit-log"&gt;&lt;/span&gt;&lt;a href="#audit-log" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;&lt;strong&gt;2026-10-20 (v0.19.0).&lt;/strong&gt; &lt;code&gt;kernels.Sqrt32&lt;/code&gt; follows &lt;code&gt;Bin32&lt;/code&gt;&amp;rsquo;s guards: it
+&lt;h2 data-hextra-search-id="audit-log"&gt;Audit log&lt;span class="hx:absolute hx:-mt-20" id="audit-log"&gt;&lt;/span&gt;&lt;a href="#audit-log" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;&lt;strong&gt;2026-10-25 (v0.19.1).&lt;/strong&gt; A correctness defect, found while reading the
+float64 extremum kernels before writing float32 ones. On amd64, &lt;code&gt;Max&lt;/code&gt;, &lt;code&gt;Min&lt;/code&gt;,
+&lt;code&gt;MaxAxis&lt;/code&gt; and &lt;code&gt;MinAxis&lt;/code&gt; over a mix of signed zeros returned the sign of
+whichever zero the kernel met last: &lt;code&gt;[+0, -0]&lt;/code&gt; gave &lt;code&gt;Max = -0&lt;/code&gt; and
+&lt;code&gt;[-0, +0]&lt;/code&gt; gave &lt;code&gt;Min = +0&lt;/code&gt;. MAXPD/MINPD return their source operand on a zero
+tie. Every other architecture, and the scalar oracle, give &lt;code&gt;Max = +0&lt;/code&gt; and
+&lt;code&gt;Min = -0&lt;/code&gt;, as Go&amp;rsquo;s max/min order them.&lt;/p&gt;
+&lt;p&gt;The tests had meant to cover this. They wrote &lt;code&gt;-0.0&lt;/code&gt;, which Go&amp;rsquo;s constant
+arithmetic makes +0, so no negative zero was ever tested: seven cases in two
+files. They now use &lt;code&gt;math.Copysign(0, -1)&lt;/code&gt;, guarded by a test of the helper;
+corrected, they failed on a Zen 3.&lt;/p&gt;
+&lt;p&gt;The fix leaves the kernel alone. A zero result is the only one whose sign
+can be wrong, and it needs every element &amp;lt;= 0 with a zero among them. The
+wrapper then asks the scalar oracle. Combining both operand orders inside
+the kernel was also correct, but cost 53-60% on a Zen 3; the wrapper check
+costs nothing measurable, +3.5% (6 ns) at n=1024 and ~ elsewhere.
+&lt;code&gt;TestExtremaOfSignedZeros&lt;/code&gt; checks the public API; it fails on v0.19.0 (amd64)
+and passes now.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;2026-10-20 (v0.19.0).&lt;/strong&gt; &lt;code&gt;kernels.Sqrt32&lt;/code&gt; follows &lt;code&gt;Bin32&lt;/code&gt;&amp;rsquo;s guards: it
 reslices &lt;code&gt;src&lt;/code&gt; to &lt;code&gt;len(dst)&lt;/code&gt; before the call (a short &lt;code&gt;src&lt;/code&gt; panics in Go,
 tested), never passes an empty slice to a kernel, and keeps the LASX, V and
 VXE gates. The PROT_NONE fence now also covers it, and passes on Zen 3,
