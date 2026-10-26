@@ -8,7 +8,7 @@ description: "How to report a vulnerability, what the library guarantees, and th
 tags: [security]
 ---
 
-> Mirrored from [`SECURITY.md`](https://github.com/go-ndarray/ndarray/blob/main/SECURITY.md) at v0.25.0.
+> Mirrored from [`SECURITY.md`](https://github.com/go-ndarray/ndarray/blob/main/SECURITY.md) at v0.26.0.
 
 ## Reporting
 
@@ -75,6 +75,18 @@ The minimum Go version (`go` in `go.mod`) is kept on a release that fixes the
 standard library's known vulnerabilities; `govulncheck ./...` reports none.
 
 ## Audit log
+
+**2026-10-26 (v0.26.0).** The float32 GEMM kernels, `gemmMicro8x8S` (arm64)
+and `gemmMicro6x16FMA` (amd64, behind the FMA probe), read `kc·MR` and `kc·NR`
+packed floats and read and write one MR×NR tile of C. Their Go wrapper
+bounds-checks all three reaches before the call. They are fenced (PROT_NONE
+on both sides of each operand) and tested against a float32 oracle. A
+sabotaged kernel failed every CI job that runs it. The edge tile now lives
+in the worker's pooled A buffer: its capacity adds MR·NR elements, and
+`gemmBand` slices the tile from the end. The operand views are the same
+`Off/RS/CS` triples the float64 GEMM reads, built from the array's own
+strides. A non-Float32 operand is converted to a fresh contiguous copy
+first. Shapes are validated (overflow included) before any allocation.
 
 **2026-10-26 (v0.25.0).** The loong64 extremum kernels (`maxLSX`, `minLSX`,
 `max32LSX`, `min32LSX`) read the whole blocks of `a` behind the `useLASX`
