@@ -8,9 +8,9 @@ description: "numpy.random with NumPy's numbers for the same seed: the bit gener
 tags: [random, numpy]
 ---
 
-> Mirrored from [`docs/random.md`](https://github.com/go-ndarray/ndarray/blob/v0.26.0/docs/random.md) at v0.26.0.
+> Mirrored from [`docs/random.md`](https://github.com/go-ndarray/ndarray/blob/v0.26.1/docs/random.md) at v0.26.1.
 
-Package [`random`](https://pkg.go.dev/github.com/go-ndarray/ndarray@v0.26.0/random) is `numpy.random` over go-ndarray arrays. Its goal
+Package [`random`](https://pkg.go.dev/github.com/go-ndarray/ndarray@v0.26.1/random) is `numpy.random` over go-ndarray arrays. Its goal
 is migration: a notebook moved from NumPy to Go keeps its numbers for the same
 seed.
 
@@ -24,7 +24,7 @@ u, _ := random.Rand(3)                // np.random.rand(3)
 ```
 
 `Example`, `ExampleSeed` and `ExampleGenerator_ChoiceN` in
-[`example_test.go`](https://github.com/go-ndarray/ndarray/blob/v0.26.0/random/example_test.go) print NumPy's own numbers.
+[`example_test.go`](https://github.com/go-ndarray/ndarray/blob/v0.26.1/random/example_test.go) print NumPy's own numbers.
 
 ## What is implemented
 
@@ -118,7 +118,7 @@ random arguments. Used as-is, that made 3% of `np.random.randn` values and
 10% of `lognormal` values one ULP off.
 
 So `random` rounds `log`, `log1p`, `exp`, `expm1` and `pow` **correctly**
-([`libm.go`](https://github.com/go-ndarray/ndarray/blob/v0.26.0/random/libm.go)): a fast evaluation to about 2⁻⁶⁸ with Ziv's
+([`libm.go`](https://github.com/go-ndarray/ndarray/blob/v0.26.1/random/libm.go)): a fast evaluation to about 2⁻⁶⁸ with Ziv's
 rounding test, and a double-double fallback (about 2⁻¹⁰⁰) for the one argument
 in ~2¹⁵ that needs it. Checked against mpmath at 300 bits on 63,000 arguments
 (0 misrounded; the committed `libm.json` keeps 8,400), and the fast paths
