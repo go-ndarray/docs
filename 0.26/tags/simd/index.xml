@@ -2269,6 +2269,45 @@ row at a time, which also speeds up float64.&lt;/p&gt;
 &lt;/tr&gt;
 &lt;/tbody&gt;
 &lt;/table&gt;
+&lt;p&gt;v0.26.1 packs full B panels with one fixed-size array move per row (8 or 16
+elements, lowered to vector moves), where &lt;code&gt;packB&lt;/code&gt; had copied element by
+element. Profiling had put it at 21% of a 64² float32 product.&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;&lt;code&gt;MatMul&lt;/code&gt; vs v0.26.0 (&lt;code&gt;abbench&lt;/code&gt;, 10 rounds)&lt;/th&gt;
+&lt;th style="text-align: right"&gt;64²&lt;/th&gt;
+&lt;th style="text-align: right"&gt;256²&lt;/th&gt;
+&lt;th style="text-align: right"&gt;1024²&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;Zen 3, float32&lt;/td&gt;
+&lt;td style="text-align: right"&gt;−11.6%&lt;/td&gt;
+&lt;td style="text-align: right"&gt;−7.1%&lt;/td&gt;
+&lt;td style="text-align: right"&gt;−1.7%&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Zen 3, float64&lt;/td&gt;
+&lt;td style="text-align: right"&gt;−4.4%&lt;/td&gt;
+&lt;td style="text-align: right"&gt;−2.3%&lt;/td&gt;
+&lt;td style="text-align: right"&gt;~&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Neoverse N1, float32&lt;/td&gt;
+&lt;td style="text-align: right"&gt;−16.4%&lt;/td&gt;
+&lt;td style="text-align: right"&gt;−8.9%&lt;/td&gt;
+&lt;td style="text-align: right"&gt;~&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Neoverse N1, float64&lt;/td&gt;
+&lt;td style="text-align: right"&gt;−9.5%&lt;/td&gt;
+&lt;td style="text-align: right"&gt;~&lt;/td&gt;
+&lt;td style="text-align: right"&gt;~&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
 &lt;p&gt;&lt;strong&gt;Open defect: products are still slower than OpenBLAS on one core&lt;/strong&gt;, by
 1.1–1.3× at 1024² and up to 1.9× at 64². The gap is widest where the work
 around the kernel weighs most: packing, edge tiles, and the result&amp;rsquo;s
