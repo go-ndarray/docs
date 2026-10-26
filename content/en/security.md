@@ -8,7 +8,7 @@ description: "How to report a vulnerability, what the library guarantees, and th
 tags: [security]
 ---
 
-> Mirrored from [`SECURITY.md`](https://github.com/go-ndarray/ndarray/blob/main/SECURITY.md) at v0.24.0.
+> Mirrored from [`SECURITY.md`](https://github.com/go-ndarray/ndarray/blob/main/SECURITY.md) at v0.25.0.
 
 ## Reporting
 
@@ -75,6 +75,14 @@ The minimum Go version (`go` in `go.mod`) is kept on a release that fixes the
 standard library's known vulnerabilities; `govulncheck ./...` reports none.
 
 ## Audit log
+
+**2026-10-26 (v0.25.0).** The loong64 extremum kernels (`maxLSX`, `minLSX`,
+`max32LSX`, `min32LSX`) read the whole blocks of `a` behind the `useLASX`
+gate. They write one 16-byte vector to an `out` array on the wrapper's stack,
+and read two 16-byte read-only constants. A test gap was found and closed: no
+extremum test used a negative NaN, so a kernel whose NaN test failed could
+pass, as a sabotaged one did. Both signs are tested now. The sabotage then
+failed CI's loong64 lane, and every other kernel passed.
 
 **2026-10-26 (v0.24.0).** The ppc64le extremum kernels (`maxVSX`, `minVSX`,
 `max32VSX`, `min32VSX`) read the whole blocks of `a` (`len(a) &^ 7` or
