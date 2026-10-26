@@ -8,7 +8,7 @@ description: "How to report a vulnerability, what the library guarantees, and th
 tags: [security]
 ---
 
-> Mirrored from [`SECURITY.md`](https://github.com/go-ndarray/ndarray/blob/main/SECURITY.md) at v0.19.1.
+> Mirrored from [`SECURITY.md`](https://github.com/go-ndarray/ndarray/blob/main/SECURITY.md) at v0.20.0.
 
 ## Reporting
 
@@ -75,6 +75,15 @@ The minimum Go version (`go` in `go.mod`) is kept on a release that fixes the
 standard library's known vulnerabilities; `govulncheck ./...` reports none.
 
 ## Audit log
+
+**2026-10-26 (v0.20.0).** The float32 extremum kernels (`max32SSE2`,
+`min32SSE2`, `max32NEON`, `min32NEON`) read `len(a)` elements from a
+non-empty slice. The Go wrappers pass `len(a)` and never an empty slice
+(`Max`/`Min` refuse an empty array before), the NEON ones only from 16 up.
+`TestBin32StaysInsideItsOperands` now fences them too: it passes on Zen 3,
+Neoverse N1 and Apple M. They are tested against one sequential pass of
+Go's max/min, with NaN, real signed zeros and infinities at every position,
+and a sabotaged kernel fails that test on both architectures.
 
 **2026-10-25 (v0.19.1).** A correctness defect, found while reading the
 float64 extremum kernels before writing float32 ones. On amd64, `Max`, `Min`,
