@@ -1,0 +1,590 @@
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>go-ndarray – Linalg</title><link>https://go-ndarray.github.io/docs/0.25/tags/linalg/</link><description>Recent content in Linalg on go-ndarray</description><generator>Hugo -- gohugo.io</generator><language>en</language><atom:link href="https://go-ndarray.github.io/docs/0.25/tags/linalg/index.xml" rel="self" type="application/rss+xml"/><item><title>linalg — numpy.linalg in pure Go</title><link>https://go-ndarray.github.io/docs/0.25/linalg/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://go-ndarray.github.io/docs/0.25/linalg/</guid><description>
+&lt;blockquote&gt;
+&lt;p&gt;Mirrored from &lt;a href="https://github.com/go-ndarray/ndarray/blob/v0.25.0/docs/linalg.md" target="_blank" rel="noopener"&gt;&lt;code&gt;docs/linalg.md&lt;/code&gt;&lt;/a&gt; at v0.25.0.&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;Package &lt;a href="https://pkg.go.dev/github.com/go-ndarray/ndarray@v0.25.0/linalg" target="_blank" rel="noopener"&gt;&lt;code&gt;linalg&lt;/code&gt;&lt;/a&gt; gives ndarray arrays the functions of
+&lt;code&gt;numpy.linalg&lt;/code&gt;, written in Go without cgo or assembly of its own: the
+matrix products it relies on are the ndarray package&amp;rsquo;s packed SIMD GEMM.&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;numpy.linalg&lt;/th&gt;
+&lt;th&gt;linalg&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;solve(a, b)&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;Solve(a, b)&lt;/code&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;inv(a)&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;Inv(a)&lt;/code&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;det(a)&lt;/code&gt;, &lt;code&gt;slogdet(a)&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;Det(a)&lt;/code&gt;, &lt;code&gt;Slogdet(a)&lt;/code&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;cholesky(a, upper=…)&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;Cholesky(a, Lower | Upper)&lt;/code&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;qr(a, mode)&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;QR(a, ModeReduced | ModeComplete | ModeR | ModeRaw)&lt;/code&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;svd(a, full_matrices)&lt;/code&gt;, &lt;code&gt;svdvals(a)&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;SVD(a, full)&lt;/code&gt;, &lt;code&gt;SVDVals(a)&lt;/code&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;eigh(a, UPLO)&lt;/code&gt;, &lt;code&gt;eigvalsh(a, UPLO)&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;Eigh(a, uplo)&lt;/code&gt;, &lt;code&gt;Eigvalsh(a, uplo)&lt;/code&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;eig(a)&lt;/code&gt;, &lt;code&gt;eigvals(a)&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;Eig(a)&lt;/code&gt;, &lt;code&gt;Eigvals(a)&lt;/code&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;lstsq(a, b, rcond)&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;Lstsq(a, b)&lt;/code&gt;, &lt;code&gt;LstsqRcond(a, b, rcond)&lt;/code&gt; → &lt;code&gt;LstsqResult{X, Residuals, Rank, S}&lt;/code&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;pinv(a, rcond)&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;Pinv(a)&lt;/code&gt;, &lt;code&gt;PinvRcond(a, rcond)&lt;/code&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;matrix_rank(A, tol)&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;MatrixRank(a)&lt;/code&gt;, &lt;code&gt;MatrixRankTol(a, tol)&lt;/code&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;norm(x, ord, axis, keepdims)&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;Norm(x, ord, axes, keepdims)&lt;/code&gt;; &lt;code&gt;ord&lt;/code&gt; is &lt;code&gt;Ord{}&lt;/code&gt; (None), &lt;code&gt;P(p)&lt;/code&gt;, &lt;code&gt;Fro&lt;/code&gt;, &lt;code&gt;Nuc&lt;/code&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;cond(x, p)&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;Cond(x, p)&lt;/code&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;matrix_power(a, n)&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;MatrixPower(a, n)&lt;/code&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;multi_dot(arrays)&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;MultiDot(arrays...)&lt;/code&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;LinAlgError&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;ErrLinAlg&lt;/code&gt;, wrapped by &lt;code&gt;ErrSingular&lt;/code&gt;, &lt;code&gt;ErrNotPosDef&lt;/code&gt;, &lt;code&gt;ErrNoConvergence&lt;/code&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;Shape problems give &lt;code&gt;ErrShape&lt;/code&gt; (numpy raises &lt;code&gt;LinAlgError&lt;/code&gt; for some of them
+and &lt;code&gt;ValueError&lt;/code&gt; for others), bad options &lt;code&gt;ErrArgs&lt;/code&gt;.&lt;/p&gt;
+&lt;h2 data-hextra-search-id="semantics"&gt;Semantics&lt;span class="hx:absolute hx:-mt-20" id="semantics"&gt;&lt;/span&gt;&lt;a href="#semantics" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Stacks.&lt;/strong&gt; The last two axes are the matrix; leading axes are a stack,
+processed one matrix per goroutine. &lt;code&gt;Solve&lt;/code&gt; broadcasts the stack
+dimensions of &lt;code&gt;a&lt;/code&gt; and &lt;code&gt;b&lt;/code&gt; as numpy&amp;rsquo;s gufunc does; a 1-D &lt;code&gt;b&lt;/code&gt; is one
+vector, any other &lt;code&gt;b&lt;/code&gt; a stack of matrices (numpy 2&amp;rsquo;s rule).&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Dtypes.&lt;/strong&gt; As in numpy, everything is computed in double precision:
+float64 and complex128 directly, integers and bools promoted to float64,
+float32 and complex64 widened. Results have numpy&amp;rsquo;s dtypes: single
+precision in, single precision out (rounded from the double result, which
+is what numpy does too — its linalg gufuncs also run in double); singular
+values, Hermitian eigenvalues, &lt;code&gt;logabsdet&lt;/code&gt; and norms are real; &lt;code&gt;Eig&lt;/code&gt; is
+always complex (numpy 2). &lt;code&gt;MatrixPower&lt;/code&gt; with n ≥ 0 keeps an integer dtype.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Conventions.&lt;/strong&gt; LAPACK&amp;rsquo;s: Householder reflectors with β = −sign(α)‖x‖, so
+R&amp;rsquo;s diagonal can be negative as in numpy; ascending Hermitian eigenvalues;
+decreasing singular values; &lt;code&gt;Eig&lt;/code&gt; vectors with unit norm and their largest
+component real, conjugate vectors for conjugate eigenvalues of a real
+matrix (dgeev&amp;rsquo;s normalization).&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Not unique.&lt;/strong&gt; Signs and phases of eigenvectors and singular vectors, and
+any orthonormal basis of a repeated eigenvalue&amp;rsquo;s space, may differ from
+numpy&amp;rsquo;s. Compare &lt;code&gt;A·v = λ·v&lt;/code&gt;, &lt;code&gt;A = U·S·Vh&lt;/code&gt;, not the vectors.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 data-hextra-search-id="algorithms-and-why"&gt;Algorithms, and why&lt;span class="hx:absolute hx:-mt-20" id="algorithms-and-why"&gt;&lt;/span&gt;&lt;a href="#algorithms-and-why" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;All are LAPACK&amp;rsquo;s, re-expressed for row-major storage. Each is written once,
+generic over &lt;code&gt;float64 | complex128&lt;/code&gt;; Go 1.27 stencils the two and folds the
+type switches of the helpers (&lt;code&gt;conj&lt;/code&gt;, &lt;code&gt;abs&lt;/code&gt;, …), so the real code pays
+nothing for the complex case (measured: same speed as a hand-specialised
+loop).&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;operation&lt;/th&gt;
+&lt;th&gt;algorithm&lt;/th&gt;
+&lt;th&gt;where the time goes&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;Solve&lt;/code&gt;, &lt;code&gt;Inv&lt;/code&gt;, &lt;code&gt;Det&lt;/code&gt;, &lt;code&gt;Slogdet&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;LU with partial pivoting, recursive (getrf2): halves the columns, so the trailing update and the triangular solves are GEMMs&lt;/td&gt;
+&lt;td&gt;GEMM&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;Cholesky&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;recursive potrf: &lt;code&gt;L21 = A21·L11⁻ᴴ&lt;/code&gt;, &lt;code&gt;A22 −= L21·L21ᴴ&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;GEMM&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;QR&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;blocked Householder (geqrf/orgqr, panels of 32, compact WY &lt;code&gt;I − V·T·Vᴴ&lt;/code&gt;)&lt;/td&gt;
+&lt;td&gt;GEMM&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;Eigh&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;blocked tridiagonalization (latrd, panels of 32: half the flops in GEMM, half in matrix-vector products) + divide and conquer (stedc: Cuppen&amp;rsquo;s split, deflation, secular equation, Gu–Eisenstat&amp;rsquo;s recomputed vector) above order 25, implicit QL/QR (steqr) below&lt;/td&gt;
+&lt;td&gt;tridiagonalization&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;Eigvalsh&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;the same reduction + QL/QR without vectors&lt;/td&gt;
+&lt;td&gt;tridiagonalization&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;SVD&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;blocked Golub–Kahan bidiagonalization (labrd) + divide and conquer on the bidiagonal (bdsdc: Gu and Eisenstat&amp;rsquo;s arrow matrix and secular equation) above order 25, implicit zero-shift/shifted QR (bdsqr, Demmel–Kahan) below; wide matrices factor Aᴴ&lt;/td&gt;
+&lt;td&gt;bidiagonalization&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;SVDVals&lt;/code&gt;, &lt;code&gt;MatrixRank&lt;/code&gt;, &lt;code&gt;Cond&lt;/code&gt; (2-norm), &lt;code&gt;Norm&lt;/code&gt; (2, nuc)&lt;/td&gt;
+&lt;td&gt;the same reduction + bdsqr without vectors&lt;/td&gt;
+&lt;td&gt;bidiagonalization&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;Eig&lt;/code&gt;, &lt;code&gt;Eigvals&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;balancing (gebal: permutations and powers of two), Hessenberg reduction (gehd2), Francis double-shift QR (dlahqr; single-shift zlahqr for complex input), eigenvectors by back-substitution on the Schur form with overflow scaling (trevc), back-transformed by one GEMM, gebak, dgeev&amp;rsquo;s normalization&lt;/td&gt;
+&lt;td&gt;QR iteration&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;Lstsq&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;SVD, &lt;code&gt;x = V·S⁺·Uᴴ·b&lt;/code&gt; over singular values above &lt;code&gt;rcond·σ₁&lt;/code&gt;; the residuals from the Householder QR of &lt;code&gt;a&lt;/code&gt; (the tail of &lt;code&gt;Qᴴb&lt;/code&gt;, free of the cancellation in &lt;code&gt;b − a·x&lt;/code&gt;)&lt;/td&gt;
+&lt;td&gt;SVD&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;Pinv&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;SVD, &lt;code&gt;V·S⁺·Uᴴ&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;SVD&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;Norm&lt;/code&gt;, &lt;code&gt;MatrixPower&lt;/code&gt;, &lt;code&gt;MultiDot&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;direct; 2-norms rescaled against overflow; repeated squaring in numpy&amp;rsquo;s order; numpy&amp;rsquo;s matrix-chain dynamic programme&lt;/td&gt;
+&lt;td&gt;—&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;&lt;strong&gt;The SVD: why Golub–Kahan with QR, and divide and conquer.&lt;/strong&gt; The choice
+was between Golub–Kahan bidiagonalization followed by the implicit-shift QR
+iteration, and one-sided Jacobi. One-sided Jacobi is the more accurate in a
+strong sense — it computes the small singular values of a matrix whose
+columns are badly scaled to high relative accuracy (Demmel–Veselić) — but it
+needs 5–10 sweeps of O(n³) rotations, several times the work, and it is not
+what numpy computes. Golub–Kahan reduction is backward stable: the computed
+singular values are those of &lt;code&gt;A + E&lt;/code&gt; with &lt;code&gt;‖E‖ ≈ ε‖A‖&lt;/code&gt;, so each is within
+about &lt;code&gt;ε·σ₁&lt;/code&gt; of the truth — numpy&amp;rsquo;s (gesdd&amp;rsquo;s) accuracy, exactly. The QR
+iteration (bdsqr, with Demmel and Kahan&amp;rsquo;s zero shift) then finds the
+singular values of the bidiagonal to high relative accuracy, so it adds
+nothing to that error. It is used at the leaves of the divide and conquer
+and whenever the vectors are not wanted. With vectors, the QR iteration&amp;rsquo;s
+plane rotations cost O(n³) of non-vectorized work (5.8 s at n = 1024 in the
+first version); divide and conquer, LAPACK&amp;rsquo;s gesdd algorithm and the one
+numpy calls, puts that work into GEMMs (0.26 s now). Its singular vectors
+stay orthogonal because the updating vector is recomputed from the computed
+roots (Gu and Eisenstat), and the secular equation is solved with each
+distance &lt;code&gt;dᵢ − σ&lt;/code&gt; formed from the nearest pole, in the squared form
+&lt;code&gt;(dᵢ − σ)(dᵢ + σ)&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Hermitian eigenproblems&lt;/strong&gt; follow the same pattern: the tridiagonal QL/QR
+iteration (steqr) is used without vectors and for orders up to 25, divide
+and conquer (stedc) above, which took n = 1024 from 3.6 s to 0.13 s.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;General eigenproblems&lt;/strong&gt; use the classical double-shift QR (dlahqr), not
+LAPACK&amp;rsquo;s multishift QR with aggressive early deflation (dlaqr0–5). That is
+the largest gap to numpy, at large orders (below).&lt;/p&gt;
+&lt;h2 data-hextra-search-id="accuracy-and-verification"&gt;Accuracy and verification&lt;span class="hx:absolute hx:-mt-20" id="accuracy-and-verification"&gt;&lt;/span&gt;&lt;a href="#accuracy-and-verification" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;&lt;strong&gt;Against numpy.&lt;/strong&gt; &lt;code&gt;linalg/testdata/cases.py&lt;/code&gt; generates 1,040 cases with
+numpy 2.5.3 (&lt;code&gt;uv run --with numpy python linalg/testdata/cases.py &amp;gt; linalg/testdata/cases.json&lt;/code&gt;; the JSON is embedded in the test binary, so the
+emulated CI architectures read it from anywhere). They cover every
+function; float64, float32, complex128, complex64, int32/int64 and bool
+inputs; 0×0, 1×1, tall, wide, stacked and broadcast shapes; Hilbert
+matrices (κ up to 10¹⁶), graded and rank-deficient matrices, exactly
+singular ones, non-symmetric matrices with complex eigenvalues, Jordan
+blocks and other defective matrices, NaN and Inf inputs; and every error
+numpy raises on them (124 cases). The test checks, for each case:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;errors: an error of the same kind (&lt;code&gt;ErrSingular&lt;/code&gt;, &lt;code&gt;ErrNotPosDef&lt;/code&gt;,
+&lt;code&gt;ErrNoConvergence&lt;/code&gt;, &lt;code&gt;ErrLinAlg&lt;/code&gt; for non-finite input to &lt;code&gt;Eig&lt;/code&gt;,
+&lt;code&gt;ErrShape&lt;/code&gt;, &lt;code&gt;ErrArgs&lt;/code&gt;);&lt;/li&gt;
+&lt;li&gt;dtype and shape of every result, exactly;&lt;/li&gt;
+&lt;li&gt;unique values (solutions, inverses, determinants, Cholesky factors,
+singular values, eigenvalues, least-squares solutions and residuals,
+pseudo-inverses, ranks, norms, condition numbers, powers, products)
+elementwise, within &lt;code&gt;32·n·ε·κ&lt;/code&gt; of the largest entry of the result, with
+&lt;code&gt;κ&lt;/code&gt; the condition number of the problem (1 for singular values, Hermitian
+eigenvalues and norms; &lt;code&gt;cond(A)&lt;/code&gt; for solves and inverses; the effective
+condition over the kept singular values for &lt;code&gt;Lstsq&lt;/code&gt; and &lt;code&gt;Pinv&lt;/code&gt;, squared for
+the residuals), plus one float32 rounding for single-precision results;&lt;/li&gt;
+&lt;li&gt;factors that are not unique through their identities: &lt;code&gt;‖QᴴQ − I‖&lt;/code&gt;,
+&lt;code&gt;‖A − QR‖/‖A‖&lt;/code&gt;, R upper triangular; &lt;code&gt;‖UᴴU − I‖&lt;/code&gt;, &lt;code&gt;‖VhVhᴴ − I‖&lt;/code&gt;,
+&lt;code&gt;‖A − U·S·Vh‖/‖A‖&lt;/code&gt;; &lt;code&gt;‖VᴴV − I‖&lt;/code&gt;, &lt;code&gt;‖AV − VΛ‖/‖A‖&lt;/code&gt; with ascending
+eigenvalues; for &lt;code&gt;Eig&lt;/code&gt;, &lt;code&gt;‖Av − λv‖/‖A‖&lt;/code&gt; per vector, unit norm, largest
+component real, conjugate pairs exactly conjugate — all within
+&lt;code&gt;32·n·ε&lt;/code&gt; (&lt;code&gt;ε&lt;/code&gt; of the result&amp;rsquo;s dtype);&lt;/li&gt;
+&lt;li&gt;general eigenvalues matched to numpy&amp;rsquo;s nearest unused one, within 100
+times how far numpy&amp;rsquo;s own eigenvalues move when each entry is perturbed by
+10⁻¹⁴ of itself (an empirical condition number, recorded in the fixture),
+so a Jordan block&amp;rsquo;s eigenvalue, accurate only to &lt;code&gt;ε^(1/4)&lt;/code&gt;, is judged by
+what is achievable.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;914 cases are value-checked and 124 are errors; the 2 deliberate departures
+below are logged.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Beyond the fixture&lt;/strong&gt; (&lt;code&gt;properties_test.go&lt;/code&gt;, &lt;code&gt;kernels_test.go&lt;/code&gt;): the same
+identities at orders 100 and 131 (above the blocking and divide-and-conquer
+thresholds), real and complex, tall and wide; a stack of 16 matrices run in
+parallel equals the matrices run one by one; repeated eigenvalues and
+singular values, rank-deficient and zero matrices (the deflation paths);
+cyclic permutations, Grcar and Frank matrices, orthogonal matrices,
+high-order Jordan blocks and coupled rotation blocks (exceptional shifts,
+overflow rescaling in the back-substitution); balancing at the limits of the
+exponent range; every iteration forced to fail (&lt;code&gt;ErrNoConvergence&lt;/code&gt; from
+each function); and the 2×2 kernels (laev2, las2, lasv2, lanv2, lartg,
+solve2) checked through their defining identities on the inputs that reach
+their special cases.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Negative controls.&lt;/strong&gt; Dropping the row interchange in the LU leaf (no
+partial pivoting) fails 64 fixture cases — 23 &lt;code&gt;solve&lt;/code&gt;, 17 &lt;code&gt;inv&lt;/code&gt;, 10 &lt;code&gt;det&lt;/code&gt;,
+10 &lt;code&gt;slogdet&lt;/code&gt;, 4 &lt;code&gt;matrix_power&lt;/code&gt; — and the order-100 identity test. Loosening
+the secular-equation solver&amp;rsquo;s stopping test by 10⁸ fails the four order-34
+&lt;code&gt;eigh&lt;/code&gt; cases (eigenvalues off by ~10⁻¹¹ relative) and the zero-diagonal
+bidiagonal divide-and-conquer test (&lt;code&gt;‖B − USVᵀ‖&lt;/code&gt; of 10⁻⁸).&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Coverage&lt;/strong&gt; is 100% of statements under the CI gate (&lt;code&gt;go test -race -coverpkg=./... ./...&lt;/code&gt;).&lt;/p&gt;
+&lt;h2 data-hextra-search-id="speed-against-numpy"&gt;Speed against numpy&lt;span class="hx:absolute hx:-mt-20" id="speed-against-numpy"&gt;&lt;/span&gt;&lt;a href="#speed-against-numpy" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;Median wall time of &lt;code&gt;BenchmarkLinalg&lt;/code&gt; against numpy 2.5.3 (&lt;code&gt;la.solve(a, ones)&lt;/code&gt;, &lt;code&gt;la.inv&lt;/code&gt;, &lt;code&gt;la.cholesky&lt;/code&gt; of &lt;code&gt;A·Aᵀ + nI&lt;/code&gt;, &lt;code&gt;la.qr&lt;/code&gt; reduced,
+&lt;code&gt;la.svd(full_matrices=False)&lt;/code&gt;, &lt;code&gt;la.eigh&lt;/code&gt; of &lt;code&gt;A + Aᵀ&lt;/code&gt;, &lt;code&gt;la.eig&lt;/code&gt;), n×n
+standard normal matrices, Apple M-series (16 cores, arm64), three
+interleaved rounds. numpy&amp;rsquo;s wheel uses &lt;strong&gt;Apple Accelerate&lt;/strong&gt;. The host was
+shared and heavily loaded (load average 16–23 on 16 cores during the runs),
+so absolute numbers are noisy; the ratios held across rounds.&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;op&lt;/th&gt;
+&lt;th&gt;n&lt;/th&gt;
+&lt;th&gt;Go (ms)&lt;/th&gt;
+&lt;th&gt;numpy (ms)&lt;/th&gt;
+&lt;th&gt;Go / numpy&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;solve&lt;/td&gt;
+&lt;td&gt;64&lt;/td&gt;
+&lt;td&gt;0.046&lt;/td&gt;
+&lt;td&gt;0.022&lt;/td&gt;
+&lt;td&gt;2.1&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;solve&lt;/td&gt;
+&lt;td&gt;256&lt;/td&gt;
+&lt;td&gt;0.99&lt;/td&gt;
+&lt;td&gt;0.25&lt;/td&gt;
+&lt;td&gt;3.9&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;solve&lt;/td&gt;
+&lt;td&gt;1024&lt;/td&gt;
+&lt;td&gt;21.2&lt;/td&gt;
+&lt;td&gt;10.9&lt;/td&gt;
+&lt;td&gt;1.9&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;inv&lt;/td&gt;
+&lt;td&gt;64&lt;/td&gt;
+&lt;td&gt;0.11&lt;/td&gt;
+&lt;td&gt;0.029&lt;/td&gt;
+&lt;td&gt;3.7&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;inv&lt;/td&gt;
+&lt;td&gt;256&lt;/td&gt;
+&lt;td&gt;2.19&lt;/td&gt;
+&lt;td&gt;0.58&lt;/td&gt;
+&lt;td&gt;3.8&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;inv&lt;/td&gt;
+&lt;td&gt;1024&lt;/td&gt;
+&lt;td&gt;39.4&lt;/td&gt;
+&lt;td&gt;23.7&lt;/td&gt;
+&lt;td&gt;1.7&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;cholesky&lt;/td&gt;
+&lt;td&gt;64&lt;/td&gt;
+&lt;td&gt;0.030&lt;/td&gt;
+&lt;td&gt;0.009&lt;/td&gt;
+&lt;td&gt;3.3&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;cholesky&lt;/td&gt;
+&lt;td&gt;256&lt;/td&gt;
+&lt;td&gt;0.54&lt;/td&gt;
+&lt;td&gt;0.24&lt;/td&gt;
+&lt;td&gt;2.2&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;cholesky&lt;/td&gt;
+&lt;td&gt;1024&lt;/td&gt;
+&lt;td&gt;10.9&lt;/td&gt;
+&lt;td&gt;6.6&lt;/td&gt;
+&lt;td&gt;1.7&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;qr&lt;/td&gt;
+&lt;td&gt;64&lt;/td&gt;
+&lt;td&gt;0.15&lt;/td&gt;
+&lt;td&gt;0.083&lt;/td&gt;
+&lt;td&gt;1.8&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;qr&lt;/td&gt;
+&lt;td&gt;256&lt;/td&gt;
+&lt;td&gt;2.32&lt;/td&gt;
+&lt;td&gt;1.57&lt;/td&gt;
+&lt;td&gt;1.5&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;qr&lt;/td&gt;
+&lt;td&gt;1024&lt;/td&gt;
+&lt;td&gt;54.7&lt;/td&gt;
+&lt;td&gt;37.3&lt;/td&gt;
+&lt;td&gt;1.5&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;svd&lt;/td&gt;
+&lt;td&gt;64&lt;/td&gt;
+&lt;td&gt;0.78&lt;/td&gt;
+&lt;td&gt;0.30&lt;/td&gt;
+&lt;td&gt;2.6&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;svd&lt;/td&gt;
+&lt;td&gt;256&lt;/td&gt;
+&lt;td&gt;13.3&lt;/td&gt;
+&lt;td&gt;5.25&lt;/td&gt;
+&lt;td&gt;2.5&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;svd&lt;/td&gt;
+&lt;td&gt;1024&lt;/td&gt;
+&lt;td&gt;263&lt;/td&gt;
+&lt;td&gt;123&lt;/td&gt;
+&lt;td&gt;2.1&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;eigh&lt;/td&gt;
+&lt;td&gt;64&lt;/td&gt;
+&lt;td&gt;0.41&lt;/td&gt;
+&lt;td&gt;0.22&lt;/td&gt;
+&lt;td&gt;1.9&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;eigh&lt;/td&gt;
+&lt;td&gt;256&lt;/td&gt;
+&lt;td&gt;6.54&lt;/td&gt;
+&lt;td&gt;3.12&lt;/td&gt;
+&lt;td&gt;2.1&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;eigh&lt;/td&gt;
+&lt;td&gt;1024&lt;/td&gt;
+&lt;td&gt;130&lt;/td&gt;
+&lt;td&gt;78&lt;/td&gt;
+&lt;td&gt;1.7&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;eig&lt;/td&gt;
+&lt;td&gt;64&lt;/td&gt;
+&lt;td&gt;1.07&lt;/td&gt;
+&lt;td&gt;1.06&lt;/td&gt;
+&lt;td&gt;1.0&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;eig&lt;/td&gt;
+&lt;td&gt;256&lt;/td&gt;
+&lt;td&gt;55&lt;/td&gt;
+&lt;td&gt;19.4&lt;/td&gt;
+&lt;td&gt;2.8&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;eig&lt;/td&gt;
+&lt;td&gt;1024&lt;/td&gt;
+&lt;td&gt;5060&lt;/td&gt;
+&lt;td&gt;712&lt;/td&gt;
+&lt;td&gt;7.1&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;&lt;strong&gt;numpy is faster on single matrices&lt;/strong&gt;, by 1.5–4× (7× for &lt;code&gt;eig&lt;/code&gt; at 1024).
+Most of that is the matrix product underneath: on the same host the ndarray
+GEMM takes 18 ms for a 1024² product where Accelerate (which uses the
+matrix coprocessor) takes 3.8 ms, 0.37 ms against 0.10 ms at 256. The
+blocked algorithms here spend most of their time in that GEMM, so their gap
+to numpy is smaller than the GEMM&amp;rsquo;s. The exceptions:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;eig&lt;/code&gt; at large n: the classical double-shift QR is O(10n³) of scalar
+work; LAPACK&amp;rsquo;s multishift QR with aggressive early deflation moves it into
+GEMMs. This is the main follow-up.&lt;/li&gt;
+&lt;li&gt;small orders (64): fixed costs (conversion of the input, allocation,
+the packing of a small GEMM) weigh more than the arithmetic.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;strong&gt;Stacks of small matrices run in parallel&lt;/strong&gt; — numpy&amp;rsquo;s gufuncs loop over
+them on one core — and there this package is faster (median of 3, same
+host):&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;op&lt;/th&gt;
+&lt;th&gt;stack&lt;/th&gt;
+&lt;th&gt;Go (ms)&lt;/th&gt;
+&lt;th&gt;numpy (ms)&lt;/th&gt;
+&lt;th&gt;numpy / Go&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;inv&lt;/td&gt;
+&lt;td&gt;10000 × 4×4&lt;/td&gt;
+&lt;td&gt;0.94&lt;/td&gt;
+&lt;td&gt;3.83&lt;/td&gt;
+&lt;td&gt;4.1&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;det&lt;/td&gt;
+&lt;td&gt;10000 × 4×4&lt;/td&gt;
+&lt;td&gt;0.81&lt;/td&gt;
+&lt;td&gt;2.12&lt;/td&gt;
+&lt;td&gt;2.6&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;eigh&lt;/td&gt;
+&lt;td&gt;10000 × 4×4&lt;/td&gt;
+&lt;td&gt;3.0&lt;/td&gt;
+&lt;td&gt;13.8&lt;/td&gt;
+&lt;td&gt;4.6&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;svd&lt;/td&gt;
+&lt;td&gt;10000 × 4×4&lt;/td&gt;
+&lt;td&gt;5.3&lt;/td&gt;
+&lt;td&gt;29.5&lt;/td&gt;
+&lt;td&gt;5.6&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;eig&lt;/td&gt;
+&lt;td&gt;10000 × 4×4&lt;/td&gt;
+&lt;td&gt;4.9&lt;/td&gt;
+&lt;td&gt;55.7&lt;/td&gt;
+&lt;td&gt;11&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;inv&lt;/td&gt;
+&lt;td&gt;1000 × 32×32&lt;/td&gt;
+&lt;td&gt;3.4&lt;/td&gt;
+&lt;td&gt;8.5&lt;/td&gt;
+&lt;td&gt;2.5&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;det&lt;/td&gt;
+&lt;td&gt;1000 × 32×32&lt;/td&gt;
+&lt;td&gt;1.6&lt;/td&gt;
+&lt;td&gt;4.0&lt;/td&gt;
+&lt;td&gt;2.5&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;eigh&lt;/td&gt;
+&lt;td&gt;1000 × 32×32&lt;/td&gt;
+&lt;td&gt;21.3&lt;/td&gt;
+&lt;td&gt;50.4&lt;/td&gt;
+&lt;td&gt;2.4&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;svd&lt;/td&gt;
+&lt;td&gt;1000 × 32×32&lt;/td&gt;
+&lt;td&gt;44.3&lt;/td&gt;
+&lt;td&gt;75.9&lt;/td&gt;
+&lt;td&gt;1.7&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;eig&lt;/td&gt;
+&lt;td&gt;1000 × 32×32&lt;/td&gt;
+&lt;td&gt;29.7&lt;/td&gt;
+&lt;td&gt;232&lt;/td&gt;
+&lt;td&gt;7.8&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;Reproduce: &lt;code&gt;go test -run XXX -bench 'Linalg|Stacked' ./linalg&lt;/code&gt;, and the
+numpy side with &lt;code&gt;uv run --with numpy==2.5.3 python docs/bench_linalg_numpy.py&lt;/code&gt;
+(the same sizes and distributions; the values differ, being from another
+generator).&lt;/p&gt;
+&lt;h2 data-hextra-search-id="differences-from-numpy"&gt;Differences from numpy&lt;span class="hx:absolute hx:-mt-20" id="differences-from-numpy"&gt;&lt;/span&gt;&lt;a href="#differences-from-numpy" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;numpy&lt;/th&gt;
+&lt;th&gt;here&lt;/th&gt;
+&lt;th&gt;why&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;det&lt;/code&gt; is &lt;code&gt;sign·exp(logabsdet)&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;the product of the pivots, accumulated as mantissa and exponent&lt;/td&gt;
+&lt;td&gt;exact to rounding, no spurious overflow or underflow of intermediate products, and no `&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;norm&lt;/code&gt; of a vector with entries near 10²⁰⁰ overflows to &lt;code&gt;inf&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;the 2-norms are rescaled (&lt;code&gt;1.414e200&lt;/code&gt; for &lt;code&gt;[1e200, 1e200]&lt;/code&gt;)&lt;/td&gt;
+&lt;td&gt;the true value is representable&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;float32 norms accumulate in float32&lt;/td&gt;
+&lt;td&gt;in float64, then rounded&lt;/td&gt;
+&lt;td&gt;more accurate; within a float32 rounding of numpy&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;cond(singular, 'nuc')&lt;/code&gt; raises &lt;code&gt;LinAlgError&lt;/code&gt; (the SVD of its NaN &amp;ldquo;inverse&amp;rdquo; fails)&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;+Inf&lt;/code&gt;, as for every other order&lt;/td&gt;
+&lt;td&gt;a singular matrix has infinite condition number&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;eigh&lt;/code&gt; of a matrix with a NaN returns NaN eigenvalues&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;ErrNoConvergence&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;the iteration cannot proceed; numpy&amp;rsquo;s &lt;code&gt;svd&lt;/code&gt; and &lt;code&gt;eig&lt;/code&gt; refuse NaN too&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;LinAlgError&lt;/code&gt; for a wrong rank or a non-square matrix&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;ErrShape&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;a shape error, not a numerical failure&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;svd(…, hermitian=True)&lt;/code&gt;, &lt;code&gt;pinv(…, hermitian=True)&lt;/code&gt;, &lt;code&gt;matrix_rank(…, hermitian=True)&lt;/code&gt;, &lt;code&gt;matrix_rank(rtol=)&lt;/code&gt;, &lt;code&gt;pinv(rtol=)&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;not provided (&lt;code&gt;PinvRcond(a, max(M,N)·ε)&lt;/code&gt; is &lt;code&gt;rtol=None&lt;/code&gt;)&lt;/td&gt;
+&lt;td&gt;follow-ups&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;tensorsolve&lt;/code&gt;, &lt;code&gt;tensorinv&lt;/code&gt;, &lt;code&gt;cross&lt;/code&gt;, &lt;code&gt;outer&lt;/code&gt;, &lt;code&gt;trace&lt;/code&gt;, &lt;code&gt;diagonal&lt;/code&gt;, &lt;code&gt;matmul&lt;/code&gt;, &lt;code&gt;vecdot&lt;/code&gt;, &lt;code&gt;matrix_norm&lt;/code&gt;, &lt;code&gt;vector_norm&lt;/code&gt;, &lt;code&gt;matrix_transpose&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;not in this package (&lt;code&gt;ndarray&lt;/code&gt; has &lt;code&gt;MatMul&lt;/code&gt;, &lt;code&gt;Outer&lt;/code&gt;, &lt;code&gt;Transpose&lt;/code&gt;; &lt;code&gt;Norm&lt;/code&gt; covers both norms)&lt;/td&gt;
+&lt;td&gt;follow-ups&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;qr&lt;/code&gt; modes &lt;code&gt;'full'&lt;/code&gt; and &lt;code&gt;'economic'&lt;/code&gt; (deprecated)&lt;/td&gt;
+&lt;td&gt;not provided&lt;/td&gt;
+&lt;td&gt;deprecated in numpy&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;h2 data-hextra-search-id="what-is-left"&gt;What is left&lt;span class="hx:absolute hx:-mt-20" id="what-is-left"&gt;&lt;/span&gt;&lt;a href="#what-is-left" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;Multishift QR with aggressive early deflation for &lt;code&gt;Eig&lt;/code&gt; (the 7× gap at
+n = 1024), and a blocked Hessenberg reduction.&lt;/li&gt;
+&lt;li&gt;A faster small-matrix path (n ≤ 64): unblocked kernels without the GEMM
+packing, fewer copies.&lt;/li&gt;
+&lt;li&gt;The &lt;code&gt;hermitian&lt;/code&gt; options and &lt;code&gt;rtol&lt;/code&gt; arguments above, and the tensor
+functions.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Eigh&lt;/code&gt; on NaN input returning NaNs like numpy, if that is preferred.&lt;/li&gt;
+&lt;/ul&gt;</description></item></channel></rss>
