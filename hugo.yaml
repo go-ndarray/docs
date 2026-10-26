@@ -97,7 +97,7 @@ params:
   # The ndarray release these pages describe. Its minor version is the
   # documentation's version label (v0.9.1 -> 0.9): the CI reads it here.
   ndarray:
-    version: "v0.19.0"
+    version: "v0.19.1"
 
   navbar:
     displayTitle: true
