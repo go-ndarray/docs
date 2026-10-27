@@ -8,9 +8,9 @@ description: "Solve, Inv, Det, Cholesky, QR, SVD, Eig and the rest of numpy.lina
 tags: [linalg, numpy]
 ---
 
-> Mirrored from [`docs/linalg.md`](https://github.com/go-ndarray/ndarray/blob/v0.26.1/docs/linalg.md) at v0.26.1.
+> Mirrored from [`docs/linalg.md`](https://github.com/go-ndarray/ndarray/blob/v0.27.0/docs/linalg.md) at v0.27.0.
 
-Package [`linalg`](https://pkg.go.dev/github.com/go-ndarray/ndarray@v0.26.1/linalg) gives ndarray arrays the functions of
+Package [`linalg`](https://pkg.go.dev/github.com/go-ndarray/ndarray@v0.27.0/linalg) gives ndarray arrays the functions of
 `numpy.linalg`, written in Go without cgo or assembly of its own: the
 matrix products it relies on are the ndarray package's packed SIMD GEMM.
 
