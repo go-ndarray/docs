@@ -105,7 +105,6 @@ entry in the switch.
 | `content/en/` | the pages; `_index.md` is the home, `weight` orders the sidebar |
 | `i18n/en.yaml` | the site's strings, beside the theme's |
 | `hugo.yaml` | `baseURL`, the ndarray version described, the navbar (version › theme › search › GitHub), the brand mounts |
-| `layouts/_partials/custom/version-select.html` | the version selector (reads `versions.json`), from go-fileshare/docs |
 | `layouts/_partials/custom/content-begin.html` | the outdated-version banner (reads `versions.json`), as the MkDocs site had |
 | `layouts/_markup/render-heading.html` | Hextra's heading, plus MkDocs' anchor where it differs |
 | `layouts/_partials/favicons.html` | the brand's favicons |
@@ -137,7 +136,7 @@ link, or an anchor, that does not exist.
 ```sh
 git clone --recurse-submodules https://github.com/go-ndarray/docs.git
 cd docs
-mkdir -p data && sh themes/hextra/scripts/page-history.sh > data/pagehistory.json
+mkdir -p data && go run github.com/tannevaled/hextra/cmd/pagehistory@v0.21.0 > data/pagehistory.json
 hugo server --baseURL http://localhost:1313/docs/0.9/
 ```
 
