@@ -8,7 +8,7 @@ description: "The plan for go-ndarray and what ships today."
 tags: [roadmap]
 ---
 
-> Mirrored from [`docs/plan-ndarray.md`](https://github.com/go-ndarray/ndarray/blob/v0.27.0/docs/plan-ndarray.md) at v0.27.0.
+> Mirrored from [`docs/plan-ndarray.md`](https://github.com/go-ndarray/ndarray/blob/v0.28.0/docs/plan-ndarray.md) at v0.28.0.
 
 > Goal: a **pure-Go (CGO=0)** NumPy-style N-dimensional array library, as a
 > **standalone, reusable** module with correct scalar kernels now and a clean
@@ -112,7 +112,7 @@ suite (plus the per-arch CI jobs already wired in `.github/workflows/ci.yml`).
 - **Performance — DONE (beats NumPy on its core ops; matmul at tuned-BLAS
   parity).** Several levers behind the kernel seam, measured honestly vs NumPy
   2.2.4 (see [docs/perf.md](performance.md) and the repo's
-  [BENCHMARKS.md](https://github.com/go-ndarray/ndarray/blob/v0.27.0/BENCHMARKS.md)):
+  [BENCHMARKS.md](https://github.com/go-ndarray/ndarray/blob/v0.28.0/BENCHMARKS.md)):
   - **Multicore.** `Add/Sub/Mul/Div/Map`, `Sum/Max/Min`, the axis reductions,
     `Concatenate`/`Stack`, and the GEMM fan out across `GOMAXPROCS` above a size
     threshold (small arrays stay serial). Plus an allocation fix: the
@@ -171,8 +171,9 @@ suite (plus the per-arch CI jobs already wired in `.github/workflows/ci.yml`).
   vectorised them on all six 64-bit targets, for float32 and float64), and the transcendental ufuncs. `MatMul` runs on the float64
   GEMM since v0.21.0, 77–90% faster than the triple loop, and since v0.26.0
   on a native float32 GEMM on arm64 (NEON 8×8) and amd64 with FMA (6×16),
-  a further 53–61% faster. The float32 kernels for ppc64le, s390x, riscv64
-  and loong64 are still to write.
+  a further 53–61% faster, and since v0.28.0 on ppc64le (VSX 8×16, 37–59%
+  faster on a POWER9). The float32 kernels for s390x, riscv64 and loong64
+  are still to write.
 - **Phase 3 — broadcasting ufuncs — MOSTLY DONE.** Broadcasting arithmetic,
   comparisons returning Bool masks, `Maximum`/`Minimum`, `Logical*`, `Power`,
   `Where` and the per-axis reductions, in every dtype. Not done: a public
