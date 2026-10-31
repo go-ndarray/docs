@@ -8,7 +8,7 @@ description: "How to report a vulnerability, what the library guarantees, and th
 tags: [security]
 ---
 
-> Mirrored from [`SECURITY.md`](https://github.com/go-ndarray/ndarray/blob/main/SECURITY.md) at v0.29.0.
+> Mirrored from [`SECURITY.md`](https://github.com/go-ndarray/ndarray/blob/main/SECURITY.md) at v0.29.1.
 
 ## Reporting
 
@@ -75,6 +75,15 @@ The minimum Go version (`go` in `go.mod`) is kept on a release that fixes the
 standard library's known vulnerabilities; `govulncheck ./...` reports none.
 
 ## Audit log
+
+**2026-10-31 (v0.29.1).** The A-in-place GEMM kernels now take B's row
+stride (`ldb`) and may read a row-major B operand in place: `kc` rows `ldb`
+elements apart, `NR` elements each. The wrappers bounds-check
+`b[(kc-1)*ldb+NR-1]` before the call. The path is taken only for a unit
+column stride and a positive row stride, and only for full panels; a partial
+panel is still packed, so no column past B's last is read. The fence tests
+place a strided B flush against a guard page. A sabotaged kernel (ignoring
+`ldb`) failed the GEMM tests on arm64 and on amd64.
 
 **2026-10-30 (v0.29.0).** The s390x float32 GEMM kernel
 (`gemmMicro4x16VXE`) reads `kc·4` and `kc·16` packed floats and one 4×16
