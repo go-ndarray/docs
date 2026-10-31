@@ -8,7 +8,7 @@ description: "How to report a vulnerability, what the library guarantees, and th
 tags: [security]
 ---
 
-> Mirrored from [`SECURITY.md`](https://github.com/go-ndarray/ndarray/blob/main/SECURITY.md) at v0.28.0.
+> Mirrored from [`SECURITY.md`](https://github.com/go-ndarray/ndarray/blob/main/SECURITY.md) at v0.29.0.
 
 ## Reporting
 
@@ -75,6 +75,13 @@ The minimum Go version (`go` in `go.mod`) is kept on a release that fixes the
 standard library's known vulnerabilities; `govulncheck ./...` reports none.
 
 ## Audit log
+
+**2026-10-30 (v0.29.0).** The s390x float32 GEMM kernel
+(`gemmMicro4x16VXE`) reads `kc·4` and `kc·16` packed floats and one 4×16
+tile of C. Its wrapper bounds-checks all three before the call, behind the
+`useVXE` gate. It passed the kernel suite (fence included) and the root
+suite on a real IBM Z with VXE, and a sabotaged kernel failed CI's s390x
+lane.
 
 **2026-10-27 (v0.28.0).** The ppc64le float32 GEMM kernel
 (`gemmMicro8x16VSX`) reads `kc·8` and `kc·16` packed floats and one 8×16 tile
