@@ -1,8 +1,8 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>go-ndarray – Random</title><link>https://go-ndarray.github.io/docs/0.29/tags/random/</link><description>Recent content in Random on go-ndarray</description><generator>Hugo -- gohugo.io</generator><language>en</language><atom:link href="https://go-ndarray.github.io/docs/0.29/tags/random/index.xml" rel="self" type="application/rss+xml"/><item><title>random — numpy.random, the same numbers</title><link>https://go-ndarray.github.io/docs/0.29/random/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://go-ndarray.github.io/docs/0.29/random/</guid><description>
 &lt;blockquote&gt;
-&lt;p&gt;Mirrored from &lt;a href="https://github.com/go-ndarray/ndarray/blob/v0.29.0/docs/random.md" target="_blank" rel="noopener"&gt;&lt;code&gt;docs/random.md&lt;/code&gt;&lt;/a&gt; at v0.29.0.&lt;/p&gt;
+&lt;p&gt;Mirrored from &lt;a href="https://github.com/go-ndarray/ndarray/blob/v0.29.1/docs/random.md" target="_blank" rel="noopener"&gt;&lt;code&gt;docs/random.md&lt;/code&gt;&lt;/a&gt; at v0.29.1.&lt;/p&gt;
 &lt;/blockquote&gt;
-&lt;p&gt;Package &lt;a href="https://pkg.go.dev/github.com/go-ndarray/ndarray@v0.29.0/random" target="_blank" rel="noopener"&gt;&lt;code&gt;random&lt;/code&gt;&lt;/a&gt; is &lt;code&gt;numpy.random&lt;/code&gt; over go-ndarray arrays. Its goal
+&lt;p&gt;Package &lt;a href="https://pkg.go.dev/github.com/go-ndarray/ndarray@v0.29.1/random" target="_blank" rel="noopener"&gt;&lt;code&gt;random&lt;/code&gt;&lt;/a&gt; is &lt;code&gt;numpy.random&lt;/code&gt; over go-ndarray arrays. Its goal
 is migration: a notebook moved from NumPy to Go keeps its numbers for the same
 seed.&lt;/p&gt;
 &lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
@@ -24,7 +24,7 @@ data-copied-label="Copied!"
 &lt;/div&gt;
 &lt;/div&gt;
 &lt;p&gt;&lt;code&gt;Example&lt;/code&gt;, &lt;code&gt;ExampleSeed&lt;/code&gt; and &lt;code&gt;ExampleGenerator_ChoiceN&lt;/code&gt; in
-&lt;a href="https://github.com/go-ndarray/ndarray/blob/v0.29.0/random/example_test.go" target="_blank" rel="noopener"&gt;&lt;code&gt;example_test.go&lt;/code&gt;&lt;/a&gt; print NumPy&amp;rsquo;s own numbers.&lt;/p&gt;
+&lt;a href="https://github.com/go-ndarray/ndarray/blob/v0.29.1/random/example_test.go" target="_blank" rel="noopener"&gt;&lt;code&gt;example_test.go&lt;/code&gt;&lt;/a&gt; print NumPy&amp;rsquo;s own numbers.&lt;/p&gt;
 &lt;h2 data-hextra-search-id="what-is-implemented"&gt;What is implemented&lt;span class="hx:absolute hx:-mt-20" id="what-is-implemented"&gt;&lt;/span&gt;&lt;a href="#what-is-implemented" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;table&gt;
 &lt;thead&gt;
 &lt;tr&gt;
@@ -186,7 +186,7 @@ fixture (Apple&amp;rsquo;s), Go&amp;rsquo;s &lt;code&gt;math&lt;/code&gt; differ
 random arguments. Used as-is, that made 3% of &lt;code&gt;np.random.randn&lt;/code&gt; values and
 10% of &lt;code&gt;lognormal&lt;/code&gt; values one ULP off.&lt;/p&gt;
 &lt;p&gt;So &lt;code&gt;random&lt;/code&gt; rounds &lt;code&gt;log&lt;/code&gt;, &lt;code&gt;log1p&lt;/code&gt;, &lt;code&gt;exp&lt;/code&gt;, &lt;code&gt;expm1&lt;/code&gt; and &lt;code&gt;pow&lt;/code&gt; &lt;strong&gt;correctly&lt;/strong&gt;
-(&lt;a href="https://github.com/go-ndarray/ndarray/blob/v0.29.0/random/libm.go" target="_blank" rel="noopener"&gt;&lt;code&gt;libm.go&lt;/code&gt;&lt;/a&gt;): a fast evaluation to about 2⁻⁶⁸ with Ziv&amp;rsquo;s
+(&lt;a href="https://github.com/go-ndarray/ndarray/blob/v0.29.1/random/libm.go" target="_blank" rel="noopener"&gt;&lt;code&gt;libm.go&lt;/code&gt;&lt;/a&gt;): a fast evaluation to about 2⁻⁶⁸ with Ziv&amp;rsquo;s
 rounding test, and a double-double fallback (about 2⁻¹⁰⁰) for the one argument
 in ~2¹⁵ that needs it. Checked against mpmath at 300 bits on 63,000 arguments
 (0 misrounded; the committed &lt;code&gt;libm.json&lt;/code&gt; keeps 8,400), and the fast paths

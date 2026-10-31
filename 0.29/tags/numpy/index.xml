@@ -1,6 +1,6 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>go-ndarray – Numpy</title><link>https://go-ndarray.github.io/docs/0.29/tags/numpy/</link><description>Recent content in Numpy on go-ndarray</description><generator>Hugo -- gohugo.io</generator><language>en</language><atom:link href="https://go-ndarray.github.io/docs/0.29/tags/numpy/index.xml" rel="self" type="application/rss+xml"/><item><title>Dtypes — thirteen element types, NumPy 2 promotion</title><link>https://go-ndarray.github.io/docs/0.29/dtypes/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://go-ndarray.github.io/docs/0.29/dtypes/</guid><description>
 &lt;blockquote&gt;
-&lt;p&gt;Mirrored from &lt;a href="https://github.com/go-ndarray/ndarray/blob/v0.29.0/docs/design-dtypes.md" target="_blank" rel="noopener"&gt;&lt;code&gt;docs/design-dtypes.md&lt;/code&gt;&lt;/a&gt; at v0.29.0.&lt;/p&gt;
+&lt;p&gt;Mirrored from &lt;a href="https://github.com/go-ndarray/ndarray/blob/v0.29.1/docs/design-dtypes.md" target="_blank" rel="noopener"&gt;&lt;code&gt;docs/design-dtypes.md&lt;/code&gt;&lt;/a&gt; at v0.29.1.&lt;/p&gt;
 &lt;/blockquote&gt;
 &lt;blockquote&gt;
 &lt;p&gt;Status: implemented (Phase 2). Supersedes decision 4 of
@@ -217,9 +217,9 @@ accumulator types, unary ufuncs.&lt;/li&gt;
 &lt;p&gt;Each step keeps the 100% coverage gate and the per-arch CI, and is checked
 against NumPy before it ships.&lt;/p&gt;</description></item><item><title>linalg — numpy.linalg in pure Go</title><link>https://go-ndarray.github.io/docs/0.29/linalg/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://go-ndarray.github.io/docs/0.29/linalg/</guid><description>
 &lt;blockquote&gt;
-&lt;p&gt;Mirrored from &lt;a href="https://github.com/go-ndarray/ndarray/blob/v0.29.0/docs/linalg.md" target="_blank" rel="noopener"&gt;&lt;code&gt;docs/linalg.md&lt;/code&gt;&lt;/a&gt; at v0.29.0.&lt;/p&gt;
+&lt;p&gt;Mirrored from &lt;a href="https://github.com/go-ndarray/ndarray/blob/v0.29.1/docs/linalg.md" target="_blank" rel="noopener"&gt;&lt;code&gt;docs/linalg.md&lt;/code&gt;&lt;/a&gt; at v0.29.1.&lt;/p&gt;
 &lt;/blockquote&gt;
-&lt;p&gt;Package &lt;a href="https://pkg.go.dev/github.com/go-ndarray/ndarray@v0.29.0/linalg" target="_blank" rel="noopener"&gt;&lt;code&gt;linalg&lt;/code&gt;&lt;/a&gt; gives ndarray arrays the functions of
+&lt;p&gt;Package &lt;a href="https://pkg.go.dev/github.com/go-ndarray/ndarray@v0.29.1/linalg" target="_blank" rel="noopener"&gt;&lt;code&gt;linalg&lt;/code&gt;&lt;/a&gt; gives ndarray arrays the functions of
 &lt;code&gt;numpy.linalg&lt;/code&gt;, written in Go without cgo or assembly of its own: the
 matrix products it relies on are the ndarray package&amp;rsquo;s packed SIMD GEMM.&lt;/p&gt;
 &lt;table&gt;
@@ -806,9 +806,9 @@ functions.&lt;/li&gt;
 &lt;li&gt;&lt;code&gt;Eigh&lt;/code&gt; on NaN input returning NaNs like numpy, if that is preferred.&lt;/li&gt;
 &lt;/ul&gt;</description></item><item><title>random — numpy.random, the same numbers</title><link>https://go-ndarray.github.io/docs/0.29/random/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://go-ndarray.github.io/docs/0.29/random/</guid><description>
 &lt;blockquote&gt;
-&lt;p&gt;Mirrored from &lt;a href="https://github.com/go-ndarray/ndarray/blob/v0.29.0/docs/random.md" target="_blank" rel="noopener"&gt;&lt;code&gt;docs/random.md&lt;/code&gt;&lt;/a&gt; at v0.29.0.&lt;/p&gt;
+&lt;p&gt;Mirrored from &lt;a href="https://github.com/go-ndarray/ndarray/blob/v0.29.1/docs/random.md" target="_blank" rel="noopener"&gt;&lt;code&gt;docs/random.md&lt;/code&gt;&lt;/a&gt; at v0.29.1.&lt;/p&gt;
 &lt;/blockquote&gt;
-&lt;p&gt;Package &lt;a href="https://pkg.go.dev/github.com/go-ndarray/ndarray@v0.29.0/random" target="_blank" rel="noopener"&gt;&lt;code&gt;random&lt;/code&gt;&lt;/a&gt; is &lt;code&gt;numpy.random&lt;/code&gt; over go-ndarray arrays. Its goal
+&lt;p&gt;Package &lt;a href="https://pkg.go.dev/github.com/go-ndarray/ndarray@v0.29.1/random" target="_blank" rel="noopener"&gt;&lt;code&gt;random&lt;/code&gt;&lt;/a&gt; is &lt;code&gt;numpy.random&lt;/code&gt; over go-ndarray arrays. Its goal
 is migration: a notebook moved from NumPy to Go keeps its numbers for the same
 seed.&lt;/p&gt;
 &lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
@@ -830,7 +830,7 @@ data-copied-label="Copied!"
 &lt;/div&gt;
 &lt;/div&gt;
 &lt;p&gt;&lt;code&gt;Example&lt;/code&gt;, &lt;code&gt;ExampleSeed&lt;/code&gt; and &lt;code&gt;ExampleGenerator_ChoiceN&lt;/code&gt; in
-&lt;a href="https://github.com/go-ndarray/ndarray/blob/v0.29.0/random/example_test.go" target="_blank" rel="noopener"&gt;&lt;code&gt;example_test.go&lt;/code&gt;&lt;/a&gt; print NumPy&amp;rsquo;s own numbers.&lt;/p&gt;
+&lt;a href="https://github.com/go-ndarray/ndarray/blob/v0.29.1/random/example_test.go" target="_blank" rel="noopener"&gt;&lt;code&gt;example_test.go&lt;/code&gt;&lt;/a&gt; print NumPy&amp;rsquo;s own numbers.&lt;/p&gt;
 &lt;h2 data-hextra-search-id="what-is-implemented"&gt;What is implemented&lt;span class="hx:absolute hx:-mt-20" id="what-is-implemented"&gt;&lt;/span&gt;&lt;a href="#what-is-implemented" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;table&gt;
 &lt;thead&gt;
 &lt;tr&gt;
@@ -992,7 +992,7 @@ fixture (Apple&amp;rsquo;s), Go&amp;rsquo;s &lt;code&gt;math&lt;/code&gt; differ
 random arguments. Used as-is, that made 3% of &lt;code&gt;np.random.randn&lt;/code&gt; values and
 10% of &lt;code&gt;lognormal&lt;/code&gt; values one ULP off.&lt;/p&gt;
 &lt;p&gt;So &lt;code&gt;random&lt;/code&gt; rounds &lt;code&gt;log&lt;/code&gt;, &lt;code&gt;log1p&lt;/code&gt;, &lt;code&gt;exp&lt;/code&gt;, &lt;code&gt;expm1&lt;/code&gt; and &lt;code&gt;pow&lt;/code&gt; &lt;strong&gt;correctly&lt;/strong&gt;
-(&lt;a href="https://github.com/go-ndarray/ndarray/blob/v0.29.0/random/libm.go" target="_blank" rel="noopener"&gt;&lt;code&gt;libm.go&lt;/code&gt;&lt;/a&gt;): a fast evaluation to about 2⁻⁶⁸ with Ziv&amp;rsquo;s
+(&lt;a href="https://github.com/go-ndarray/ndarray/blob/v0.29.1/random/libm.go" target="_blank" rel="noopener"&gt;&lt;code&gt;libm.go&lt;/code&gt;&lt;/a&gt;): a fast evaluation to about 2⁻⁶⁸ with Ziv&amp;rsquo;s
 rounding test, and a double-double fallback (about 2⁻¹⁰⁰) for the one argument
 in ~2¹⁵ that needs it. Checked against mpmath at 300 bits on 63,000 arguments
 (0 misrounded; the committed &lt;code&gt;libm.json&lt;/code&gt; keeps 8,400), and the fast paths
@@ -3732,8 +3732,55 @@ the float64 GEMM.&lt;/p&gt;
 &lt;/tr&gt;
 &lt;/tbody&gt;
 &lt;/table&gt;
+&lt;h3 data-hextra-search-id="reading-b-in-place-too-for-small-products-2026-10-31"&gt;Reading B in place too, for small products (2026-10-31)&lt;span class="hx:absolute hx:-mt-20" id="reading-b-in-place-too-for-small-products-2026-10-31"&gt;&lt;/span&gt;&lt;a href="#reading-b-in-place-too-for-small-products-2026-10-31" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;BLIS&amp;rsquo;s sup kernels pack neither operand: the &amp;ldquo;rv&amp;rdquo; kernel advances B by its
+row stride (&lt;code&gt;b += rs_b&lt;/code&gt;) as it advances A by its column stride. v0.29.1 does
+the same on the small-product path (below &lt;code&gt;GemmThreshold&lt;/code&gt;, one worker). When
+both operands are row-major, the A-in-place kernels read B&amp;rsquo;s full panels in
+place too, advancing B by &lt;code&gt;ldb&lt;/code&gt; instead of the packed panel&amp;rsquo;s width. Only a
+partial last panel is still packed, for its zero padding. The parallel path,
+used for larger products, still packs B once and shares it across workers.&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;&lt;code&gt;MatMul&lt;/code&gt; vs v0.29.0 (&lt;code&gt;abbench&lt;/code&gt;, 10 rounds)&lt;/th&gt;
+&lt;th style="text-align: right"&gt;64²&lt;/th&gt;
+&lt;th style="text-align: right"&gt;256²&lt;/th&gt;
+&lt;th style="text-align: right"&gt;1024²&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;Zen 3, float32&lt;/td&gt;
+&lt;td style="text-align: right"&gt;&lt;strong&gt;−16%&lt;/strong&gt;&lt;/td&gt;
+&lt;td style="text-align: right"&gt;~&lt;/td&gt;
+&lt;td style="text-align: right"&gt;~&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Zen 3, float64&lt;/td&gt;
+&lt;td style="text-align: right"&gt;&lt;strong&gt;−10%&lt;/strong&gt;&lt;/td&gt;
+&lt;td style="text-align: right"&gt;~&lt;/td&gt;
+&lt;td style="text-align: right"&gt;~&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Neoverse N1, float32&lt;/td&gt;
+&lt;td style="text-align: right"&gt;−7.3%&lt;/td&gt;
+&lt;td style="text-align: right"&gt;~&lt;/td&gt;
+&lt;td style="text-align: right"&gt;~&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Neoverse N1, float64&lt;/td&gt;
+&lt;td style="text-align: right"&gt;~&lt;/td&gt;
+&lt;td style="text-align: right"&gt;~&lt;/td&gt;
+&lt;td style="text-align: right"&gt;~&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;The N1 host was contended (load 31, rows up to ±39%), so its &amp;ldquo;~&amp;rdquo; rows show
+no regression but are not a precise measurement. On Zen 3, float32 64² now
+takes 8.02 µs against NumPy&amp;rsquo;s 8.14: &lt;strong&gt;parity&lt;/strong&gt;. float64 takes 16.3 against
+15.8 µs (1.03×).&lt;/p&gt;
 &lt;p&gt;&lt;strong&gt;Open defect: products are still up to 1.2× slower than OpenBLAS on one
-core.&lt;/strong&gt; The exception is float64 at 1024² on Zen 3, where we are 3% faster.
+core&lt;/strong&gt; at 256² and 1024² on N1, and float32 1024² on Zen 3 is at 1.04×. The exception is float64 at 1024² on Zen 3, where we are 3% faster.
 The float32 kernels for riscv64 and loong64 are still to write.&lt;/p&gt;
 &lt;p&gt;&lt;strong&gt;Open: the allocating operations.&lt;/strong&gt; &lt;code&gt;Add&lt;/code&gt; is still 1.5–3.2× slower than
 NumPy&amp;rsquo;s &lt;code&gt;a+b&lt;/code&gt;, for float64 as well. The kernel is no longer the difference,

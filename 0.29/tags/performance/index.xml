@@ -2450,8 +2450,55 @@ the float64 GEMM.&lt;/p&gt;
 &lt;/tr&gt;
 &lt;/tbody&gt;
 &lt;/table&gt;
+&lt;h3 data-hextra-search-id="reading-b-in-place-too-for-small-products-2026-10-31"&gt;Reading B in place too, for small products (2026-10-31)&lt;span class="hx:absolute hx:-mt-20" id="reading-b-in-place-too-for-small-products-2026-10-31"&gt;&lt;/span&gt;&lt;a href="#reading-b-in-place-too-for-small-products-2026-10-31" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;BLIS&amp;rsquo;s sup kernels pack neither operand: the &amp;ldquo;rv&amp;rdquo; kernel advances B by its
+row stride (&lt;code&gt;b += rs_b&lt;/code&gt;) as it advances A by its column stride. v0.29.1 does
+the same on the small-product path (below &lt;code&gt;GemmThreshold&lt;/code&gt;, one worker). When
+both operands are row-major, the A-in-place kernels read B&amp;rsquo;s full panels in
+place too, advancing B by &lt;code&gt;ldb&lt;/code&gt; instead of the packed panel&amp;rsquo;s width. Only a
+partial last panel is still packed, for its zero padding. The parallel path,
+used for larger products, still packs B once and shares it across workers.&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;&lt;code&gt;MatMul&lt;/code&gt; vs v0.29.0 (&lt;code&gt;abbench&lt;/code&gt;, 10 rounds)&lt;/th&gt;
+&lt;th style="text-align: right"&gt;64²&lt;/th&gt;
+&lt;th style="text-align: right"&gt;256²&lt;/th&gt;
+&lt;th style="text-align: right"&gt;1024²&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;Zen 3, float32&lt;/td&gt;
+&lt;td style="text-align: right"&gt;&lt;strong&gt;−16%&lt;/strong&gt;&lt;/td&gt;
+&lt;td style="text-align: right"&gt;~&lt;/td&gt;
+&lt;td style="text-align: right"&gt;~&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Zen 3, float64&lt;/td&gt;
+&lt;td style="text-align: right"&gt;&lt;strong&gt;−10%&lt;/strong&gt;&lt;/td&gt;
+&lt;td style="text-align: right"&gt;~&lt;/td&gt;
+&lt;td style="text-align: right"&gt;~&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Neoverse N1, float32&lt;/td&gt;
+&lt;td style="text-align: right"&gt;−7.3%&lt;/td&gt;
+&lt;td style="text-align: right"&gt;~&lt;/td&gt;
+&lt;td style="text-align: right"&gt;~&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Neoverse N1, float64&lt;/td&gt;
+&lt;td style="text-align: right"&gt;~&lt;/td&gt;
+&lt;td style="text-align: right"&gt;~&lt;/td&gt;
+&lt;td style="text-align: right"&gt;~&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;The N1 host was contended (load 31, rows up to ±39%), so its &amp;ldquo;~&amp;rdquo; rows show
+no regression but are not a precise measurement. On Zen 3, float32 64² now
+takes 8.02 µs against NumPy&amp;rsquo;s 8.14: &lt;strong&gt;parity&lt;/strong&gt;. float64 takes 16.3 against
+15.8 µs (1.03×).&lt;/p&gt;
 &lt;p&gt;&lt;strong&gt;Open defect: products are still up to 1.2× slower than OpenBLAS on one
-core.&lt;/strong&gt; The exception is float64 at 1024² on Zen 3, where we are 3% faster.
+core&lt;/strong&gt; at 256² and 1024² on N1, and float32 1024² on Zen 3 is at 1.04×. The exception is float64 at 1024² on Zen 3, where we are 3% faster.
 The float32 kernels for riscv64 and loong64 are still to write.&lt;/p&gt;
 &lt;p&gt;&lt;strong&gt;Open: the allocating operations.&lt;/strong&gt; &lt;code&gt;Add&lt;/code&gt; is still 1.5–3.2× slower than
 NumPy&amp;rsquo;s &lt;code&gt;a+b&lt;/code&gt;, for float64 as well. The kernel is no longer the difference,

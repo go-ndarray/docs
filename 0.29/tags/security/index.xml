@@ -1,6 +1,6 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>go-ndarray – Security</title><link>https://go-ndarray.github.io/docs/0.29/tags/security/</link><description>Recent content in Security on go-ndarray</description><generator>Hugo -- gohugo.io</generator><language>en</language><atom:link href="https://go-ndarray.github.io/docs/0.29/tags/security/index.xml" rel="self" type="application/rss+xml"/><item><title>Security</title><link>https://go-ndarray.github.io/docs/0.29/security/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://go-ndarray.github.io/docs/0.29/security/</guid><description>
 &lt;blockquote&gt;
-&lt;p&gt;Mirrored from &lt;a href="https://github.com/go-ndarray/ndarray/blob/main/SECURITY.md" target="_blank" rel="noopener"&gt;&lt;code&gt;SECURITY.md&lt;/code&gt;&lt;/a&gt; at v0.29.0.&lt;/p&gt;
+&lt;p&gt;Mirrored from &lt;a href="https://github.com/go-ndarray/ndarray/blob/main/SECURITY.md" target="_blank" rel="noopener"&gt;&lt;code&gt;SECURITY.md&lt;/code&gt;&lt;/a&gt; at v0.29.1.&lt;/p&gt;
 &lt;/blockquote&gt;
 &lt;h2 data-hextra-search-id="reporting"&gt;Reporting&lt;span class="hx:absolute hx:-mt-20" id="reporting"&gt;&lt;/span&gt;&lt;a href="#reporting" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;Report a vulnerability privately through GitHub&amp;rsquo;s &lt;strong&gt;Report a vulnerability&lt;/strong&gt;
 button on &lt;a href="https://github.com/go-ndarray/ndarray/security" target="_blank" rel="noopener"&gt;the repository&lt;/a&gt; (Security → Advisories). Please do not open a public
@@ -73,7 +73,15 @@ requires that, that it never panics, and that re-encoding is a fixed point.&lt;/
 &lt;/ul&gt;
 &lt;p&gt;The minimum Go version (&lt;code&gt;go&lt;/code&gt; in &lt;code&gt;go.mod&lt;/code&gt;) is kept on a release that fixes the
 standard library&amp;rsquo;s known vulnerabilities; &lt;code&gt;govulncheck ./...&lt;/code&gt; reports none.&lt;/p&gt;
-&lt;h2 data-hextra-search-id="audit-log"&gt;Audit log&lt;span class="hx:absolute hx:-mt-20" id="audit-log"&gt;&lt;/span&gt;&lt;a href="#audit-log" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;&lt;strong&gt;2026-10-30 (v0.29.0).&lt;/strong&gt; The s390x float32 GEMM kernel
+&lt;h2 data-hextra-search-id="audit-log"&gt;Audit log&lt;span class="hx:absolute hx:-mt-20" id="audit-log"&gt;&lt;/span&gt;&lt;a href="#audit-log" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;&lt;strong&gt;2026-10-31 (v0.29.1).&lt;/strong&gt; The A-in-place GEMM kernels now take B&amp;rsquo;s row
+stride (&lt;code&gt;ldb&lt;/code&gt;) and may read a row-major B operand in place: &lt;code&gt;kc&lt;/code&gt; rows &lt;code&gt;ldb&lt;/code&gt;
+elements apart, &lt;code&gt;NR&lt;/code&gt; elements each. The wrappers bounds-check
+&lt;code&gt;b[(kc-1)*ldb+NR-1]&lt;/code&gt; before the call. The path is taken only for a unit
+column stride and a positive row stride, and only for full panels; a partial
+panel is still packed, so no column past B&amp;rsquo;s last is read. The fence tests
+place a strided B flush against a guard page. A sabotaged kernel (ignoring
+&lt;code&gt;ldb&lt;/code&gt;) failed the GEMM tests on arm64 and on amd64.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;2026-10-30 (v0.29.0).&lt;/strong&gt; The s390x float32 GEMM kernel
 (&lt;code&gt;gemmMicro4x16VXE&lt;/code&gt;) reads &lt;code&gt;kc·4&lt;/code&gt; and &lt;code&gt;kc·16&lt;/code&gt; packed floats and one 4×16
 tile of C. Its wrapper bounds-checks all three before the call, behind the
 &lt;code&gt;useVXE&lt;/code&gt; gate. It passed the kernel suite (fence included) and the root
