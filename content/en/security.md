@@ -8,7 +8,7 @@ description: "How to report a vulnerability, what the library guarantees, and th
 tags: [security]
 ---
 
-> Mirrored from [`SECURITY.md`](https://github.com/go-ndarray/ndarray/blob/main/SECURITY.md) at v0.31.0.
+> Mirrored from [`SECURITY.md`](https://github.com/go-ndarray/ndarray/blob/main/SECURITY.md) at v0.32.0.
 
 ## Reporting
 
@@ -75,6 +75,13 @@ The minimum Go version (`go` in `go.mod`) is kept on a release that fixes the
 standard library's known vulnerabilities; `govulncheck ./...` reports none.
 
 ## Audit log
+
+**2026-11-01 (v0.32.0).** float32 `Log` checks each result for a float32
+rounding midpoint with one integer comparison. On a hit it looks the input
+up by binary search in a fixed 24-entry table, compiled in and read only.
+No input can make that search read outside the table or allocate. The
+exhaustive test that derives and checks the table is
+`TestLog32CorrectlyRounded`.
 
 **2026-11-01 (v0.31.0).** float32 `Exp` and `Log` widen their input 256
 elements at a time into a fixed stack buffer and call the float64 kernels in
