@@ -46,7 +46,7 @@ WebAssembly, with nothing to install — build a pipeline step by step (creation
 | Manipulation | `Flatten`, `ExpandDims`, `Squeeze`, `Concatenate`, `Stack`, `VStack`, `HStack` |
 | Linear algebra | `MatMul`, `Dot`, `Inner`, `Outer`; package `linalg` ([page](linalg.md)): `Solve`, `Inv`, `Det`, `Slogdet`, `Cholesky`, `QR`, `SVD`, `Eigh`, `Eig`, `Lstsq`, `Pinv`, `MatrixRank`, `Norm`, `Cond`, `MatrixPower`, `MultiDot` |
 | Fourier transforms | package `fft`: `numpy.fft` on arrays (`FFT`/`RFFT`/`FFT2`/`FFTN`/… with `n`/`s`, `axes`, `norm`), over [go-fft](https://github.com/go-fft/fft) |
-| Random numbers | package `random` ([page](random.md)): PCG64, PCG64DXSM, MT19937, Philox, SFC64; `Generator` (`DefaultRNG`, 40 samplers) and the legacy `RandomState` (`Seed`, `Rand`) |
+| Random numbers | package `random` ([page](random.md)): PCG64, PCG64DXSM, MT19937, Philox, SFC64; `Generator` (`DefaultRNG`, 40 samplers) and the legacy `RandomState` (`Seed`, `Rand`); allocation-free scalar draws for solvers (`Float64`, `FillUniform`, `IntN`, `FillIntN`, `ShuffleInt64`) |
 | Notebooks & storage | `Repr` (character for character what NumPy 2.5.3's `repr` prints, checked against NumPy's own test strings), `Display` (text and HTML), `MarshalBinary`/`UnmarshalBinary` (the same bytes on every architecture) |
 | Memory reuse | `NewWorkspace`, `Use`, `Reset`, `Detach` |
 
