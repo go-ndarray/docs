@@ -8,9 +8,9 @@ description: "numpy.random with NumPy's numbers for the same seed: the bit gener
 tags: [random, numpy]
 ---
 
-> Mirrored from [`docs/random.md`](https://github.com/go-ndarray/ndarray/blob/v0.29.1/docs/random.md) at v0.29.1.
+> Mirrored from [`docs/random.md`](https://github.com/go-ndarray/ndarray/blob/v0.30.0/docs/random.md) at v0.30.0.
 
-Package [`random`](https://pkg.go.dev/github.com/go-ndarray/ndarray@v0.29.1/random) is `numpy.random` over go-ndarray arrays. Its goal
+Package [`random`](https://pkg.go.dev/github.com/go-ndarray/ndarray@v0.30.0/random) is `numpy.random` over go-ndarray arrays. Its goal
 is migration: a notebook moved from NumPy to Go keeps its numbers for the same
 seed.
 
@@ -24,7 +24,7 @@ u, _ := random.Rand(3)                // np.random.rand(3)
 ```
 
 `Example`, `ExampleSeed` and `ExampleGenerator_ChoiceN` in
-[`example_test.go`](https://github.com/go-ndarray/ndarray/blob/v0.29.1/random/example_test.go) print NumPy's own numbers.
+[`example_test.go`](https://github.com/go-ndarray/ndarray/blob/v0.30.0/random/example_test.go) print NumPy's own numbers.
 
 ## What is implemented
 
@@ -45,6 +45,30 @@ u, _ := random.Rand(3)                // np.random.rand(3)
 | `RandomState(seed)`, `.seed`, `.get_state`/`.set_state` | `NewRandomState(uint32)`, `NewRandomStateArray`, `NewRandomStateFrom(bitgen)`, `Seed`, `SeedArray`, `GetState`/`SetState` |
 | `rand`, `randn`, `randint`, `random_sample`, `normal`, `uniform`, `choice`, `shuffle`, `permutation`, `binomial`, `poisson`, `standard_normal`, `standard_exponential`, `exponential`, `standard_gamma`, `gamma`, `chisquare`, `lognormal`, `multinomial`, `bytes` | `RandomState` methods of the same names |
 | `np.random.seed`, `rand`, `randn`, `randint`, `random_sample`, `normal`, `uniform`, `choice`, `shuffle`, `permutation`, `binomial`, `poisson` | package functions over a shared `RandomState` behind a mutex |
+
+### Allocation-free scalar draws
+
+Every sampler above returns a `*ndarray.Array`. A solver that needs a few draws
+per candidate (differential evolution, basin hopping) would spend its time
+allocating, so `Generator` and `RandomState` both have five methods that draw
+into caller storage or return a Go scalar, allocate nothing, and consume
+exactly the bit-generator output NumPy consumes for the same call:
+
+| NumPy | `Generator` / `RandomState` |
+|---|---|
+| `random()` / `random_sample()`, `size=None` | `Float64() float64` |
+| `uniform(low, high, size=len(dst))` | `FillUniform(dst []float64, low, high float64) error` (Generator: error when `high-low` is negative, NaN or infinite; legacy: only NaN or infinite, `high < low` is accepted) |
+| `integers(0, high)` / `randint(0, high)`, `size=None`, int64 | `IntN(high int64) int64` (Lemire for `Generator`, masked rejection for `RandomState`; panics when `high <= 0`, like `math/rand`) |
+| `integers(0, high, size=len(dst))` / `randint(…)` | `FillIntN(dst []int64, high int64) error` (error when `high <= 0` and `dst` is not empty; nothing is drawn) |
+| `shuffle(x)` of a 1-D int64 array | `ShuffleInt64(d []int64)` (Fisher-Yates from the end, `random_interval`) |
+
+A failing call draws nothing, as in NumPy. A mixed sequence of 32-bit and
+64-bit draws keeps PCG64's buffered half-word exactly as NumPy does.
+`testdata/scalar.py` and `TestScalarDrawsMatchNumPy` compare 7 296 calls on 192
+scripts (48 seeds × Generator over PCG64 and MT19937, `RandomState` over MT19937
+and PCG64) with NumPy 2.5.3, errors included; `TestScalarAllocations` asserts
+zero allocations with `testing.AllocsPerRun`; `FuzzScalarDraws` throws NaN,
+±Inf, negative and zero bounds, `MaxInt64` and `MinInt64` at them.
 
 The size comes last; no size gives a 0-d array holding what NumPy returns as a
 scalar (`size=None`), which draws exactly the same values. `ChoiceOptions`'
@@ -118,7 +142,7 @@ random arguments. Used as-is, that made 3% of `np.random.randn` values and
 10% of `lognormal` values one ULP off.
 
 So `random` rounds `log`, `log1p`, `exp`, `expm1` and `pow` **correctly**
-([`libm.go`](https://github.com/go-ndarray/ndarray/blob/v0.29.1/random/libm.go)): a fast evaluation to about 2⁻⁶⁸ with Ziv's
+([`libm.go`](https://github.com/go-ndarray/ndarray/blob/v0.30.0/random/libm.go)): a fast evaluation to about 2⁻⁶⁸ with Ziv's
 rounding test, and a double-double fallback (about 2⁻¹⁰⁰) for the one argument
 in ~2¹⁵ that needs it. Checked against mpmath at 300 bits on 63,000 arguments
 (0 misrounded; the committed `libm.json` keeps 8,400), and the fast paths
@@ -223,6 +247,7 @@ interface. The samplers that call `pow`/`exp` per draw cost about what
 uv run --python cpython-3.12-macos-x86_64 --with numpy==2.5.3 python random/testdata/cases.py > random/testdata/cases.json
 uv run --with mpmath python random/testdata/libm.py > random/testdata/libm.json
 uv run --with mpmath python random/testdata/libm_tables.py > random/zz_libm_tables.go
+GONDARRAY_REGEN=1 go test ./random -run TestRegenerateScalarFixture   # scalar.json: x86-64 NumPy in an amd64 container
 python3 random/testdata/zig2go.py <numpy>/numpy/random/src/distributions/ziggurat_constants.h random/zz_ziggurat.go
 ```
 
