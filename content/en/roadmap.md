@@ -8,7 +8,7 @@ description: "The plan for go-ndarray and what ships today."
 tags: [roadmap]
 ---
 
-> Mirrored from [`docs/plan-ndarray.md`](https://github.com/go-ndarray/ndarray/blob/v0.30.0/docs/plan-ndarray.md) at v0.30.0.
+> Mirrored from [`docs/plan-ndarray.md`](https://github.com/go-ndarray/ndarray/blob/v0.31.0/docs/plan-ndarray.md) at v0.31.0.
 
 > Goal: a **pure-Go (CGO=0)** NumPy-style N-dimensional array library, as a
 > **standalone, reusable** module with correct scalar kernels now and a clean
@@ -112,7 +112,7 @@ suite (plus the per-arch CI jobs already wired in `.github/workflows/ci.yml`).
 - **Performance — DONE (beats NumPy on its core ops; matmul at tuned-BLAS
   parity).** Several levers behind the kernel seam, measured honestly vs NumPy
   2.2.4 (see [docs/perf.md](performance.md) and the repo's
-  [BENCHMARKS.md](https://github.com/go-ndarray/ndarray/blob/v0.30.0/BENCHMARKS.md)):
+  [BENCHMARKS.md](https://github.com/go-ndarray/ndarray/blob/v0.31.0/BENCHMARKS.md)):
   - **Multicore.** `Add/Sub/Mul/Div/Map`, `Sum/Max/Min`, the axis reductions,
     `Concatenate`/`Stack`, and the GEMM fan out across `GOMAXPROCS` above a size
     threshold (small arrays stay serial). Plus an allocation fix: the
@@ -168,7 +168,7 @@ suite (plus the per-arch CI jobs already wired in `.github/workflows/ci.yml`).
   SIMD kernels on all six 64-bit targets for `Sum` (v0.14.0–v0.17.0) and for
   `Add`/`Sub`/`Mul`/`Div` (v0.18.0) and `Sqrt` (v0.19.0). Still pure Go
   for float32: nothing in `Max`/`Min` any more (v0.20.0 to v0.25.0
-  vectorised them on all six 64-bit targets, for float32 and float64), and the transcendental ufuncs. `MatMul` runs on the float64
+  vectorised them on all six 64-bit targets, for float32 and float64), and the transcendental ufuncs (float32 `Exp`/`Log` run the float64 kernels since v0.31.0, 2–3.5× faster but still 3× behind NumPy's float32 SIMD). `MatMul` runs on the float64
   GEMM since v0.21.0, 77–90% faster than the triple loop, and since v0.26.0
   on a native float32 GEMM on arm64 (NEON 8×8) and amd64 with FMA (6×16),
   a further 53–61% faster, and since v0.28.0 on ppc64le (VSX 8×16, 37–59%

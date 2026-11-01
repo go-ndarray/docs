@@ -8,7 +8,7 @@ description: "How to report a vulnerability, what the library guarantees, and th
 tags: [security]
 ---
 
-> Mirrored from [`SECURITY.md`](https://github.com/go-ndarray/ndarray/blob/main/SECURITY.md) at v0.29.1.
+> Mirrored from [`SECURITY.md`](https://github.com/go-ndarray/ndarray/blob/main/SECURITY.md) at v0.31.0.
 
 ## Reporting
 
@@ -75,6 +75,12 @@ The minimum Go version (`go` in `go.mod`) is kept on a release that fixes the
 standard library's known vulnerabilities; `govulncheck ./...` reports none.
 
 ## Audit log
+
+**2026-11-01 (v0.31.0).** float32 `Exp` and `Log` widen their input 256
+elements at a time into a fixed stack buffer and call the float64 kernels in
+place. There is no allocation proportional to the input beyond the result,
+and no index arithmetic beyond slices bounded by `len(dst)`. The source is
+resliced to `len(dst)`, so a shorter source panics instead of being read past.
 
 **2026-10-31 (v0.29.1).** The A-in-place GEMM kernels now take B's row
 stride (`ldb`) and may read a row-major B operand in place: `kc` rows `ldb`
