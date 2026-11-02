@@ -8,7 +8,7 @@ description: "How to report a vulnerability, what the library guarantees, and th
 tags: [security]
 ---
 
-> Mirrored from [`SECURITY.md`](https://github.com/go-ndarray/ndarray/blob/main/SECURITY.md) at v0.33.0.
+> Mirrored from [`SECURITY.md`](https://github.com/go-ndarray/ndarray/blob/main/SECURITY.md) at v0.34.0.
 
 ## Reporting
 
@@ -75,6 +75,17 @@ The minimum Go version (`go` in `go.mod`) is kept on a release that fixes the
 standard library's known vulnerabilities; `govulncheck ./...` reports none.
 
 ## Audit log
+
+**2026-11-02 (v0.34.0).** The AVX2 float32 log kernel (`log32CRAVX2`) reads
+and writes at most `n` floats, a positive multiple of 8 chosen by the Go
+wrapper, and returns how many it wrote, a multiple of 8 no larger than `n`;
+the wrapper finishes the block it stopped at in Go and calls it again past
+that block, so the loop always advances. Its gather index is
+`(m + 2^16) >> 17` with `m` the 23 mantissa bits, at most 64 for any input,
+so it cannot leave the 65-entry tables. A block it stops at is not written,
+so `dst == src` is safe (`TestLog32AVX2InPlace`). It is gated on AVX2 (CPU
+and OS) and fenced with PROT_NONE on both sides of each operand. The Go
+`logCR` indexes the same tables with the same bound.
 
 **2026-11-02 (v0.33.0).** The AVX2 float32 exp kernel (`exp32CRAVX2`)
 reads and writes `n` floats, a positive multiple of 8 chosen by the Go
