@@ -1787,10 +1787,10 @@ IEEE edge inputs (signed zeros, ±Inf, NaN, extremes): each lane is a single
 independent correctly-rounded IEEE op (no reduction grouping), and on arm64 the
 FMA-against-an-exact-constant form (&lt;code&gt;b+a·1&lt;/code&gt;, &lt;code&gt;a−b·1&lt;/code&gt;, &lt;code&gt;0+a·b&lt;/code&gt;) rounds identically
 to the plain op, so bit-identity is the contract.&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Sum&lt;/strong&gt; — validated to a tight &lt;em&gt;relative tolerance&lt;/em&gt; (not bit-identity): its
-lane-parallel grouping is a valid reordering, the same kind NumPy&amp;rsquo;s pairwise
-summation uses, so closeness — not bit-identity — is the contract for a
-floating-point reduction.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Sum&lt;/strong&gt; — since v0.37.0 bit-identical to &lt;code&gt;np.sum&lt;/code&gt; (NumPy&amp;rsquo;s pairwise order, see
+&lt;a href="#sum-numpy-pairwise"&gt;Sum is NumPy&amp;rsquo;s pairwise sum&lt;/a&gt;). Before v0.37.0 it was
+validated to a tight &lt;em&gt;relative tolerance&lt;/em&gt;: its lane-parallel grouping was a
+valid reordering, not NumPy&amp;rsquo;s.&lt;/li&gt;
 &lt;/ul&gt;
 &lt;h2 data-hextra-search-id="where-go-ndarray-still-loses-and-the-plan"&gt;Where go-ndarray still loses, and the plan&lt;span class="hx:absolute hx:-mt-20" id="where-go-ndarray-still-loses-and-the-plan"&gt;&lt;/span&gt;&lt;a href="#where-go-ndarray-still-loses-and-the-plan" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;table&gt;
 &lt;thead&gt;
@@ -2091,8 +2091,8 @@ when there are fewer slabs than workers, and each row run is added with the
 elementwise SIMD kernel (exact per element, so the sum is still in axis order).&lt;/li&gt;
 &lt;li&gt;&lt;strong&gt;A row reduction (axis 1, &lt;code&gt;inner&lt;/code&gt; = 1) was a sequential scalar loop&lt;/strong&gt;,
 latency-bound at one add per 4 cycles. Each row now goes through the SIMD
-sum/max/min. Max and min are exact; the sum is regrouped lane-parallel, as
-NumPy&amp;rsquo;s own pairwise sum is.&lt;/li&gt;
+sum/max/min. Max and min are exact; the sum was regrouped lane-parallel (since
+v0.37.0 it is NumPy&amp;rsquo;s pairwise order, bit for bit).&lt;/li&gt;
 &lt;/ul&gt;
 &lt;p&gt;Zen 3, 16 cores pinned, minimum of three interleaved runs:&lt;/p&gt;
 &lt;table&gt;
@@ -4310,6 +4310,43 @@ the constant block&amp;rsquo;s layout is tested.&lt;/p&gt;
 both allocating, on &lt;code&gt;BenchmarkDTypeExpLog&lt;/code&gt;&amp;rsquo;s data.&lt;/p&gt;
 &lt;p&gt;The float32 kernels for the other architectures are still to write; there
 &lt;code&gt;Exp&lt;/code&gt; and &lt;code&gt;Log&lt;/code&gt; run the Go transcriptions.&lt;/p&gt;
+&lt;h2 data-hextra-search-id="sum-numpy-pairwise"&gt;Sum is NumPy&amp;rsquo;s pairwise sum; the shared kernels move to go-simd/floats (2026-11-07)&lt;span class="hx:absolute hx:-mt-20" id="sum-numpy-pairwise"&gt;&lt;/span&gt;&lt;span class="hx:absolute hx:-mt-20" id="sum-is-numpys-pairwise-sum-the-shared-kernels-move-to-go-simdfloats-2026-11-07"&gt;&lt;/span&gt;&lt;a href="#sum-numpy-pairwise" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;v0.37.0 is K1 of the go-scikit
+&lt;a href="https://github.com/go-scikit/roadmap/blob/main/docs/performance-campaign.md" target="_blank" rel="noopener"&gt;performance campaign&lt;/a&gt;:
+a kernel lives once, in the lowest library every user can import, and
+&lt;a href="https://github.com/go-simd/floats" target="_blank" rel="noopener"&gt;go-simd/floats&lt;/a&gt; (v0.9.0) is that library.
+ndarray imports it and deletes its copies.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;A changed result.&lt;/strong&gt; &lt;code&gt;Sum&lt;/code&gt; (and &lt;code&gt;Mean&lt;/code&gt;, &lt;code&gt;Var&lt;/code&gt;, &lt;code&gt;Std&lt;/code&gt;, everything built on it) is now
+&lt;strong&gt;NumPy&amp;rsquo;s pairwise sum&lt;/strong&gt; (&lt;code&gt;floats.SumPairwise&lt;/code&gt;): bit-identical to &lt;code&gt;np.sum&lt;/code&gt; of a
+contiguous 1-D float64 array, on every architecture, at every size. Before, the
+result was a lane-parallel regrouping whose last bits differed from NumPy&amp;rsquo;s and from
+one architecture to the next; NumPy&amp;rsquo;s order is the reference, so the changed bits
+are the fix. The golden values of the test are NumPy 2.5.4&amp;rsquo;s, computed with
+&lt;code&gt;np.arange&lt;/code&gt;, not by this package. v0.37.0 computed large sums on one core, because
+cutting the sum into chunks and adding the partials would have regrouped NumPy&amp;rsquo;s
+order; v0.37.1 (go-ndarray#99) spreads them over the cores again by cutting
+NumPy&amp;rsquo;s own tree where NumPy cuts it (blocks of at most 128, a longer one split at
+n/2 rounded down to a multiple of 8) and adding the subtrees back up the same tree,
+so the bits do not depend on the number of cores.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;What moved.&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;Exp&lt;/code&gt;, &lt;code&gt;Log&lt;/code&gt; and the correctly rounded float32 &lt;code&gt;Exp&lt;/code&gt;/&lt;code&gt;Log&lt;/code&gt;, with the AVX2 kernels
+written here (go-ndarray#94, #96) and the NEON kernels (#95): now
+go-simd/floats#29, with the exhaustive correct-rounding proofs and the kernel
+tests. Bit-identity to the Go transcriptions &lt;code&gt;expCR&lt;/code&gt; and &lt;code&gt;logCR&lt;/code&gt; is the oracle.&lt;/li&gt;
+&lt;li&gt;On amd64 (AVX2) and arm64 (NEON): the float64 add, sub, mul, div, sqrt, max, min
+and clip kernels. Each is one IEEE operation or a comparison per element, so the
+results are the scalar loop&amp;rsquo;s, and NumPy&amp;rsquo;s.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;strong&gt;What did not move, and the cost.&lt;/strong&gt; The float32 kernels, the dot inside GEMM and
+the ppc64le, loong64, riscv64 and s390x kernels stay here until floats has them
+(&lt;a href="https://github.com/go-ndarray/ndarray/issues/98" target="_blank" rel="noopener"&gt;go-ndarray#98&lt;/a&gt;). On those four
+architectures the sum went from SIMD to the portable pairwise block
+(&lt;a href="https://github.com/go-simd/floats/issues/30" target="_blank" rel="noopener"&gt;go-simd/floats#30&lt;/a&gt;); on an amd64 CPU
+without AVX2 and FMA the elementwise kernels run scalar loops where SSE2 kernels used
+to run (&lt;a href="https://github.com/go-simd/floats/issues/31" target="_blank" rel="noopener"&gt;go-simd/floats#31&lt;/a&gt;); &lt;code&gt;Max&lt;/code&gt; and
+&lt;code&gt;Min&lt;/code&gt; still settle the sign of a zero result with the serial oracle
+(&lt;a href="https://github.com/go-simd/floats/issues/32" target="_blank" rel="noopener"&gt;go-simd/floats#32&lt;/a&gt;). No timing was
+taken for this change: the host&amp;rsquo;s load was above the gate.&lt;/p&gt;
 &lt;h2 data-hextra-search-id="simd-coverage"&gt;SIMD coverage&lt;span class="hx:absolute hx:-mt-20" id="simd-coverage"&gt;&lt;/span&gt;&lt;a href="#simd-coverage" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;ul&gt;
 &lt;li&gt;
 &lt;p&gt;&lt;strong&gt;amd64 (SSE2)&lt;/strong&gt; ships hand-vectorized &lt;code&gt;sum&lt;/code&gt; (4-accumulator &lt;code&gt;ADDPD&lt;/code&gt;), &lt;code&gt;sqrt&lt;/code&gt;
