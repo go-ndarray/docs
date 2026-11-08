@@ -348,10 +348,10 @@ The SIMD kernels are also validated against the scalar oracle per-arch in CI:
   independent correctly-rounded IEEE op (no reduction grouping), and on arm64 the
   FMA-against-an-exact-constant form (`b+a·1`, `a−b·1`, `0+a·b`) rounds identically
   to the plain op, so bit-identity is the contract.
-- **Sum** — since v0.37.0 bit-identical to `np.sum` (NumPy's pairwise order, see
-  [Sum is NumPy's pairwise sum](#sum-numpy-pairwise)). Before v0.37.0 it was
-  validated to a tight *relative tolerance*: its lane-parallel grouping was a
-  valid reordering, not NumPy's.
+- **Sum** — validated to a tight *relative tolerance* (not bit-identity): its
+  lane-parallel grouping is a valid reordering, the same kind NumPy's pairwise
+  summation uses, so closeness — not bit-identity — is the contract for a
+  floating-point reduction.
 
 ## Where go-ndarray still loses, and the plan
 
@@ -502,8 +502,8 @@ Two causes, both measured:
   elementwise SIMD kernel (exact per element, so the sum is still in axis order).
 - **A row reduction (axis 1, `inner` = 1) was a sequential scalar loop**,
   latency-bound at one add per 4 cycles. Each row now goes through the SIMD
-  sum/max/min. Max and min are exact; the sum was regrouped lane-parallel (since
-  v0.37.0 it is NumPy's pairwise order, bit for bit).
+  sum/max/min. Max and min are exact; the sum is regrouped lane-parallel, as
+  NumPy's own pairwise sum is.
 
 Zen 3, 16 cores pinned, minimum of three interleaved runs:
 
@@ -1685,50 +1685,38 @@ the constant block's layout is tested.
 −47% and −49% against v0.35.0 (`abbench`, 8 interleaved rounds, p = 0.000),
 both allocating, on `BenchmarkDTypeExpLog`'s data.
 
-The float32 kernels for the other architectures are still to write; there
-`Exp` and `Log` run the Go transcriptions.
+Since v0.37.0 these kernels live in go-simd/floats (`floats.Exp`, `Log`,
+`Float32Exp`, `Float32Log`, go-simd/floats#29), with NEON versions of the
+float32 pair for arm64; ndarray calls them (`internal/kernels/explog.go`).
+The NEON kernels are proven correctly rounded over all 2³² inputs on
+darwin/arm64 but were not benchmarked: every arm64 host available was at
+load 48–100. ppc64le, s390x, riscv64 and loong64 still run the Go
+transcriptions.
 
-## Sum is NumPy's pairwise sum; the shared kernels move to go-simd/floats (2026-11-07) {#sum-numpy-pairwise}
+#### float64 `Exp` on 16 cores: the allocation, not the kernel (2026-11-08)
 
-v0.37.0 is K1 of the go-scikit
-[performance campaign](https://github.com/go-scikit/roadmap/blob/main/docs/performance-campaign.md):
-a kernel lives once, in the lowest library every user can import, and
-[go-simd/floats](https://github.com/go-simd/floats) (v0.9.0) is that library.
-ndarray imports it and deletes its copies.
+The README listed float64 `Exp` below 256 Ki as slower than NumPy (0.82×),
+measured with 16 cores. On one core it is faster at every size. With
+GOMAXPROCS = 16 the same serial code (below `ParThreshold`, 32 Ki, nothing
+is split) got slower than with 1: 89 µs against 73 at 16 Ki. The same holds
+for `Add`, which goes from 14 to 23–26 µs, while `AddInto`, which allocates
+nothing, costs 4.3 µs at both. Each result's allocation costs more with more
+Ps: every garbage-collector cycle starts and stops work on all of them. In a
+`Workspace` (`BenchmarkExpWS`) the difference disappears:
 
-**A changed result.** `Sum` (and `Mean`, `Var`, `Std`, everything built on it) is now
-**NumPy's pairwise sum** (`floats.SumPairwise`): bit-identical to `np.sum` of a
-contiguous 1-D float64 array, on every architecture, at every size. Before, the
-result was a lane-parallel regrouping whose last bits differed from NumPy's and from
-one architecture to the next; NumPy's order is the reference, so the changed bits
-are the fix. The golden values of the test are NumPy 2.5.4's, computed with
-`np.arange`, not by this package. v0.37.0 computed large sums on one core, because
-cutting the sum into chunks and adding the partials would have regrouped NumPy's
-order; v0.37.1 (go-ndarray#99) spreads them over the cores again by cutting
-NumPy's own tree where NumPy cuts it (blocks of at most 128, a longer one split at
-n/2 rounded down to a multiple of 8) and adding the subtrees back up the same tree,
-so the bits do not depend on the number of cores.
+| float64 `Exp`, Zen 3, load ≤ 5 | 1 Ki | 16 Ki | 256 Ki | 4 Mi |
+|---|---:|---:|---:|---:|
+| NumPy 2.5.4, `np.exp(a)` (one thread) | 6.0 µs | 85.5 µs | 1.32 ms | 25.0 ms |
+| ours, 1 P, allocating | 4.9 µs | 73 µs | 1.11 ms | 19.3 ms |
+| ours, 16 P, allocating | 5.8–6.6 µs | 83–95 µs | 0.63–0.78 ms | 4.8–6.7 ms |
+| ours, 16 P, `Workspace` | **4.1 µs** | **64 µs** | **0.18 ms** | **1.47 ms** |
 
-**What moved.**
-
-- `Exp`, `Log` and the correctly rounded float32 `Exp`/`Log`, with the AVX2 kernels
-  written here (go-ndarray#94, #96) and the NEON kernels (#95): now
-  go-simd/floats#29, with the exhaustive correct-rounding proofs and the kernel
-  tests. Bit-identity to the Go transcriptions `expCR` and `logCR` is the oracle.
-- On amd64 (AVX2) and arm64 (NEON): the float64 add, sub, mul, div, sqrt, max, min
-  and clip kernels. Each is one IEEE operation or a comparison per element, so the
-  results are the scalar loop's, and NumPy's.
-
-**What did not move, and the cost.** The float32 kernels, the dot inside GEMM and
-the ppc64le, loong64, riscv64 and s390x kernels stay here until floats has them
-([go-ndarray#98](https://github.com/go-ndarray/ndarray/issues/98)). On those four
-architectures the sum went from SIMD to the portable pairwise block
-([go-simd/floats#30](https://github.com/go-simd/floats/issues/30)); on an amd64 CPU
-without AVX2 and FMA the elementwise kernels run scalar loops where SSE2 kernels used
-to run ([go-simd/floats#31](https://github.com/go-simd/floats/issues/31)); `Max` and
-`Min` still settle the sign of a zero result with the serial oracle
-([go-simd/floats#32](https://github.com/go-simd/floats/issues/32)). No timing was
-taken for this change: the host's load was above the gate.
+`BenchmarkExp` and `BenchmarkExpWS` (`(i%97)·0.5`, the README's data), two
+rounds each at `-cpu 1` and `-cpu 16` on cores 0–15; NumPy medians of nine
+on one pinned core. In a `Workspace` on 16 cores, float64 `Exp` is 1.3–1.5×
+NumPy up to 16 Ki and 7–17× from 256 Ki. Allocating, it is at parity up to
+16 Ki, and at 4 Mi the allocation of each 32 MB result takes about 3.3 ms of
+the 4.8.
 
 ## SIMD coverage
 
