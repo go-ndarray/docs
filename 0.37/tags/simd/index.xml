@@ -1,4 +1,11 @@
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>go-ndarray – Simd</title><link>https://go-ndarray.github.io/docs/0.37/tags/simd/</link><description>Recent content in Simd on go-ndarray</description><generator>Hugo -- gohugo.io</generator><language>en</language><atom:link href="https://go-ndarray.github.io/docs/0.37/tags/simd/index.xml" rel="self" type="application/rss+xml"/><item><title>Performance — go-ndarray vs NumPy</title><link>https://go-ndarray.github.io/docs/0.37/performance/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://go-ndarray.github.io/docs/0.37/performance/</guid><description>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>go-ndarray – Simd</title><link>https://go-ndarray.github.io/docs/0.37/tags/simd/</link><description>Recent content in Simd on go-ndarray</description><generator>Hugo -- gohugo.io</generator><language>en</language><atom:link href="https://go-ndarray.github.io/docs/0.37/tags/simd/index.xml" rel="self" type="application/rss+xml"/><item><title>Performance history — go-ndarray vs NumPy (multicore)</title><link>https://go-ndarray.github.io/docs/0.37/performance-history/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://go-ndarray.github.io/docs/0.37/performance-history/</guid><description>
+&lt;blockquote&gt;
+&lt;p&gt;&lt;strong&gt;Not a verdict.&lt;/strong&gt; This page compares multicore Go with single-threaded NumPy
+(2.2.4, then 2.5.3), which the go-scikit one-core rule does not allow
+(&lt;a href="https://github.com/go-ndarray/ndarray/issues/93" target="_blank" rel="noopener"&gt;go-ndarray/ndarray#93&lt;/a&gt;).
+It is kept for its kernel-level analysis. The one-core measurement is
+&lt;a href="https://go-ndarray.github.io/docs/0.37/performance/"&gt;Performance&lt;/a&gt;.&lt;/p&gt;
+&lt;/blockquote&gt;
 &lt;p&gt;Honest, reproducible head-to-head of &lt;code&gt;go-ndarray/ndarray&lt;/code&gt; against &lt;strong&gt;NumPy
 2.2.4&lt;/strong&gt; on identical hardware. &amp;ldquo;On n&amp;rsquo;a pas le droit de se tromper&amp;rdquo;: every number
 here is measured, every win is real, and where NumPy still leads it says so.&lt;/p&gt;
