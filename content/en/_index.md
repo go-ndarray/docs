@@ -108,28 +108,20 @@ correct where amd64's `math.Exp` returns +Inf
 is wrong on subnormals
 ([golang/go#56600](https://github.com/golang/go/issues/56600)).
 
-**Measured against NumPy 2.5.3 (OpenBLAS 0.3.34) on an AMD Zen 3, 16 cores:**
-
-- **Faster:** whole-array reductions (`Sum`/`Mean`/`Max` at 4 Mi: 2.3–4.5×),
-  row reductions (`SumAxis(1)` 2.2×, `MaxAxis(1)` 1.7×), `Exp` from 256 Ki
-  elements (2.4–5.6×), and `MatMul` against single-threaded OpenBLAS
-  (3.7–5.9× from 512²).
-- **At parity:** `SumAxis(0)`, `Inner` against 16-thread OpenBLAS, `Log` on
-  one core.
-- **Slower:** `MatMul` against 16-thread OpenBLAS at 512² and up (0.42× at
-  512², 0.51× at 1024², measured in one run; at 256² ours is 1.44× faster);
-  `Dot` and mat·vec against NumPy's 16-thread BLAS (0.69× and 0.52× since
-  v0.6.0's helper pool; 0.16× before); `Exp`
-  below 256 Ki elements (0.82×); the *allocating* forms of elementwise ops up
-  to 256 Ki elements, `Concatenate`/`Stack` and slice copies outside a
-  `Workspace` (0.2–0.5×).
+**Speed against NumPy is measured on one core, both sides**
+([Performance](performance.md)): one row per public function (or a named
+exemption), against the pinned NumPy 2.5.4, `GOMAXPROCS=1` and one BLAS thread,
+interleaved rounds, refused at a 1-minute load of 8 or more, with the
+allocation count of every row checked in CI. The earlier multicore comparison
+with single-threaded NumPy is kept as [Performance history](performance-history.md)
+for its kernel-level analysis; its ratios are not a verdict.
 
 On Apple silicon the GEMM reached parity with tuned BLAS at 1024² (OpenBLAS in
 an arm64 VM, single-threaded vecLib on an M4 Max) and beats the pure-Go
 **gonum 4–10×**. On the other targets, against go-ndarray's own scalar code on
 one core: on a RISC-V SpacemiT X60 the RVV kernels cut `Sum` by up to 5.8× and
 `MatMul` time by 31–45%; on an IBM z17 the s390x kernels cut `MatMul` 1024²
-from 340 to 70 ms and `Max` by 92–96% (see [Performance](performance.md),
+from 340 to 70 ms and `Max` by 92–96% (see [Performance history](performance-history.md),
 *SIMD coverage*).
 
 CI runs the suite on amd64, arm64 and 386 natively and on
@@ -144,7 +136,8 @@ ppc64le, riscv64 and loong64 hardware.
 - [Linear algebra](linalg.md) — `numpy.linalg`: algorithms, accuracy, speed.
 - [Random numbers](random.md) — `numpy.random`, the same numbers for the same seed.
 - [Roadmap](roadmap.md) — the plan and what ships today.
-- [Performance](performance.md) — honest benchmarks versus NumPy / OpenBLAS.
+- [Performance](performance.md) — the one-core comparison with NumPy: method, one row per function.
+- [Performance history](performance-history.md) — the earlier multicore analysis, kernel by kernel.
 
 Source: [github.com/go-ndarray/ndarray](https://github.com/go-ndarray/ndarray) ·
 also the cgo-free ndarray backend behind [go-embedded-ruby](https://github.com/go-embedded-ruby/ruby)'s

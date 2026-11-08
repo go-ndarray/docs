@@ -41,6 +41,8 @@ pages=content/en
 links() {
 	sed -E \
 		-e "s#\]\(perf\.md(\#[^)]*)?\)#](performance.md\1)#g" \
+		-e "s#\]\(perf-history\.md(\#[^)]*)?\)#](performance-history.md\1)#g" \
+		-e "s#\]\((perf-table\.md|perf-exempt\.md|perf\.json)\)#]($blob/docs/\1)#g" \
 		-e "s#\]\(plan-ndarray\.md(\#[^)]*)?\)#](roadmap.md\1)#g" \
 		-e "s#\]\(design-dtypes\.md(\#[^)]*)?\)#](dtypes.md\1)#g" \
 		-e "s#\]\(\.\./(linalg|random|fft)/?\)#]($pkg/\1)#g" \
@@ -74,12 +76,14 @@ mirror roadmap.md plan-ndarray.md
 mirror dtypes.md design-dtypes.md
 mirror linalg.md linalg.md
 mirror random.md random.md
+mirror performance.md perf.md
 
-# performance: keep our part above the heading, replace the rest.
-perf=$pages/performance.md
+# performance history (the multicore page): keep our part above the heading,
+# replace the rest.
+perf=$pages/performance-history.md
 {
 	sed '/^## How a pure-Go library can beat NumPy/,$d' "$perf"
-	sed -n '/^## How a pure-Go library can beat NumPy/,$p' "$nd/docs/perf.md" | links
+	sed -n '/^## How a pure-Go library can beat NumPy/,$p' "$nd/docs/perf-history.md" | links
 } > "$perf.tmp"
 mv "$perf.tmp" "$perf"
 
@@ -92,7 +96,7 @@ prose() {
 	     { gsub(/`[^`]*`/, ""); print }' "$1"
 }
 bad=0
-for f in roadmap.md dtypes.md linalg.md random.md performance.md; do
+for f in roadmap.md dtypes.md linalg.md random.md performance.md performance-history.md; do
 	prose "$pages/$f" | grep -noE '\]\([^)h#][^)]*\)' | while IFS=: read -r line link; do
 		target=${link#](}
 		target=${target%)}

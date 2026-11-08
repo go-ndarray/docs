@@ -41,7 +41,7 @@ same `versions.json` (mike's format).
 
 ## Mirrored pages
 
-Six pages are copies of files in `go-ndarray/ndarray`, kept verbatim so that
+Seven pages are copies of files in `go-ndarray/ndarray`, kept verbatim so that
 re-syncing them is a copy, not an edit:
 
 | Page | Mirrors | What is ours |
@@ -50,10 +50,11 @@ re-syncing them is a copy, not an edit:
 | `content/en/linalg.md` | [`docs/linalg.md`](https://github.com/go-ndarray/ndarray/blob/main/docs/linalg.md), below its `#` title | the front matter |
 | `content/en/random.md` | [`docs/random.md`](https://github.com/go-ndarray/ndarray/blob/main/docs/random.md), below its `#` title | the front matter |
 | `content/en/roadmap.md` | [`docs/plan-ndarray.md`](https://github.com/go-ndarray/ndarray/blob/main/docs/plan-ndarray.md), below its `#` title | the front matter |
-| `content/en/performance.md` | [`docs/perf.md`](https://github.com/go-ndarray/ndarray/blob/main/docs/perf.md), from the heading `## How a pure-Go library can beat NumPy` to the end | the front matter, and the introduction and *Where it stands* summary above that heading |
+| `content/en/performance.md` | [`docs/perf.md`](https://github.com/go-ndarray/ndarray/blob/main/docs/perf.md), below its `#` title (the one-core method page; the table, the inventory and the exemptions are linked on GitHub) | the front matter |
+| `content/en/performance-history.md` | [`docs/perf-history.md`](https://github.com/go-ndarray/ndarray/blob/main/docs/perf-history.md), from the heading `## How a pure-Go library can beat NumPy` to the end | the front matter, and the banner, introduction and *Where it stands* summary above that heading |
 | `content/en/security.md` | [`SECURITY.md`](https://github.com/go-ndarray/ndarray/blob/main/SECURITY.md), from `## Reporting` to the end | the front matter and the `> Mirrored from … at vX.Y.Z` line; repository-relative references are rewritten as GitHub links (`this repository` → `[the repository](https://github.com/go-ndarray/ndarray/security)`, `` `fuzz_test.go` `` → ``[`fuzz_test.go`](https://github.com/go-ndarray/ndarray/blob/main/fuzz_test.go)``, …) |
 
-The first five are re-synced by one command, from a checkout of ndarray at tag
+The first six are re-synced by one command, from a checkout of ndarray at tag
 `vX.Y.Z` (`$ND`); it refuses a checkout that is not at that tag:
 
 ```sh
