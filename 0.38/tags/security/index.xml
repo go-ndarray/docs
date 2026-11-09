@@ -1,6 +1,6 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>go-ndarray – Security</title><link>https://go-ndarray.github.io/docs/0.38/tags/security/</link><description>Recent content in Security on go-ndarray</description><generator>Hugo -- gohugo.io</generator><language>en</language><atom:link href="https://go-ndarray.github.io/docs/0.38/tags/security/index.xml" rel="self" type="application/rss+xml"/><item><title>Security</title><link>https://go-ndarray.github.io/docs/0.38/security/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://go-ndarray.github.io/docs/0.38/security/</guid><description>
 &lt;blockquote&gt;
-&lt;p&gt;Mirrored from &lt;a href="https://github.com/go-ndarray/ndarray/blob/main/SECURITY.md" target="_blank" rel="noopener"&gt;&lt;code&gt;SECURITY.md&lt;/code&gt;&lt;/a&gt; at v0.38.0.&lt;/p&gt;
+&lt;p&gt;Mirrored from &lt;a href="https://github.com/go-ndarray/ndarray/blob/main/SECURITY.md" target="_blank" rel="noopener"&gt;&lt;code&gt;SECURITY.md&lt;/code&gt;&lt;/a&gt; at v0.38.1.&lt;/p&gt;
 &lt;/blockquote&gt;
 &lt;h2 data-hextra-search-id="reporting"&gt;Reporting&lt;span class="hx:absolute hx:-mt-20" id="reporting"&gt;&lt;/span&gt;&lt;a href="#reporting" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;Report a vulnerability privately through GitHub&amp;rsquo;s &lt;strong&gt;Report a vulnerability&lt;/strong&gt;
 button on &lt;a href="https://github.com/go-ndarray/ndarray/security" target="_blank" rel="noopener"&gt;the repository&lt;/a&gt; (Security → Advisories). Please do not open a public
@@ -73,7 +73,17 @@ requires that, that it never panics, and that re-encoding is a fixed point.&lt;/
 &lt;/ul&gt;
 &lt;p&gt;The minimum Go version (&lt;code&gt;go&lt;/code&gt; in &lt;code&gt;go.mod&lt;/code&gt;) is kept on a release that fixes the
 standard library&amp;rsquo;s known vulnerabilities; &lt;code&gt;govulncheck ./...&lt;/code&gt; reports none.&lt;/p&gt;
-&lt;h2 data-hextra-search-id="audit-log"&gt;Audit log&lt;span class="hx:absolute hx:-mt-20" id="audit-log"&gt;&lt;/span&gt;&lt;a href="#audit-log" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;&lt;strong&gt;2026-11-07 (v0.36.0).&lt;/strong&gt; The AVX2 float64 log kernel (&lt;code&gt;logAVX2&lt;/code&gt;) reads and
+&lt;h2 data-hextra-search-id="audit-log"&gt;Audit log&lt;span class="hx:absolute hx:-mt-20" id="audit-log"&gt;&lt;/span&gt;&lt;a href="#audit-log" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;&lt;strong&gt;2026-11-09 (v0.38.0).&lt;/strong&gt; The riscv64 float32 GEMM kernel
+(&lt;code&gt;gemmMicro6x16RVV&lt;/code&gt;) reads &lt;code&gt;kc·6&lt;/code&gt; and &lt;code&gt;kc·16&lt;/code&gt; packed floats and one 6×16
+tile of C, &lt;code&gt;ldc&lt;/code&gt; floats apart. Its wrapper (&lt;code&gt;gemmMicro32&lt;/code&gt; in
+&lt;code&gt;gemm32_riscv64.go&lt;/code&gt;) bounds-checks all three before the call, behind the
+&lt;code&gt;useRVV&lt;/code&gt; gate (V reported in &lt;code&gt;AT_HWCAP&lt;/code&gt;); without V there is no float32 kernel
+and products go through the float64 GEMM. It passed the kernel suite (the
+&lt;code&gt;PROT_NONE&lt;/code&gt; fence of &lt;code&gt;TestGemmMicroStaysInsideItsOperands&lt;/code&gt; included, which
+runs whichever &lt;code&gt;gemm32&lt;/code&gt; the CPU selects) and the root suite on a real
+SpacemiT X60, and CI&amp;rsquo;s riscv64 lane runs it with V enabled. This entry was
+written after the v0.38.0 tag; the code it describes is that release&amp;rsquo;s.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;2026-11-07 (v0.36.0).&lt;/strong&gt; The AVX2 float64 log kernel (&lt;code&gt;logAVX2&lt;/code&gt;) reads and
 writes at most &lt;code&gt;n&lt;/code&gt; doubles, a positive multiple of 4 chosen by the Go
 wrapper, and returns how many it wrote; the wrapper finishes the block it
 stopped at in Go and resumes past it, so the loop always advances, and a
