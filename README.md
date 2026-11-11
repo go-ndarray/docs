@@ -19,7 +19,7 @@ describes**:
 
 | Source | Published under |
 | --- | --- |
-| branch `main`, with `params.ndarray.version: v0.38.1` in `hugo.yaml` | `https://go-ndarray.github.io/docs/<MAJOR.MINOR>/`, here `/docs/0.38/` |
+| branch `main`, with `params.ndarray.version: v0.39.0` in `hugo.yaml` | `https://go-ndarray.github.io/docs/<MAJOR.MINOR>/`, here `/docs/0.39/` |
 | the newest version | also `https://go-ndarray.github.io/docs/latest/` |
 
 `https://go-ndarray.github.io/docs/` redirects to `latest/`. Each push to
