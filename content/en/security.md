@@ -8,7 +8,7 @@ description: "How to report a vulnerability, what the library guarantees, and th
 tags: [security]
 ---
 
-> Mirrored from [`SECURITY.md`](https://github.com/go-ndarray/ndarray/blob/main/SECURITY.md) at v0.40.1.
+> Mirrored from [`SECURITY.md`](https://github.com/go-ndarray/ndarray/blob/main/SECURITY.md) at v0.40.2.
 
 ## Reporting
 
@@ -75,6 +75,17 @@ The minimum Go version (`go` in `go.mod`) is kept on a release that fixes the
 standard library's known vulnerabilities; `govulncheck ./...` reports none.
 
 ## Audit log
+
+**2026-11-12 (v0.40.2, #103).** The gather of `random`'s `Choice`
+(`takeAxis`, random/arrays.go) now copies bytes through `bytesOf`, an
+`unsafe.Slice` view of a slice's backing array of exactly `Len()·size` bytes.
+Every dtype the package stores is a fixed-size value without pointers
+(bool, the integers, float32/64, complex64/128), so a byte copy is a valid copy
+and the garbage collector has nothing to trace in it. Both views come from
+slices the function holds for the whole copy (the source array's storage and
+the freshly allocated result), and every copy slices them with Go's bounds
+checks. The indices are validated against the axis length before
+`takeAxis` is called, as before. An empty slice gives an empty view.
 
 **2026-11-11 (v0.39.0).** go-simd/floats v0.15.0 adds an AVX2 path to
 `Float32Max`/`Float32Min` on amd64 (four YMM accumulators, from 32 elements, SSE2
