@@ -8,7 +8,7 @@ description: "What go-ndarray promises about its results: a stated error bound, 
 tags: [accuracy, numpy, math/big]
 ---
 
-> Mirrored from [`README.md`](https://github.com/go-ndarray/ndarray/blob/v0.40.2/README.md#accuracy-contract) at v0.40.2.
+> Mirrored from [`README.md`](https://github.com/go-ndarray/ndarray/blob/v0.40.3/README.md#accuracy-contract) at v0.40.3.
 
 The contract is **correct, and as fast as possible**. "Correct" means a stated error bound, checked against an exact oracle. Equality with NumPy's bits is not the contract: wherever it holds today, it is how a function was ported, and a faster default that stays within its bound may replace it.
 
