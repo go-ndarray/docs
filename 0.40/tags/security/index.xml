@@ -1,6 +1,6 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>go-ndarray – Security</title><link>https://go-ndarray.github.io/docs/0.40/tags/security/</link><description>Recent content in Security on go-ndarray</description><generator>Hugo -- gohugo.io</generator><language>en</language><atom:link href="https://go-ndarray.github.io/docs/0.40/tags/security/index.xml" rel="self" type="application/rss+xml"/><item><title>Security</title><link>https://go-ndarray.github.io/docs/0.40/security/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://go-ndarray.github.io/docs/0.40/security/</guid><description>
 &lt;blockquote&gt;
-&lt;p&gt;Mirrored from &lt;a href="https://github.com/go-ndarray/ndarray/blob/main/SECURITY.md" target="_blank" rel="noopener"&gt;&lt;code&gt;SECURITY.md&lt;/code&gt;&lt;/a&gt; at v0.40.1.&lt;/p&gt;
+&lt;p&gt;Mirrored from &lt;a href="https://github.com/go-ndarray/ndarray/blob/main/SECURITY.md" target="_blank" rel="noopener"&gt;&lt;code&gt;SECURITY.md&lt;/code&gt;&lt;/a&gt; at v0.40.2.&lt;/p&gt;
 &lt;/blockquote&gt;
 &lt;h2 data-hextra-search-id="reporting"&gt;Reporting&lt;span class="hx:absolute hx:-mt-20" id="reporting"&gt;&lt;/span&gt;&lt;a href="#reporting" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;Report a vulnerability privately through GitHub&amp;rsquo;s &lt;strong&gt;Report a vulnerability&lt;/strong&gt;
 button on &lt;a href="https://github.com/go-ndarray/ndarray/security" target="_blank" rel="noopener"&gt;the repository&lt;/a&gt; (Security → Advisories). Please do not open a public
@@ -73,7 +73,17 @@ requires that, that it never panics, and that re-encoding is a fixed point.&lt;/
 &lt;/ul&gt;
 &lt;p&gt;The minimum Go version (&lt;code&gt;go&lt;/code&gt; in &lt;code&gt;go.mod&lt;/code&gt;) is kept on a release that fixes the
 standard library&amp;rsquo;s known vulnerabilities; &lt;code&gt;govulncheck ./...&lt;/code&gt; reports none.&lt;/p&gt;
-&lt;h2 data-hextra-search-id="audit-log"&gt;Audit log&lt;span class="hx:absolute hx:-mt-20" id="audit-log"&gt;&lt;/span&gt;&lt;a href="#audit-log" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;&lt;strong&gt;2026-11-11 (v0.39.0).&lt;/strong&gt; go-simd/floats v0.15.0 adds an AVX2 path to
+&lt;h2 data-hextra-search-id="audit-log"&gt;Audit log&lt;span class="hx:absolute hx:-mt-20" id="audit-log"&gt;&lt;/span&gt;&lt;a href="#audit-log" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;&lt;strong&gt;2026-11-12 (v0.40.2, #103).&lt;/strong&gt; The gather of &lt;code&gt;random&lt;/code&gt;&amp;rsquo;s &lt;code&gt;Choice&lt;/code&gt;
+(&lt;code&gt;takeAxis&lt;/code&gt;, random/arrays.go) now copies bytes through &lt;code&gt;bytesOf&lt;/code&gt;, an
+&lt;code&gt;unsafe.Slice&lt;/code&gt; view of a slice&amp;rsquo;s backing array of exactly &lt;code&gt;Len()·size&lt;/code&gt; bytes.
+Every dtype the package stores is a fixed-size value without pointers
+(bool, the integers, float32/64, complex64/128), so a byte copy is a valid copy
+and the garbage collector has nothing to trace in it. Both views come from
+slices the function holds for the whole copy (the source array&amp;rsquo;s storage and
+the freshly allocated result), and every copy slices them with Go&amp;rsquo;s bounds
+checks. The indices are validated against the axis length before
+&lt;code&gt;takeAxis&lt;/code&gt; is called, as before. An empty slice gives an empty view.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;2026-11-11 (v0.39.0).&lt;/strong&gt; go-simd/floats v0.15.0 adds an AVX2 path to
 &lt;code&gt;Float32Max&lt;/code&gt;/&lt;code&gt;Float32Min&lt;/code&gt; on amd64 (four YMM accumulators, from 32 elements, SSE2
 kept below that and on CPUs without AVX2+FMA), with both paths run through the
 same tests and fences there (go-simd/floats#47). Nothing in this package reads
