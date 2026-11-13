@@ -8,7 +8,7 @@ description: "What go-ndarray promises about its results: a stated error bound, 
 tags: [accuracy, numpy, math/big]
 ---
 
-> Mirrored from [`README.md`](https://github.com/go-ndarray/ndarray/blob/v0.40.3/README.md#accuracy-contract) at v0.40.3.
+> Mirrored from [`README.md`](https://github.com/go-ndarray/ndarray/blob/v0.41.0/README.md#accuracy-contract) at v0.41.0.
 
 The contract is **correct, and as fast as possible**. "Correct" means a stated error bound, checked against an exact oracle. Equality with NumPy's bits is not the contract: wherever it holds today, it is how a function was ported, and a faster default that stays within its bound may replace it.
 
@@ -20,4 +20,4 @@ Every element of `MatMul`/`Dot` satisfies |Ĉᵢⱼ − Cᵢⱼ| ≤ γ_k·(|A|�
 
 Oracle: `math/big` at 1024 bits for sums and inner products. `TestSumDepth`, `TestAccuracyBoundSum` and `TestAccuracyBoundMatMul` check them; the difference is taken in `big.Float`, so the oracle is never rounded. `Exp`/`Log` are checked against a 300-bit reference in go-simd/floats.
 
-Exact: the defaults are still the exact ports, NumPy's pairwise order for `Sum` included, so results match NumPy bit for bit where they did before. When a faster default lands, that arithmetic stays available behind an explicit option.
+Exact: the defaults are still the exact ports, NumPy's pairwise order for `Sum` included, so results match NumPy bit for bit where they did before. When a faster default lands, that arithmetic stays available behind an explicit option. For `fft`, that option exists already: `fft.Options{Exact: true}` asks go-fft for its reference arithmetic, and `FMA: true` for its fused twiddles.
