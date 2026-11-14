@@ -8,7 +8,7 @@ description: "The plan for go-ndarray and what ships today."
 tags: [roadmap]
 ---
 
-> Mirrored from [`docs/plan-ndarray.md`](https://github.com/go-ndarray/ndarray/blob/v0.41.0/docs/plan-ndarray.md) at v0.41.0.
+> Mirrored from [`docs/plan-ndarray.md`](https://github.com/go-ndarray/ndarray/blob/v0.41.1/docs/plan-ndarray.md) at v0.41.1.
 
 > Goal: a **pure-Go (CGO=0)** NumPy-style N-dimensional array library, as a
 > **standalone, reusable** module with correct scalar kernels now and a clean
@@ -109,10 +109,13 @@ suite (plus the per-arch CI jobs already wired in `.github/workflows/ci.yml`).
   GEMM/dot kernels live in `internal/kernels` for the Phase 1 SIMD path. Matches
   numpy 2.2.4. Blocked/transpose-aware and decomposition variants remain in
   Phase 4.
-- **Performance — DONE (beats NumPy on its core ops; matmul at tuned-BLAS
-  parity).** Several levers behind the kernel seam, measured honestly vs NumPy
+- **Performance — OPEN.** The first single-core measurement against NumPy 2.5.4
+  (v0.41.0, #118) has 188 of 256 rows slower and 54 faster. The earlier
+  "beats NumPy on its core ops" compared multicore Go with single-threaded
+  NumPy. What follows is the history of the levers behind the kernel seam,
+  measured then against NumPy
   2.2.4 (see [docs/perf.md](performance.md) and the repo's
-  [BENCHMARKS.md](https://github.com/go-ndarray/ndarray/blob/v0.41.0/BENCHMARKS.md)):
+  [BENCHMARKS.md](https://github.com/go-ndarray/ndarray/blob/v0.41.1/BENCHMARKS.md)):
   - **Multicore.** `Add/Sub/Mul/Div/Map`, `Sum/Max/Min`, the axis reductions,
     `Concatenate`/`Stack`, and the GEMM fan out across `GOMAXPROCS` above a size
     threshold (small arrays stay serial). Plus an allocation fix: the
