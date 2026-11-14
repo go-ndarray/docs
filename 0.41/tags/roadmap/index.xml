@@ -1,6 +1,6 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>go-ndarray – Roadmap</title><link>https://go-ndarray.github.io/docs/0.41/tags/roadmap/</link><description>Recent content in Roadmap on go-ndarray</description><generator>Hugo -- gohugo.io</generator><language>en</language><atom:link href="https://go-ndarray.github.io/docs/0.41/tags/roadmap/index.xml" rel="self" type="application/rss+xml"/><item><title>Implementation plan — N-dimensional arrays in pure Go (go-ndarray/ndarray)</title><link>https://go-ndarray.github.io/docs/0.41/roadmap/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://go-ndarray.github.io/docs/0.41/roadmap/</guid><description>
 &lt;blockquote&gt;
-&lt;p&gt;Mirrored from &lt;a href="https://github.com/go-ndarray/ndarray/blob/v0.41.0/docs/plan-ndarray.md" target="_blank" rel="noopener"&gt;&lt;code&gt;docs/plan-ndarray.md&lt;/code&gt;&lt;/a&gt; at v0.41.0.&lt;/p&gt;
+&lt;p&gt;Mirrored from &lt;a href="https://github.com/go-ndarray/ndarray/blob/v0.41.1/docs/plan-ndarray.md" target="_blank" rel="noopener"&gt;&lt;code&gt;docs/plan-ndarray.md&lt;/code&gt;&lt;/a&gt; at v0.41.1.&lt;/p&gt;
 &lt;/blockquote&gt;
 &lt;blockquote&gt;
 &lt;p&gt;Goal: a &lt;strong&gt;pure-Go (CGO=0)&lt;/strong&gt; NumPy-style N-dimensional array library, as a
@@ -99,10 +99,13 @@ matrix-vector, vector-matrix), &lt;code&gt;Inner&lt;/code&gt; (sum over last axi
 GEMM/dot kernels live in &lt;code&gt;internal/kernels&lt;/code&gt; for the Phase 1 SIMD path. Matches
 numpy 2.2.4. Blocked/transpose-aware and decomposition variants remain in
 Phase 4.&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Performance — DONE (beats NumPy on its core ops; matmul at tuned-BLAS
-parity).&lt;/strong&gt; Several levers behind the kernel seam, measured honestly vs NumPy
+&lt;li&gt;&lt;strong&gt;Performance — OPEN.&lt;/strong&gt; The first single-core measurement against NumPy 2.5.4
+(v0.41.0, #118) has 188 of 256 rows slower and 54 faster. The earlier
+&amp;ldquo;beats NumPy on its core ops&amp;rdquo; compared multicore Go with single-threaded
+NumPy. What follows is the history of the levers behind the kernel seam,
+measured then against NumPy
 2.2.4 (see &lt;a href="https://go-ndarray.github.io/docs/0.41/performance/"&gt;docs/perf.md&lt;/a&gt; and the repo&amp;rsquo;s
-&lt;a href="https://github.com/go-ndarray/ndarray/blob/v0.41.0/BENCHMARKS.md" target="_blank" rel="noopener"&gt;BENCHMARKS.md&lt;/a&gt;):
+&lt;a href="https://github.com/go-ndarray/ndarray/blob/v0.41.1/BENCHMARKS.md" target="_blank" rel="noopener"&gt;BENCHMARKS.md&lt;/a&gt;):
 &lt;ul&gt;
 &lt;li&gt;&lt;strong&gt;Multicore.&lt;/strong&gt; &lt;code&gt;Add/Sub/Mul/Div/Map&lt;/code&gt;, &lt;code&gt;Sum/Max/Min&lt;/code&gt;, the axis reductions,
 &lt;code&gt;Concatenate&lt;/code&gt;/&lt;code&gt;Stack&lt;/code&gt;, and the GEMM fan out across &lt;code&gt;GOMAXPROCS&lt;/code&gt; above a size
