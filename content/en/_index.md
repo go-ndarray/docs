@@ -93,7 +93,7 @@ On an AMD Zen 3 (16 cores), `x + y` on 1 024 elements goes from 2.6 µs to
 ## Performance & architectures
 
 Large elementwise ops, reductions and products run **multicore** (across
-`GOMAXPROCS`). On **amd64, arm64, ppc64le, loong64, riscv64 and s390x** the hot
+`GOMAXPROCS`); the NumPy comparison below is on one core. On **amd64, arm64, ppc64le, loong64, riscv64 and s390x** the hot
 loops are go-asmgen SIMD kernels for `float64`: sum, add/sub/mul/div, sqrt and
 the dot product (SSE2 or AVX2/FMA on amd64, NEON on arm64, VSX on ppc64le, LASX
 on loong64, RVV on riscv64 and the vector facility on s390x, the last three
@@ -112,7 +112,9 @@ is wrong on subnormals
 ([Performance](performance.md)): one row per public function (or a named
 exemption), against the pinned NumPy 2.5.4, `GOMAXPROCS=1` and one BLAS thread,
 interleaved rounds, refused at a 1-minute load of 8 or more, with the
-allocation count of every row checked in CI. The earlier multicore comparison
+allocation count of every row checked in CI. At v0.41.1 the measured table has
+188 of 256 rows slower than NumPy and 54 faster ([ndarray#118](https://github.com/go-ndarray/ndarray/issues/118)
+tracks the slower rows by cause). The earlier multicore comparison
 with single-threaded NumPy is kept as [Performance history](performance-history.md)
 for its kernel-level analysis; its ratios are not a verdict.
 
