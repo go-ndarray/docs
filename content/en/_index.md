@@ -112,7 +112,7 @@ is wrong on subnormals
 ([Performance](performance.md)): one row per public function (or a named
 exemption), against the pinned NumPy 2.5.4, `GOMAXPROCS=1` and one BLAS thread,
 interleaved rounds, refused at a 1-minute load of 8 or more, with the
-allocation count of every row checked in CI. At v0.41.1 the measured table has
+allocation count of every row checked in CI. At v0.41.3 the measured table has
 188 of 256 rows slower than NumPy and 54 faster ([ndarray#118](https://github.com/go-ndarray/ndarray/issues/118)
 tracks the slower rows by cause). The earlier multicore comparison
 with single-threaded NumPy is kept as [Performance history](performance-history.md)
