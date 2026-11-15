@@ -102,8 +102,8 @@ The **panel-packed, cache-blocked GEMM** with its SIMD-FMA micro-kernels (NEON
 4×8; AVX2/FMA 6×8 chosen at run time by a CPUID probe, SSE2 fallback; VSX 8×8;
 LASX 8×8; RVV 6×8; s390x 4×8) no longer lives here: `MatMul`, `Dot` and the
 linalg products call [go-blas/blas](https://github.com/go-blas/blas) v0.2.1
-(`DgemmStrided`/`SgemmStrided`), the one implementation of that kernel, with the
-same kernels and bit-identical results. The 32-bit targets run the same pure-Go code
+(`DgemmStrided`/`SgemmStrided`), the one implementation of that kernel; the GEMM code moved
+there byte for byte. The 32-bit targets run the same pure-Go code
 those kernels are tested against. `Exp` and `Log` are ports of Arm's
 optimized-routines (worst 0.504 and 0.508 ULP measured, against up to 0.88 and 0.72 for Go's `math.Exp`/`math.Log` on arm64), and they are
 correct where amd64's `math.Exp` returns +Inf
@@ -115,7 +115,7 @@ is wrong on subnormals
 ([Performance](performance.md)): one row per public function (or a named
 exemption), against the pinned NumPy 2.5.4, `GOMAXPROCS=1` and one BLAS thread,
 interleaved rounds, refused at a 1-minute load of 8 or more, with the
-allocation count of every row checked in CI. At v0.42.0 the measured table has
+allocation count of every row checked in CI. The table measured at v0.41.0 has
 188 of 256 rows slower than NumPy and 54 faster ([ndarray#118](https://github.com/go-ndarray/ndarray/issues/118)
 tracks the slower rows by cause). The earlier multicore comparison
 with single-threaded NumPy is kept as [Performance history](performance-history.md)
