@@ -1,6 +1,6 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>go-ndarray – Numpy</title><link>https://go-ndarray.github.io/docs/0.41/tags/numpy/</link><description>Recent content in Numpy on go-ndarray</description><generator>Hugo -- gohugo.io</generator><language>en</language><atom:link href="https://go-ndarray.github.io/docs/0.41/tags/numpy/index.xml" rel="self" type="application/rss+xml"/><item><title>Dtypes — thirteen element types, NumPy 2 promotion</title><link>https://go-ndarray.github.io/docs/0.41/dtypes/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://go-ndarray.github.io/docs/0.41/dtypes/</guid><description>
 &lt;blockquote&gt;
-&lt;p&gt;Mirrored from &lt;a href="https://github.com/go-ndarray/ndarray/blob/v0.41.1/docs/design-dtypes.md" target="_blank" rel="noopener"&gt;&lt;code&gt;docs/design-dtypes.md&lt;/code&gt;&lt;/a&gt; at v0.41.1.&lt;/p&gt;
+&lt;p&gt;Mirrored from &lt;a href="https://github.com/go-ndarray/ndarray/blob/v0.41.3/docs/design-dtypes.md" target="_blank" rel="noopener"&gt;&lt;code&gt;docs/design-dtypes.md&lt;/code&gt;&lt;/a&gt; at v0.41.3.&lt;/p&gt;
 &lt;/blockquote&gt;
 &lt;blockquote&gt;
 &lt;p&gt;Status: implemented (Phase 2). Supersedes decision 4 of
@@ -217,9 +217,9 @@ accumulator types, unary ufuncs.&lt;/li&gt;
 &lt;p&gt;Each step keeps the 100% coverage gate and the per-arch CI, and is checked
 against NumPy before it ships.&lt;/p&gt;</description></item><item><title>linalg — numpy.linalg in pure Go</title><link>https://go-ndarray.github.io/docs/0.41/linalg/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://go-ndarray.github.io/docs/0.41/linalg/</guid><description>
 &lt;blockquote&gt;
-&lt;p&gt;Mirrored from &lt;a href="https://github.com/go-ndarray/ndarray/blob/v0.41.1/docs/linalg.md" target="_blank" rel="noopener"&gt;&lt;code&gt;docs/linalg.md&lt;/code&gt;&lt;/a&gt; at v0.41.1.&lt;/p&gt;
+&lt;p&gt;Mirrored from &lt;a href="https://github.com/go-ndarray/ndarray/blob/v0.41.3/docs/linalg.md" target="_blank" rel="noopener"&gt;&lt;code&gt;docs/linalg.md&lt;/code&gt;&lt;/a&gt; at v0.41.3.&lt;/p&gt;
 &lt;/blockquote&gt;
-&lt;p&gt;Package &lt;a href="https://pkg.go.dev/github.com/go-ndarray/ndarray@v0.41.1/linalg" target="_blank" rel="noopener"&gt;&lt;code&gt;linalg&lt;/code&gt;&lt;/a&gt; gives ndarray arrays the functions of
+&lt;p&gt;Package &lt;a href="https://pkg.go.dev/github.com/go-ndarray/ndarray@v0.41.3/linalg" target="_blank" rel="noopener"&gt;&lt;code&gt;linalg&lt;/code&gt;&lt;/a&gt; gives ndarray arrays the functions of
 &lt;code&gt;numpy.linalg&lt;/code&gt;, written in Go without cgo or assembly of its own: the
 matrix products it relies on are the ndarray package&amp;rsquo;s packed SIMD GEMM.&lt;/p&gt;
 &lt;table&gt;
@@ -806,9 +806,9 @@ functions.&lt;/li&gt;
 &lt;li&gt;&lt;code&gt;Eigh&lt;/code&gt; on NaN input returning NaNs like numpy, if that is preferred.&lt;/li&gt;
 &lt;/ul&gt;</description></item><item><title>random — numpy.random, the same numbers</title><link>https://go-ndarray.github.io/docs/0.41/random/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://go-ndarray.github.io/docs/0.41/random/</guid><description>
 &lt;blockquote&gt;
-&lt;p&gt;Mirrored from &lt;a href="https://github.com/go-ndarray/ndarray/blob/v0.41.1/docs/random.md" target="_blank" rel="noopener"&gt;&lt;code&gt;docs/random.md&lt;/code&gt;&lt;/a&gt; at v0.41.1.&lt;/p&gt;
+&lt;p&gt;Mirrored from &lt;a href="https://github.com/go-ndarray/ndarray/blob/v0.41.3/docs/random.md" target="_blank" rel="noopener"&gt;&lt;code&gt;docs/random.md&lt;/code&gt;&lt;/a&gt; at v0.41.3.&lt;/p&gt;
 &lt;/blockquote&gt;
-&lt;p&gt;Package &lt;a href="https://pkg.go.dev/github.com/go-ndarray/ndarray@v0.41.1/random" target="_blank" rel="noopener"&gt;&lt;code&gt;random&lt;/code&gt;&lt;/a&gt; is &lt;code&gt;numpy.random&lt;/code&gt; over go-ndarray arrays. Its goal
+&lt;p&gt;Package &lt;a href="https://pkg.go.dev/github.com/go-ndarray/ndarray@v0.41.3/random" target="_blank" rel="noopener"&gt;&lt;code&gt;random&lt;/code&gt;&lt;/a&gt; is &lt;code&gt;numpy.random&lt;/code&gt; over go-ndarray arrays. Its goal
 is migration: a notebook moved from NumPy to Go keeps its numbers for the same
 seed.&lt;/p&gt;
 &lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
@@ -830,7 +830,7 @@ data-copied-label="Copied!"
 &lt;/div&gt;
 &lt;/div&gt;
 &lt;p&gt;&lt;code&gt;Example&lt;/code&gt;, &lt;code&gt;ExampleSeed&lt;/code&gt; and &lt;code&gt;ExampleGenerator_ChoiceN&lt;/code&gt; in
-&lt;a href="https://github.com/go-ndarray/ndarray/blob/v0.41.1/random/example_test.go" target="_blank" rel="noopener"&gt;&lt;code&gt;example_test.go&lt;/code&gt;&lt;/a&gt; print NumPy&amp;rsquo;s own numbers.&lt;/p&gt;
+&lt;a href="https://github.com/go-ndarray/ndarray/blob/v0.41.3/random/example_test.go" target="_blank" rel="noopener"&gt;&lt;code&gt;example_test.go&lt;/code&gt;&lt;/a&gt; print NumPy&amp;rsquo;s own numbers.&lt;/p&gt;
 &lt;h2 data-hextra-search-id="what-is-implemented"&gt;What is implemented&lt;span class="hx:absolute hx:-mt-20" id="what-is-implemented"&gt;&lt;/span&gt;&lt;a href="#what-is-implemented" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;table&gt;
 &lt;thead&gt;
 &lt;tr&gt;
@@ -1034,7 +1034,7 @@ fixture (Apple&amp;rsquo;s), Go&amp;rsquo;s &lt;code&gt;math&lt;/code&gt; differ
 random arguments. Used as-is, that made 3% of &lt;code&gt;np.random.randn&lt;/code&gt; values and
 10% of &lt;code&gt;lognormal&lt;/code&gt; values one ULP off.&lt;/p&gt;
 &lt;p&gt;So &lt;code&gt;random&lt;/code&gt; rounds &lt;code&gt;log&lt;/code&gt;, &lt;code&gt;log1p&lt;/code&gt;, &lt;code&gt;exp&lt;/code&gt;, &lt;code&gt;expm1&lt;/code&gt; and &lt;code&gt;pow&lt;/code&gt; &lt;strong&gt;correctly&lt;/strong&gt;
-(&lt;a href="https://github.com/go-ndarray/ndarray/blob/v0.41.1/random/libm.go" target="_blank" rel="noopener"&gt;&lt;code&gt;libm.go&lt;/code&gt;&lt;/a&gt;): a fast evaluation to about 2⁻⁶⁸ with Ziv&amp;rsquo;s
+(&lt;a href="https://github.com/go-ndarray/ndarray/blob/v0.41.3/random/libm.go" target="_blank" rel="noopener"&gt;&lt;code&gt;libm.go&lt;/code&gt;&lt;/a&gt;): a fast evaluation to about 2⁻⁶⁸ with Ziv&amp;rsquo;s
 rounding test, and a double-double fallback (about 2⁻¹⁰⁰) for the one argument
 in ~2¹⁵ that needs it. Checked against mpmath at 300 bits on 63,000 arguments
 (0 misrounded; the committed &lt;code&gt;libm.json&lt;/code&gt; keeps 8,400), and the fast paths
@@ -1325,11 +1325,11 @@ data-copied-label="Copied!"
 &lt;p&gt;&lt;code&gt;random/testdata/quant.py&lt;/code&gt; and &lt;code&gt;TestQuantifyLibm&lt;/code&gt; (run with
 &lt;code&gt;RANDOM_QUANT_DIR&lt;/code&gt;) reproduce the 10⁶-draw table.&lt;/p&gt;</description></item><item><title>Performance — go-ndarray vs NumPy</title><link>https://go-ndarray.github.io/docs/0.41/performance/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://go-ndarray.github.io/docs/0.41/performance/</guid><description>
 &lt;blockquote&gt;
-&lt;p&gt;Mirrored from &lt;a href="https://github.com/go-ndarray/ndarray/blob/v0.41.1/docs/perf.md" target="_blank" rel="noopener"&gt;&lt;code&gt;docs/perf.md&lt;/code&gt;&lt;/a&gt; at v0.41.1.&lt;/p&gt;
+&lt;p&gt;Mirrored from &lt;a href="https://github.com/go-ndarray/ndarray/blob/v0.41.3/docs/perf.md" target="_blank" rel="noopener"&gt;&lt;code&gt;docs/perf.md&lt;/code&gt;&lt;/a&gt; at v0.41.3.&lt;/p&gt;
 &lt;/blockquote&gt;
-&lt;p&gt;The table is &lt;a href="https://github.com/go-ndarray/ndarray/blob/v0.41.1/docs/perf-table.md" target="_blank" rel="noopener"&gt;perf-table.md&lt;/a&gt;, generated by
+&lt;p&gt;The table is &lt;a href="https://github.com/go-ndarray/ndarray/blob/v0.41.3/docs/perf-table.md" target="_blank" rel="noopener"&gt;perf-table.md&lt;/a&gt;, generated by
 &lt;a href="https://github.com/go-scikit/refbench" target="_blank" rel="noopener"&gt;refbench&lt;/a&gt; (go-scikit/refbench v0.3.0)
-from &lt;a href="https://github.com/go-ndarray/ndarray/blob/v0.41.1/docs/perf.json" target="_blank" rel="noopener"&gt;perf.json&lt;/a&gt;; nothing in it is edited by hand. The rules are
+from &lt;a href="https://github.com/go-ndarray/ndarray/blob/v0.41.3/docs/perf.json" target="_blank" rel="noopener"&gt;perf.json&lt;/a&gt;; nothing in it is edited by hand. The rules are
 those of the go-scikit performance campaign
 (&lt;a href="https://github.com/go-scikit/roadmap/issues/27" target="_blank" rel="noopener"&gt;go-scikit/roadmap#27&lt;/a&gt;):&lt;/p&gt;
 &lt;ul&gt;
@@ -1353,7 +1353,7 @@ bytes (24 distinct argument sets, complex ones included, all equal), and
 &lt;code&gt;TestRefSmoke&lt;/code&gt; runs every NumPy call once.&lt;/li&gt;
 &lt;li&gt;&lt;strong&gt;One case per public function&lt;/strong&gt; (a function with several shapes of use has
 several rows, &lt;code&gt;Array.SumAxis/axis0&lt;/code&gt; and &lt;code&gt;/axis1&lt;/code&gt;), or a named exemption with
-its reason in &lt;a href="https://github.com/go-ndarray/ndarray/blob/v0.41.1/docs/perf-exempt.md" target="_blank" rel="noopener"&gt;perf-exempt.md&lt;/a&gt;. CI fails on a public function
+its reason in &lt;a href="https://github.com/go-ndarray/ndarray/blob/v0.41.3/docs/perf-exempt.md" target="_blank" rel="noopener"&gt;perf-exempt.md&lt;/a&gt;. CI fails on a public function
 with neither.&lt;/li&gt;
 &lt;/ul&gt;
 &lt;h2 data-hextra-search-id="what-a-row-times"&gt;What a row times&lt;span class="hx:absolute hx:-mt-20" id="what-a-row-times"&gt;&lt;/span&gt;&lt;a href="#what-a-row-times" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;Each row calls the Go function once on a vector of 100 000 elements (a 1000 x
@@ -1405,6 +1405,26 @@ issue per row:&lt;/p&gt;
 &lt;li&gt;the &lt;code&gt;random&lt;/code&gt; draws built on &lt;code&gt;log&lt;/code&gt;/&lt;code&gt;exp&lt;/code&gt;.&lt;/li&gt;
 &lt;/ul&gt;
 &lt;p&gt;Faster, for example: &lt;code&gt;SqrtInto&lt;/code&gt; (0.51), &lt;code&gt;fft.FFT&lt;/code&gt; (0.54), &lt;code&gt;Sum&lt;/code&gt; (0.70), &lt;code&gt;Exp&lt;/code&gt; (0.89).&lt;/p&gt;
+&lt;h3 data-hextra-search-id="since-the-table"&gt;Since the table&lt;span class="hx:absolute hx:-mt-20" id="since-the-table"&gt;&lt;/span&gt;&lt;a href="#since-the-table" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;Fixed after v0.41.0, measured by &lt;code&gt;go test -bench&lt;/code&gt; on the same core, not yet
+by a new table run. On 10⁵ float64 at load 2.2–2.4, over three interleaved
+rounds:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;The scalar forms (&lt;code&gt;AddScalar&lt;/code&gt; … &lt;code&gt;DivScalar&lt;/code&gt;, &lt;code&gt;AddInto&lt;/code&gt; … &lt;code&gt;DivInto&lt;/code&gt;, and
+any Float64 operation with a one-element operand against a contiguous
+array of the result&amp;rsquo;s shape) no longer copy the scalar to the result&amp;rsquo;s
+size. A strided operand, such as a transpose, still takes the general path.
+They stream it through the same SIMD kernel, so the result is bit for bit
+the same. &lt;code&gt;AddScalar&lt;/code&gt; went from 183–203 µs to 95–110 µs, and from 1.6 MB
+to 0.8 MB per call.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Full&lt;/code&gt;, &lt;code&gt;Ones&lt;/code&gt; and &lt;code&gt;FullOf&lt;/code&gt; fill by doubling &lt;code&gt;copy&lt;/code&gt; instead of storing one
+element at a time. &lt;code&gt;Full&lt;/code&gt; went from 131–135 µs to 84–104 µs. &lt;code&gt;Ones&lt;/code&gt; calls
+&lt;code&gt;Full&lt;/code&gt;. &lt;code&gt;FullOf&lt;/code&gt;, which fills the other dtypes, was not timed.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;What remains of the allocation cause is Go&amp;rsquo;s own cost. A CPU profile of a bare
+&lt;code&gt;make([]float64, 100000)&lt;/code&gt; shows about 60% garbage-collector marking (assists
+in the allocating goroutine) and about 23% zeroing. NumPy frees each result
+when its last reference goes and reuses that memory warm. In Go, the way to
+avoid both costs is to not allocate: use the &lt;code&gt;*Into&lt;/code&gt; forms or a &lt;code&gt;Workspace&lt;/code&gt;.&lt;/p&gt;
 &lt;p&gt;The run was made from the release&amp;rsquo;s own code. The test binary was
 cross-compiled from a clean v0.41.0 worktree, the tag was shipped to the host
 as a git bundle, and the binary ran from outside the clone so that the tree
@@ -4862,7 +4882,7 @@ the scalar ikj oracle in CI: exactly on integer-valued data, within tolerance on
 general data, since above KC the block partials regroup the sum and the FMA
 kernels round once per step where the scalar oracle may round twice.&lt;/p&gt;</description></item><item><title>Accuracy contract</title><link>https://go-ndarray.github.io/docs/0.41/accuracy/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://go-ndarray.github.io/docs/0.41/accuracy/</guid><description>
 &lt;blockquote&gt;
-&lt;p&gt;Mirrored from &lt;a href="https://github.com/go-ndarray/ndarray/blob/v0.41.1/README.md#accuracy-contract" target="_blank" rel="noopener"&gt;&lt;code&gt;README.md&lt;/code&gt;&lt;/a&gt; at v0.41.1.&lt;/p&gt;
+&lt;p&gt;Mirrored from &lt;a href="https://github.com/go-ndarray/ndarray/blob/v0.41.3/README.md#accuracy-contract" target="_blank" rel="noopener"&gt;&lt;code&gt;README.md&lt;/code&gt;&lt;/a&gt; at v0.41.3.&lt;/p&gt;
 &lt;/blockquote&gt;
 &lt;p&gt;The contract is &lt;strong&gt;correct, and as fast as possible&lt;/strong&gt;. &amp;ldquo;Correct&amp;rdquo; means a stated error bound, checked against an exact oracle. Equality with NumPy&amp;rsquo;s bits is not the contract: wherever it holds today, it is how a function was ported, and a faster default that stays within its bound may replace it.&lt;/p&gt;
 &lt;p&gt;Bound: elementwise &lt;code&gt;+ − × ÷&lt;/code&gt; and &lt;code&gt;Sqrt&lt;/code&gt; are correctly rounded (one IEEE operation, ≤ 0.5 ULP). Float64 &lt;code&gt;Exp&lt;/code&gt;/&lt;code&gt;Log&lt;/code&gt; have a worst error of 0.511 / 0.519 ULP, the figures of Arm&amp;rsquo;s optimized-routines, which go-simd/floats ports. Float32 &lt;code&gt;Exp&lt;/code&gt;/&lt;code&gt;Log&lt;/code&gt; are correctly rounded. The proof covers all 2³² inputs and lives in go-simd/floats; it runs on demand, and CI checks a sample. &lt;code&gt;Max&lt;/code&gt;/&lt;code&gt;Min&lt;/code&gt; are exact.&lt;/p&gt;
