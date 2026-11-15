@@ -38,7 +38,7 @@ WebAssembly, with nothing to install — build a pipeline step by step (creation
 | --- | --- |
 | Dtypes ([page](dtypes.md)) | bool, int8…int64, uint8…uint64, float32/float64, complex64/complex128 with NumPy 2 promotion: `AsType`, `ZerosOf`, `FromSlice`, `Data[T]`/`Item[T]`, weak Go scalars with `Scalar` |
 | Creation | `New`, `Zeros`, `Ones`, `Full`, `Arange`, `Linspace`, `Eye`, `Identity`, `FromData` |
-| Views & shape | `Slice` (`All`/`R`/`Rng`/`From`/`To`/`Step`), `Reshape`, `Ravel`, `Transpose`, `Copy` |
+| Views & shape | `Slice` (`All`/`R`/`Rng`/`From`/`To`/`Step`), `Reshape`, `Ravel` (a view when the elements are one row-major run, as `numpy.ravel`), `Transpose`, `Copy`, `Flatten` |
 | Elementwise | `Add`/`Sub`/`Mul`/`Div` (+`*Scalar`, +`*Into`), `Map`, `Neg`, `Abs`, comparisons (`Greater`/`Equal`/… → Bool masks), `Maximum`/`Minimum`, `Logical*`, `Real`/`Imag`/`Conj`/`Angle` |
 | Ufuncs | `Sqrt`, `Exp`, `Log`/`Log2`/`Log10`, `Sin`/`Cos`/`Tan`, `Floor`/`Ceil`, `Round` (half to even, as `np.round`; `RoundHalfAway` keeps the old rule), `Square`, `Power` |
 | Reductions | `Sum`, `Mean`, `Max`/`Min`, `Prod`, `ArgMax`/`ArgMin`, `CumSum`/`CumProd`, `Clip`, `Where` (+ per-axis) |
@@ -115,8 +115,8 @@ is wrong on subnormals
 ([Performance](performance.md)): one row per public function (or a named
 exemption), against the pinned NumPy 2.5.4, `GOMAXPROCS=1` and one BLAS thread,
 interleaved rounds, refused at a 1-minute load of 8 or more, with the
-allocation count of every row checked in CI. The table measured at v0.41.0 has
-188 of 256 rows slower than NumPy and 54 faster ([ndarray#118](https://github.com/go-ndarray/ndarray/issues/118)
+allocation count of every row checked in CI. The table measured at `c198892` (the code of v0.44.0) has
+186 of 256 rows slower than NumPy, 51 faster and 19 tied ([ndarray#118](https://github.com/go-ndarray/ndarray/issues/118)
 tracks the slower rows by cause). The earlier multicore comparison
 with single-threaded NumPy is kept as [Performance history](performance-history.md)
 for its kernel-level analysis; its ratios are not a verdict.
