@@ -8,7 +8,7 @@ description: "Why the dtype is a run-time property of one Array type, how arrays
 tags: [dtypes, numpy]
 ---
 
-> Mirrored from [`docs/design-dtypes.md`](https://github.com/go-ndarray/ndarray/blob/v0.42.0/docs/design-dtypes.md) at v0.42.0.
+> Mirrored from [`docs/design-dtypes.md`](https://github.com/go-ndarray/ndarray/blob/v0.43.1/docs/design-dtypes.md) at v0.43.1.
 
 > Status: implemented (Phase 2). Supersedes decision 4 of
 > [plan-ndarray.md](roadmap.md) ("`float64` first").
@@ -111,7 +111,6 @@ dtype by dtype after correctness, `float32` first.
 | NumPy | here | why |
 |---|---|---|
 | `float16` exists; `sqrt(int8)` is `float16` | no `float16`; `sqrt(int8)`, `sqrt(uint8)` and `sqrt(bool)` give `float32` | Go has no half-precision arithmetic; `float32` is the smallest type that holds the result exactly |
-| `round` is half-to-even | half-away-from-zero (unchanged) | documented since v0.1.0 |
 | `datetime64`, `str_`, `object`, structured dtypes | absent | out of scope for a numeric library |
 
 ## Element access

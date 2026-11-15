@@ -8,7 +8,7 @@ description: "The plan for go-ndarray and what ships today."
 tags: [roadmap]
 ---
 
-> Mirrored from [`docs/plan-ndarray.md`](https://github.com/go-ndarray/ndarray/blob/v0.42.0/docs/plan-ndarray.md) at v0.42.0.
+> Mirrored from [`docs/plan-ndarray.md`](https://github.com/go-ndarray/ndarray/blob/v0.43.1/docs/plan-ndarray.md) at v0.43.1.
 
 > Goal: a **pure-Go (CGO=0)** NumPy-style N-dimensional array library, as a
 > **standalone, reusable** module with correct scalar kernels now and a clean
@@ -94,12 +94,14 @@ suite (plus the per-arch CI jobs already wired in `.github/workflows/ci.yml`).
   non-positive m defaults to square), and `Reshape` `-1` dimension inference.
 - **Ufuncs — DONE.** Unary math (`Sqrt`/`Exp`/`Log`/`Log2`/`Log10`/`Sin`/`Cos`/
   `Tan`/`Floor`/`Ceil`/`Round`/`Square`/`Power`): `Sqrt` has a SIMD kernel,
-  `Exp`/`Log`/`Log10` run ports of Arm's optimized-routines (v0.2.0), and the
-  rest go through the `Map` seam over Go's `math`; and
-  broadcasting comparisons returning 0/1 float masks (`Equal`/`NotEqual`/
-  `Greater`/`GreaterEqual`/`Less`/`LessEqual`) plus pairwise `Maximum`/`Minimum`.
-  (`Round` is math.Round / half-away-from-zero, unlike numpy's banker's
-  rounding — documented.) A bool dtype for true masks is deferred to Phase 2.
+  `Exp`/`Log`/`Log10` run ports of Arm's optimized-routines (v0.2.0); since
+  v0.43.0 float64 `Abs`/`Neg`/`Square`/`Floor`/`Ceil`/`Round` run on
+  go-simd/floats vector kernels, and the rest go through the `Map` seam over
+  Go's `math`; and broadcasting comparisons returning 0/1 float masks
+  (`Equal`/`NotEqual`/`Greater`/`GreaterEqual`/`Less`/`LessEqual`) plus pairwise
+  `Maximum`/`Minimum`. `Round` rounds halves to even, as `np.round`, since
+  v0.43.0 (it was `math.Round`, half away from zero, before); `RoundHalfAway`
+  keeps that older rule. A bool dtype for true masks is deferred to Phase 2.
 - **Manipulation — DONE.** `Flatten` (always copy), `ExpandDims`/`Squeeze`
   (length-1 axis views), `Concatenate` (existing axis), `Stack` (new axis), and
   the `VStack`/`HStack` conveniences with 1-D promotion. Negative axes
@@ -116,7 +118,7 @@ suite (plus the per-arch CI jobs already wired in `.github/workflows/ci.yml`).
   NumPy. What follows is the history of the levers behind the kernel seam,
   measured then against NumPy
   2.2.4 (see [docs/perf.md](performance.md) and the repo's
-  [BENCHMARKS.md](https://github.com/go-ndarray/ndarray/blob/v0.42.0/BENCHMARKS.md)):
+  [BENCHMARKS.md](https://github.com/go-ndarray/ndarray/blob/v0.43.1/BENCHMARKS.md)):
   - **Multicore.** `Add/Sub/Mul/Div/Map`, `Sum/Max/Min`, the axis reductions,
     `Concatenate`/`Stack`, and the GEMM fan out across `GOMAXPROCS` above a size
     threshold (small arrays stay serial). Plus an allocation fix: the
