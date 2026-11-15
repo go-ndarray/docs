@@ -40,7 +40,7 @@ WebAssembly, with nothing to install — build a pipeline step by step (creation
 | Creation | `New`, `Zeros`, `Ones`, `Full`, `Arange`, `Linspace`, `Eye`, `Identity`, `FromData` |
 | Views & shape | `Slice` (`All`/`R`/`Rng`/`From`/`To`/`Step`), `Reshape`, `Ravel`, `Transpose`, `Copy` |
 | Elementwise | `Add`/`Sub`/`Mul`/`Div` (+`*Scalar`, +`*Into`), `Map`, `Neg`, `Abs`, comparisons (`Greater`/`Equal`/… → Bool masks), `Maximum`/`Minimum`, `Logical*`, `Real`/`Imag`/`Conj`/`Angle` |
-| Ufuncs | `Sqrt`, `Exp`, `Log`/`Log2`/`Log10`, `Sin`/`Cos`/`Tan`, `Floor`/`Ceil`/`Round`, `Square`, `Power` |
+| Ufuncs | `Sqrt`, `Exp`, `Log`/`Log2`/`Log10`, `Sin`/`Cos`/`Tan`, `Floor`/`Ceil`, `Round` (half to even, as `np.round`; `RoundHalfAway` keeps the old rule), `Square`, `Power` |
 | Reductions | `Sum`, `Mean`, `Max`/`Min`, `Prod`, `ArgMax`/`ArgMin`, `CumSum`/`CumProd`, `Clip`, `Where` (+ per-axis) |
 | Indexing | `Slice` (basic indexing), `MaskSelect` (`a[mask]`), `Nonzero` (`flatnonzero`), `Take` (fancy indexing) |
 | Manipulation | `Flatten`, `ExpandDims`, `Squeeze`, `Concatenate`, `Stack`, `VStack`, `HStack` |

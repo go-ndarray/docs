@@ -8,7 +8,7 @@ description: "The plan for go-ndarray and what ships today."
 tags: [roadmap]
 ---
 
-> Mirrored from [`docs/plan-ndarray.md`](https://github.com/go-ndarray/ndarray/blob/v0.42.0/docs/plan-ndarray.md) at v0.42.0.
+> Mirrored from [`docs/plan-ndarray.md`](https://github.com/go-ndarray/ndarray/blob/v0.43.0/docs/plan-ndarray.md) at v0.43.0.
 
 > Goal: a **pure-Go (CGO=0)** NumPy-style N-dimensional array library, as a
 > **standalone, reusable** module with correct scalar kernels now and a clean
@@ -116,7 +116,7 @@ suite (plus the per-arch CI jobs already wired in `.github/workflows/ci.yml`).
   NumPy. What follows is the history of the levers behind the kernel seam,
   measured then against NumPy
   2.2.4 (see [docs/perf.md](performance.md) and the repo's
-  [BENCHMARKS.md](https://github.com/go-ndarray/ndarray/blob/v0.42.0/BENCHMARKS.md)):
+  [BENCHMARKS.md](https://github.com/go-ndarray/ndarray/blob/v0.43.0/BENCHMARKS.md)):
   - **Multicore.** `Add/Sub/Mul/Div/Map`, `Sum/Max/Min`, the axis reductions,
     `Concatenate`/`Stack`, and the GEMM fan out across `GOMAXPROCS` above a size
     threshold (small arrays stay serial). Plus an allocation fix: the
